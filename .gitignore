@@ -47,6 +47,8 @@ app.*.map.json
 # Env and Secrets
 .env
 .env.*
+!.env.example
+!functions/.env.local.example
 
 # Firebase
 .firebase/
