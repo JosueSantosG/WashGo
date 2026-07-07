@@ -317,8 +317,11 @@ query GetBusinessHours($businessId: UUID!) @auth(level: USER, insecureReason: "O
 }
 
 query SuperAdminGetBusinesses @auth(level: USER) {
-  user(key: { id_expr: "auth.uid" }) @redact {
-    roles @check(expr: "'SUPER_ADMIN' in this", message: "Only super admins can access this list")
+  user(key: { id_expr: "auth.uid" }) @redact @check(
+    expr: "auth.token.email == 'root@washgo.com' || (this != null && 'SUPER_ADMIN' in this.roles)",
+    message: "Only super admins can access this list"
+  ) {
+    roles
   }
   businesses {
     id
@@ -901,7 +904,7 @@ query GetPrepaidHistoryByOrderId($orderId: String!) @auth(level: USER) {
   }
 }
 
-query GetBusinessReservationConfig($businessId: UUID!) @auth(level: USER) {
+query GetBusinessReservationConfig($businessId: UUID!) @auth(level: USER, insecureReason: "Cualquier usuario puede ver la configuracion de reservas de un negocio para programar citas") {
   businessReservationConfigs(where: { businessId: { eq: $businessId } }, limit: 1) {
     id
     capacidadSimultanea
@@ -911,7 +914,7 @@ query GetBusinessReservationConfig($businessId: UUID!) @auth(level: USER) {
   }
 }
 
-query GetActiveReservations($businessId: UUID!) @auth(level: USER) {
+query GetActiveReservations($businessId: UUID!) @auth(level: USER, insecureReason: "Cualquier usuario puede ver las reservas activas para verificar disponibilidad de horario") {
   orderReservations(where: { businessId: { eq: $businessId } }) {
     orderId
     businessId

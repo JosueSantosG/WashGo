@@ -7,8 +7,8 @@ class GetPrepaidHistoryByOrderIdVariablesBuilder {
   GetPrepaidHistoryByOrderIdVariablesBuilder(this._dataConnect, {required  this.orderId,});
   Deserializer<GetPrepaidHistoryByOrderIdData> dataDeserializer = (dynamic json)  => GetPrepaidHistoryByOrderIdData.fromJson(jsonDecode(json));
   Serializer<GetPrepaidHistoryByOrderIdVariables> varsSerializer = (GetPrepaidHistoryByOrderIdVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetPrepaidHistoryByOrderIdData, GetPrepaidHistoryByOrderIdVariables>> execute() {
-    return ref().execute();
+  Future<QueryResult<GetPrepaidHistoryByOrderIdData, GetPrepaidHistoryByOrderIdVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<GetPrepaidHistoryByOrderIdData, GetPrepaidHistoryByOrderIdVariables> ref() {

@@ -6,6 +6,8 @@ import 'package:washgo/config/theme/app_colors.dart';
 import 'package:washgo/config/routes/app_routes.dart';
 import 'package:washgo/features/auth/models/super_admin_session.dart';
 import 'package:washgo/shared/widgets/custom_text_field.dart';
+import 'package:washgo/features/auth/repositories/firebase_auth_repository.dart';
+import 'package:washgo/dataconnect-generated/example.dart';
 
 class SuperAdminLoginPage extends StatefulWidget {
   const SuperAdminLoginPage({super.key});
@@ -55,6 +57,17 @@ class _SuperAdminLoginPageState extends State<SuperAdminLoginPage> {
             setState(() => _isLoading = false);
             return;
           }
+        }
+
+        // Seed the user in PostgreSQL via Data Connect
+        try {
+          await FirebaseAuthRepository().upsertUser(
+            nombreCompleto: 'Super Administrador',
+            email: 'root@washgo.com',
+            roles: [UserRole.SUPER_ADMIN],
+          );
+        } catch (dbError) {
+          debugPrint('Error al guardar SuperAdministrador en DB: $dbError');
         }
 
         if (!mounted) return;

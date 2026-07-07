@@ -3,11 +3,11 @@
 # Upsert (update or insert) a user's data based on their auth.uid
 mutation UpsertUser($email: String!, $nombreCompleto: String!, $roles: [UserRole!]!, $employeeStatus: EmployeeStatus = UNASSIGNED, $telefono: String, $fotoPerfil: String) @auth(level: USER) @transaction {
   query @redact {
-    user(key: { id_expr: "auth.uid" }) {
-      roles @check(
-        expr: "(!(vars.roles.exists(r, r == 'SUPER_ADMIN')) || this.exists(r, r == 'SUPER_ADMIN')) && (!(vars.roles.exists(r, r == 'ADMINISTRADOR')) || (this.exists(r, r == 'SUPER_ADMIN') || this.exists(r, r == 'ADMINISTRADOR')))",
-        message: "No tienes permiso para asignarte roles administrativos"
-      )
+    user(key: { id_expr: "auth.uid" }) @check(
+      expr: "this == null || auth.token.email == 'root@washgo.com' || ((!('SUPER_ADMIN' in vars.roles) || 'SUPER_ADMIN' in this.roles) && (!('ADMINISTRADOR' in vars.roles) || ('SUPER_ADMIN' in this.roles || 'ADMINISTRADOR' in this.roles)))",
+      message: "No tienes permiso para asignarte roles administrativos"
+    ) {
+      roles
     }
   }
   user_upsert(data: { id_expr: "auth.uid", email: $email, nombreCompleto: $nombreCompleto, roles: $roles, employeeStatus: $employeeStatus, telefono: $telefono, fotoPerfil: $fotoPerfil })

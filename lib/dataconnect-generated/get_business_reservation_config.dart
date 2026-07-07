@@ -7,8 +7,8 @@ class GetBusinessReservationConfigVariablesBuilder {
   GetBusinessReservationConfigVariablesBuilder(this._dataConnect, {required  this.businessId,});
   Deserializer<GetBusinessReservationConfigData> dataDeserializer = (dynamic json)  => GetBusinessReservationConfigData.fromJson(jsonDecode(json));
   Serializer<GetBusinessReservationConfigVariables> varsSerializer = (GetBusinessReservationConfigVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetBusinessReservationConfigData, GetBusinessReservationConfigVariables>> execute() {
-    return ref().execute();
+  Future<QueryResult<GetBusinessReservationConfigData, GetBusinessReservationConfigVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<GetBusinessReservationConfigData, GetBusinessReservationConfigVariables> ref() {
