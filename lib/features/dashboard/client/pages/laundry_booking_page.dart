@@ -160,37 +160,6 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
     }
   }
 
-  static DateTime _getInitialDatePickerDate(LaundryItem laundry) {
-    DateTime candidate = DateTime.now();
-    for (int i = 0; i < 7; i++) {
-      final bh = laundry.businessHours.firstWhere(
-        (element) => element['diaDeLaSemana'] == candidate.weekday,
-        orElse: () => <String, dynamic>{},
-      );
-      final bool esDescanso = bh['esDiaDescanso'] ?? false;
-      if (!esDescanso) {
-        final String? apertura = bh['horaApertura'];
-        if (apertura != null) {
-          try {
-            final parts = apertura.split(':');
-            if (parts.length >= 2) {
-              return DateTime(
-                candidate.year,
-                candidate.month,
-                candidate.day,
-                int.parse(parts[0]),
-                int.parse(parts[1]),
-              );
-            }
-          } catch (_) {}
-        }
-        return candidate;
-      }
-      candidate = candidate.add(const Duration(days: 1));
-    }
-    return DateTime.now();
-  }
-
   void _showOrderCreatedSuccess(String orderId) {
     final displayId = orderId.length > 8
         ? orderId.substring(0, 8).toUpperCase()
