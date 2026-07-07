@@ -1,0 +1,961 @@
+extend type Query {
+  """
+  ✨ Look up a single `Business` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  business(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Business_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Business_FirstRow
+  ): Business @fdc_generated(from: "Business", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `BusinessEmployee` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  businessEmployee(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: BusinessEmployee_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: BusinessEmployee_FirstRow
+  ): BusinessEmployee @fdc_generated(from: "BusinessEmployee", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `BusinessHour` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  businessHour(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: BusinessHour_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: BusinessHour_FirstRow
+  ): BusinessHour @fdc_generated(from: "BusinessHour", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `BusinessReservationConfig` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  businessReservationConfig(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: BusinessReservationConfig_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: BusinessReservationConfig_FirstRow
+  ): BusinessReservationConfig @fdc_generated(from: "BusinessReservationConfig", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `EmployeeRequest` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  employeeRequest(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: EmployeeRequest_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: EmployeeRequest_FirstRow
+  ): EmployeeRequest @fdc_generated(from: "EmployeeRequest", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Invoice` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  invoice(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Invoice_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Invoice_FirstRow
+  ): Invoice @fdc_generated(from: "Invoice", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `InvoiceItem` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  invoiceItem(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: InvoiceItem_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: InvoiceItem_FirstRow
+  ): InvoiceItem @fdc_generated(from: "InvoiceItem", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Notification` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  notification(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Notification_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Notification_FirstRow
+  ): Notification @fdc_generated(from: "Notification", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Order` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  order(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Order_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Order_FirstRow
+  ): Order @fdc_generated(from: "Order", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `OrderReservation` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  orderReservation(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: OrderReservation_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: OrderReservation_FirstRow
+  ): OrderReservation @fdc_generated(from: "OrderReservation", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `PrepaidHistory` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  prepaidHistory(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PrepaidHistory_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PrepaidHistory_FirstRow
+  ): PrepaidHistory @fdc_generated(from: "PrepaidHistory", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `PrepaidServiceMetric` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  prepaidServiceMetric(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PrepaidServiceMetric_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PrepaidServiceMetric_FirstRow
+  ): PrepaidServiceMetric @fdc_generated(from: "PrepaidServiceMetric", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Review` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  review(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Review_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Review_FirstRow
+  ): Review @fdc_generated(from: "Review", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Service` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  service(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Service_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Service_FirstRow
+  ): Service @fdc_generated(from: "Service", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `User` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  user(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: User_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: User_FirstRow
+  ): User @fdc_generated(from: "User", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Vehicle` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  vehicle(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Vehicle_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Vehicle_FirstRow
+  ): Vehicle @fdc_generated(from: "Vehicle", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `VehicleBrand` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  vehicleBrand(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: VehicleBrand_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: VehicleBrand_FirstRow
+  ): VehicleBrand @fdc_generated(from: "VehicleBrand", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `VehicleModel` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  vehicleModel(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: VehicleModel_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: VehicleModel_FirstRow
+  ): VehicleModel @fdc_generated(from: "VehicleModel", purpose: QUERY_SINGLE)
+  """
+  ✨ List `Business` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  businesses(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Business_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Business_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Business_Having
+  ): [Business!]! @fdc_generated(from: "Business", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `BusinessEmployee` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  businessEmployees(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: BusinessEmployee_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [BusinessEmployee_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: BusinessEmployee_Having
+  ): [BusinessEmployee!]! @fdc_generated(from: "BusinessEmployee", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `BusinessHour` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  businessHours(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: BusinessHour_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [BusinessHour_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: BusinessHour_Having
+  ): [BusinessHour!]! @fdc_generated(from: "BusinessHour", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `BusinessReservationConfig` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  businessReservationConfigs(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: BusinessReservationConfig_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [BusinessReservationConfig_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: BusinessReservationConfig_Having
+  ): [BusinessReservationConfig!]! @fdc_generated(from: "BusinessReservationConfig", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `EmployeeRequest` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  employeeRequests(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: EmployeeRequest_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [EmployeeRequest_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: EmployeeRequest_Having
+  ): [EmployeeRequest!]! @fdc_generated(from: "EmployeeRequest", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Invoice` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  invoices(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Invoice_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Invoice_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Invoice_Having
+  ): [Invoice!]! @fdc_generated(from: "Invoice", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `InvoiceItem` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  invoiceItems(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: InvoiceItem_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [InvoiceItem_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: InvoiceItem_Having
+  ): [InvoiceItem!]! @fdc_generated(from: "InvoiceItem", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Notification` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  notifications(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Notification_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Notification_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Notification_Having
+  ): [Notification!]! @fdc_generated(from: "Notification", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Order` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  orders(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Order_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Order_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Order_Having
+  ): [Order!]! @fdc_generated(from: "Order", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `OrderReservation` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  orderReservations(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: OrderReservation_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [OrderReservation_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: OrderReservation_Having
+  ): [OrderReservation!]! @fdc_generated(from: "OrderReservation", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `PrepaidHistory` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  prepaidHistories(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: PrepaidHistory_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [PrepaidHistory_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: PrepaidHistory_Having
+  ): [PrepaidHistory!]! @fdc_generated(from: "PrepaidHistory", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `PrepaidServiceMetric` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  prepaidServiceMetrics(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: PrepaidServiceMetric_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [PrepaidServiceMetric_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: PrepaidServiceMetric_Having
+  ): [PrepaidServiceMetric!]! @fdc_generated(from: "PrepaidServiceMetric", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Review` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  reviews(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Review_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Review_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Review_Having
+  ): [Review!]! @fdc_generated(from: "Review", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Service` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  services(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Service_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Service_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Service_Having
+  ): [Service!]! @fdc_generated(from: "Service", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `User` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  users(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: User_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [User_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: User_Having
+  ): [User!]! @fdc_generated(from: "User", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Vehicle` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  vehicles(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Vehicle_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Vehicle_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Vehicle_Having
+  ): [Vehicle!]! @fdc_generated(from: "Vehicle", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `VehicleBrand` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  vehicleBrands(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: VehicleBrand_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [VehicleBrand_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: VehicleBrand_Having
+  ): [VehicleBrand!]! @fdc_generated(from: "VehicleBrand", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `VehicleModel` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  vehicleModels(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: VehicleModel_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [VehicleModel_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: VehicleModel_Having
+  ): [VehicleModel!]! @fdc_generated(from: "VehicleModel", purpose: QUERY_MULTIPLE)
+}

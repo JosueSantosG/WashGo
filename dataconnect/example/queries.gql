@@ -1,0 +1,1033 @@
+query GetUsers @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) @redact {
+    roles @check(expr: "'SUPER_ADMIN' in this", message: "Only super admins can view the user list")
+  }
+  users {
+    id
+    nombreCompleto
+    email
+    roles
+  }
+}
+
+# Example query to get the current authenticated user
+query GetCurrentUser @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) {
+    id
+    nombreCompleto
+    email
+    roles
+    fotoPerfil
+    telefono
+    fechaCreacion
+    employeeStatus
+    currentBusiness {
+      id
+      nombre
+      ruc
+      businessCode
+      descripcion
+      telefono
+      latitud
+      longitud
+      status
+      saldoPrepagoInicial
+      saldoPrepagoConsumido
+    }
+  }
+}
+
+query GetBusinessByCode($code: String!) @auth(level: USER, insecureReason: "Obtener negocio por código") {
+  businesses(where: {businessCode: {eq: $code}}, limit: 1) {
+    id
+    nombre
+    descripcion
+  }
+}
+
+query GetPendingEmployeeRequests($businessId: UUID!) @auth(level: USER) {
+  business(key: { id: $businessId }) @redact {
+    owner {
+      id @check(expr: "this == auth.uid", message: "Only the business owner can view pending employee requests")
+    }
+  }
+  employeeRequests(where: {businessId: {eq: $businessId}, status: {eq: PENDING}}) {
+    id
+    user {
+      id
+      nombreCompleto
+      email
+    }
+    createdAt
+  }
+}
+
+query GetAllBusinesses @auth(level: USER, insecureReason: "Obtener todos los negocios") {
+  businesses {
+    id
+    nombre
+    businessCode # <--- CÓDIGO
+    status
+    descripcion
+    telefono
+    latitud
+    longitud
+    owner {
+      nombreCompleto
+    }
+    businessHours_on_business {
+      diaDeLaSemana
+      horaApertura
+      horaCierre
+      esDiaDescanso
+    }
+    services_on_business {
+      precioPequeno
+      precioMediano
+      precioGrande
+      precioMoto
+      activo
+      precioPendiente
+    }
+    reviews_on_business {
+      calificacion
+    }
+  }
+}
+
+query GetClientOrders @auth(level: USER) {
+  orders(
+    where: {
+      clientId: { eq_expr: "auth.uid" }
+      status: { in: [PENDIENTE_PAGO, EN_COLA, ACEPTADO, EN_CAMINO, EN_SERVICIO, COMPLETADO, CANCELADO] }
+    }
+  ) {
+    id
+    price
+    costo
+    serviceName
+    observations
+    type
+    paymentMethod
+    status
+    invoiceUrl
+    business {
+      id
+      nombre
+      latitud
+      longitud
+      telefono
+    }
+    employee {
+      id
+      nombreCompleto
+      fotoPerfil
+      telefono
+    }
+    review_on_order {
+      id
+      calificacion
+      comentario
+    }
+  }
+}
+
+query GetBusinessOrders($businessId: UUID!) @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) @redact {
+    roles
+  }
+  business(key: { id: $businessId }) @redact {
+    owner {
+      id
+    }
+  }
+  businessEmployees(where: {
+    businessId: { eq: $businessId }
+    employeeId: { eq_expr: "auth.uid" }
+    status: { eq: ACTIVE }
+  }) @redact @check(expr: "'SUPER_ADMIN' in response.user.roles || (response.business != null && response.business.owner != null && response.business.owner.id == auth.uid) || this.size() > 0", message: "No tienes permiso para acceder a las órdenes del negocio") {
+    id
+  }
+  orders(
+    where: {
+      businessId: { eq: $businessId }
+      status: { in: [PENDIENTE_PAGO, EN_COLA, ACEPTADO, EN_CAMINO, EN_SERVICIO] }
+    }
+  ) {
+    id
+    price
+    costo
+    serviceName
+    observations
+    type
+    paymentMethod
+    status
+    client {
+      id
+      nombreCompleto
+      fotoPerfil
+      telefono
+    }
+    employee {
+      id
+      nombreCompleto
+      fotoPerfil
+      telefono
+    }
+  }
+}
+
+query GetActiveEmployees($businessId: UUID!) @auth(level: USER, insecureReason: "Obtener empleados activos") {
+  businessEmployees(where: {businessId: {eq: $businessId}, status: {eq: ACTIVE}}) {
+    id
+    employee {
+      id
+      nombreCompleto
+      email
+      telefono
+      fotoPerfil
+    }
+    estadoDisponibilidad
+    joinedAt
+  }
+}
+
+query GetBusinessServices($businessId: UUID!) @auth(level: USER, insecureReason: "Obtener servicios de negocio") {
+  services(where: {businessId: {eq: $businessId}}) {
+    id
+    nombre
+    descripcion
+    precioPequeno
+    precioMediano
+    precioGrande
+    precioMoto
+    precioOwnerPequeno
+    precioOwnerMediano
+    precioOwnerGrande
+    precioOwnerMoto
+    precioPendiente
+    costo
+    duracionMinutos
+    fotoUrl
+    tipo
+    activo
+  }
+}
+
+query GetMyVehicles @auth(level: USER) {
+  vehicles(where: { clientId: { eq_expr: "auth.uid" } }) {
+    id
+    plate
+    model {
+      id
+      name
+      category
+      brand {
+        id
+        name
+      }
+    }
+  }
+}
+
+query GetVehicleBrands @auth(level: USER, insecureReason: "Cualquier usuario autenticado puede ver las marcas de vehículos") {
+  vehicleBrands {
+    id
+    name
+  }
+}
+
+query GetVehicleModelsByBrand($brandId: UUID!) @auth(level: USER, insecureReason: "Cualquier usuario autenticado puede ver los modelos de vehículos") {
+  vehicleModels(where: { brandId: { eq: $brandId } }) {
+    id
+    name
+    category
+  }
+}
+
+query GetActiveBusinessOrders($businessId: UUID!) @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) @redact {
+    roles
+  }
+  business(key: { id: $businessId }) @redact {
+    owner {
+      id
+    }
+  }
+  businessEmployees(where: {
+    businessId: { eq: $businessId }
+    employeeId: { eq_expr: "auth.uid" }
+    status: { eq: ACTIVE }
+  }) @redact @check(expr: "'SUPER_ADMIN' in response.user.roles || (response.business != null && response.business.owner != null && response.business.owner.id == auth.uid) || this.size() > 0", message: "No tienes permiso para acceder a las órdenes de este negocio") {
+    id
+  }
+  orders(where: {
+    businessId: { eq: $businessId },
+    status: { in: [PENDIENTE_PAGO, EN_COLA, ACEPTADO, EN_CAMINO, EN_SERVICIO] }
+  }) {
+    id
+    price
+    costo
+    serviceName
+    observations
+    type
+    paymentMethod
+    status
+    client {
+      id
+      nombreCompleto
+    }
+    employee {
+      id
+      nombreCompleto
+    }
+    service {
+      id
+      duracionMinutos
+    }
+  }
+}
+
+query GetEmployeeAvailability($businessId: UUID!, $employeeId: String!) @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) @redact {
+    roles
+  }
+  business(key: { id: $businessId }) @redact {
+    owner {
+      id
+    }
+  }
+  businessEmployees(where: {
+    businessId: { eq: $businessId },
+    employeeId: { eq: $employeeId }
+  }) @check(expr: "'SUPER_ADMIN' in response.user.roles || auth.uid == vars.employeeId || (response.business != null && response.business.owner != null && response.business.owner.id == auth.uid)", message: "No tienes permiso para ver la disponibilidad de este empleado") {
+    id
+    estadoDisponibilidad
+  }
+}
+
+query GetBusinessHours($businessId: UUID!) @auth(level: USER, insecureReason: "Obtener horario de negocio") {
+  businessHours(where: { businessId: { eq: $businessId } }) {
+    id
+    diaDeLaSemana
+    horaApertura
+    horaCierre
+    esDiaDescanso
+  }
+}
+
+query SuperAdminGetBusinesses @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) @redact {
+    roles @check(expr: "'SUPER_ADMIN' in this", message: "Only super admins can access this list")
+  }
+  businesses {
+    id
+    nombre
+    ruc
+    businessCode
+    status
+    descripcion
+    telefono
+    latitud
+    longitud
+    saldoPrepagoInicial
+    saldoPrepagoConsumido
+    owner {
+      id
+      nombreCompleto
+    }
+    services_on_business {
+      id
+      nombre
+      descripcion
+      precioPequeno
+      precioMediano
+      precioGrande
+      precioMoto
+      precioOwnerPequeno
+      precioOwnerMediano
+      precioOwnerGrande
+      precioOwnerMoto
+      precioPendiente
+      costo
+      duracionMinutos
+      tipo
+      activo
+    }
+  }
+}
+
+query GetMyBusinesses @auth(level: USER) {
+  businesses(where: { ownerId: { eq_expr: "auth.uid" } }) {
+    id
+    nombre
+    ruc
+    businessCode
+    status
+    descripcion
+    telefono
+    saldoPrepagoInicial
+    saldoPrepagoConsumido
+    latitud
+    longitud
+  }
+}
+
+query GetEmployeeHistoryOrdersPaged($businessId: UUID!, $employeeId: String!, $limit: Int!, $offset: Int!) @auth(level: USER) {
+  business(key: { id: $businessId }) @redact {
+    owner {
+      id
+    }
+  }
+  user(key: { id_expr: "auth.uid" }) @redact @check(expr: "auth.uid == vars.employeeId || 'SUPER_ADMIN' in this.roles || (response.business != null && response.business.owner != null && response.business.owner.id == auth.uid)", message: "No tienes permiso para ver el historial del empleado") {
+    roles
+  }
+  orders(
+    where: {
+      businessId: { eq: $businessId }
+      employeeId: { eq: $employeeId }
+      status: { in: [COMPLETADO, CANCELADO] }
+    }
+    limit: $limit
+    offset: $offset
+    orderBy: [{ id: DESC }]
+  ) {
+    id
+    price
+    costo
+    serviceName
+    observations
+    type
+    paymentMethod
+    status
+    client {
+      id
+      nombreCompleto
+      fotoPerfil
+      telefono
+    }
+    employee {
+      id
+      nombreCompleto
+      fotoPerfil
+      telefono
+    }
+  }
+}
+
+query GetClientHistoryOrdersPaged($limit: Int!, $offset: Int!) @auth(level: USER) {
+  orders(
+    where: {
+      clientId: { eq_expr: "auth.uid" }
+      status: { in: [COMPLETADO, CANCELADO] }
+    }
+    limit: $limit
+    offset: $offset
+    orderBy: [{ id: DESC }]
+  ) {
+    id
+    price
+    costo
+    serviceName
+    observations
+    type
+    paymentMethod
+    status
+    invoiceUrl
+    business {
+      id
+      nombre
+      latitud
+      longitud
+    }
+    employee {
+      id
+      nombreCompleto
+      fotoPerfil
+      telefono
+    }
+    review_on_order {
+      id
+      calificacion
+      comentario
+    }
+  }
+}
+
+query FindUserByPhone($phone: String!) @auth(level: USER, insecureReason: "Buscar usuario por teléfono") {
+  users(where: { telefono: { eq: $phone } }, limit: 1) {
+    id
+    nombreCompleto
+    telefono
+    email
+  }
+}
+
+query GetClientInvoices(
+  $limit: Int
+  $offset: Int
+  $startDate: Timestamp
+  $endDate: Timestamp
+  $paymentMethod: PaymentMethod
+  $status: InvoiceStatus
+  $searchQuery: String
+) @auth(level: USER) {
+  invoices(
+    where: {
+      _and: [
+        { order: { clientId: { eq_expr: "auth.uid" } } }
+        { fechaEmision: { ge: $startDate, le: $endDate } }
+        { paymentMethod: { eq: $paymentMethod } }
+        { invoiceStatus: { eq: $status } }
+        {
+          _or: [
+            { numeroUnico: { contains: $searchQuery } }
+            { order: { serviceName: { contains: $searchQuery } } }
+            { order: { business: { nombre: { contains: $searchQuery } } } }
+          ]
+        }
+      ]
+    }
+    limit: $limit
+    offset: $offset
+    orderBy: [{ fechaEmision: DESC }]
+  ) {
+    id
+    numeroUnico
+    fechaEmision
+    subtotal
+    discount
+    tax
+    total
+    paymentMethod
+    invoiceStatus
+    generatedAt
+    pdfUrl
+    order {
+      id
+      price
+      serviceName
+      paymentMethod
+      status
+      business {
+        nombre
+      }
+      employee {
+        nombreCompleto
+        telefono
+      }
+    }
+    invoiceItems_on_invoice {
+      id
+      serviceName
+      quantity
+      unitPrice
+      total
+    }
+  }
+}
+
+query GetEmployeeInvoices(
+  $limit: Int
+  $offset: Int
+  $startDate: Timestamp
+  $endDate: Timestamp
+  $paymentMethod: PaymentMethod
+  $status: InvoiceStatus
+  $searchQuery: String
+) @auth(level: USER) {
+  invoices(
+    where: {
+      _and: [
+        { order: { employeeId: { eq_expr: "auth.uid" } } }
+        { fechaEmision: { ge: $startDate, le: $endDate } }
+        { paymentMethod: { eq: $paymentMethod } }
+        { invoiceStatus: { eq: $status } }
+        {
+          _or: [
+            { numeroUnico: { contains: $searchQuery } }
+            { order: { serviceName: { contains: $searchQuery } } }
+            { order: { client: { nombreCompleto: { contains: $searchQuery } } } }
+          ]
+        }
+      ]
+    }
+    limit: $limit
+    offset: $offset
+    orderBy: [{ fechaEmision: DESC }]
+  ) {
+    id
+    numeroUnico
+    fechaEmision
+    subtotal
+    discount
+    tax
+    total
+    paymentMethod
+    invoiceStatus
+    generatedAt
+    pdfUrl
+    order {
+      id
+      price
+      serviceName
+      paymentMethod
+      status
+      observations
+      business {
+        nombre
+      }
+      client {
+        nombreCompleto
+        email
+        telefono
+      }
+    }
+    invoiceItems_on_invoice {
+      id
+      serviceName
+      quantity
+      unitPrice
+      total
+    }
+  }
+}
+
+query GetBusinessInvoices(
+  $businessId: UUID!
+  $limit: Int
+  $offset: Int
+  $employeeId: String
+  $startDate: Timestamp
+  $endDate: Timestamp
+  $paymentMethod: PaymentMethod
+  $status: InvoiceStatus
+  $searchQuery: String
+) @auth(level: USER) {
+  business(key: { id: $businessId }) @redact {
+    owner {
+      id
+    }
+  }
+  user(key: { id_expr: "auth.uid" }) @redact @check(expr: "'SUPER_ADMIN' in this.roles || (response.business != null && response.business.owner != null && response.business.owner.id == auth.uid)", message: "No tienes permiso para ver las facturas de este negocio") {
+    roles
+  }
+  invoices(
+    where: {
+      _and: [
+        {
+          order: {
+            businessId: { eq: $businessId }
+            employeeId: { eq: $employeeId }
+          }
+        }
+        { fechaEmision: { ge: $startDate, le: $endDate } }
+        { paymentMethod: { eq: $paymentMethod } }
+        { invoiceStatus: { eq: $status } }
+        {
+          _or: [
+            { numeroUnico: { contains: $searchQuery } }
+            { order: { serviceName: { contains: $searchQuery } } }
+            { order: { client: { nombreCompleto: { contains: $searchQuery } } } }
+          ]
+        }
+      ]
+    }
+    limit: $limit
+    offset: $offset
+    orderBy: [{ fechaEmision: DESC }]
+  ) {
+    id
+    numeroUnico
+    fechaEmision
+    subtotal
+    discount
+    tax
+    total
+    paymentMethod
+    invoiceStatus
+    generatedAt
+    pdfUrl
+    order {
+      id
+      price
+      serviceName
+      paymentMethod
+      status
+      client {
+        nombreCompleto
+        email
+        telefono
+      }
+      employee {
+        nombreCompleto
+        telefono
+      }
+    }
+    invoiceItems_on_invoice {
+      id
+      serviceName
+      quantity
+      unitPrice
+      total
+    }
+  }
+}
+
+query GetInvoiceById($id: UUID!) @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) @redact {
+    roles
+  }
+  invoice(key: { id: $id }) {
+    id
+    numeroUnico
+    fechaEmision
+    subtotal
+    discount
+    tax
+    total
+    paymentMethod
+    invoiceStatus
+    generatedAt
+    pdfUrl
+    order {
+      id
+      price
+      serviceName
+      paymentMethod
+      status
+      observations
+      clientId
+      employeeId
+      business {
+        id
+        nombre
+        ruc
+        descripcion
+        owner {
+          id @check(expr: "'SUPER_ADMIN' in response.user.roles || response.invoice.order.clientId == auth.uid || response.invoice.order.employeeId == auth.uid || this == auth.uid", message: "No tienes permiso para ver esta factura")
+        }
+      }
+      client {
+        nombreCompleto
+        email
+        telefono
+      }
+      employee {
+        nombreCompleto
+        telefono
+      }
+    }
+    invoiceItems_on_invoice {
+      id
+      serviceName
+      quantity
+      unitPrice
+      total
+    }
+  }
+}
+
+query GetInvoicesByDateRange($businessId: UUID!, $startDate: Timestamp!, $endDate: Timestamp!) @auth(level: USER) {
+  business(key: { id: $businessId }) @redact {
+    owner {
+      id
+    }
+  }
+  user(key: { id_expr: "auth.uid" }) @redact @check(expr: "'SUPER_ADMIN' in this.roles || (response.business != null && response.business.owner != null && response.business.owner.id == auth.uid)", message: "No tienes permiso para ver las facturas de este negocio") {
+    roles
+  }
+  invoices(
+    where: {
+      order: { businessId: { eq: $businessId } }
+      fechaEmision: { ge: $startDate, le: $endDate }
+    }
+    orderBy: [{ fechaEmision: DESC }]
+  ) {
+    id
+    numeroUnico
+    fechaEmision
+    subtotal
+    discount
+    tax
+    total
+    paymentMethod
+    invoiceStatus
+    generatedAt
+    pdfUrl
+    order {
+      id
+      price
+      serviceName
+      paymentMethod
+      status
+      client {
+        nombreCompleto
+      }
+    }
+    invoiceItems_on_invoice {
+      id
+      serviceName
+      quantity
+      unitPrice
+      total
+    }
+  }
+}
+
+query GetBusinessDetails($id: UUID!) @auth(level: USER, insecureReason: "Obtener detalles del negocio") {
+  business(key: { id: $id }) {
+    id
+    nombre
+    ruc
+    descripcion
+    telefono
+    saldoPrepagoInicial
+    saldoPrepagoConsumido
+  }
+}
+
+query GetUserNotifications($userId: String!) @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) @redact @check(expr: "auth.uid == vars.userId || 'SUPER_ADMIN' in this.roles", message: "No tienes permiso para ver estas notificaciones") {
+    roles
+  }
+  notifications(where: { userId: { eq: $userId } }, orderBy: [{ fechaCreacion: DESC }]) {
+    id
+    titulo
+    mensaje
+    leida
+    fechaCreacion
+  }
+}
+
+query GetPrepaidHistory($businessId: UUID!) @auth(level: USER) {
+  business(key: { id: $businessId }) @redact {
+    owner {
+      id
+    }
+  }
+  user(key: { id_expr: "auth.uid" }) @redact @check(expr: "'SUPER_ADMIN' in this.roles || (response.business != null && response.business.owner != null && response.business.owner.id == auth.uid)", message: "No tienes permiso para ver el historial de prepago") {
+    roles
+  }
+  prepaidHistories(where: { businessId: { eq: $businessId } }, orderBy: [{ fecha: DESC }]) {
+    id
+    orderId
+    serviceName
+    costoConsumido
+    saldoResultante
+    fecha
+  }
+}
+
+query GetPrepaidServiceMetrics($businessId: UUID!) @auth(level: USER) {
+  business(key: { id: $businessId }) @redact {
+    owner {
+      id
+    }
+  }
+  user(key: { id_expr: "auth.uid" }) @redact @check(expr: "'SUPER_ADMIN' in this.roles || (response.business != null && response.business.owner != null && response.business.owner.id == auth.uid)", message: "No tienes permiso para ver las métricas de prepago") {
+    roles
+  }
+  prepaidServiceMetrics(where: { businessId: { eq: $businessId } }) {
+    id
+    serviceName
+    costoUnitario
+    cantidad
+    totalConsumido
+  }
+}
+
+query GetPrepaidServiceMetricByServiceName($businessId: UUID!, $serviceName: String!) @auth(level: USER) {
+  business(key: { id: $businessId }) @redact {
+    owner {
+      id
+    }
+  }
+  user(key: { id_expr: "auth.uid" }) @redact @check(expr: "'SUPER_ADMIN' in this.roles || (response.business != null && response.business.owner != null && response.business.owner.id == auth.uid)", message: "No tienes permiso para ver las métricas de prepago") {
+    roles
+  }
+  prepaidServiceMetrics(where: { businessId: { eq: $businessId }, serviceName: { eq: $serviceName } }, limit: 1) {
+    id
+    serviceName
+    costoUnitario
+    cantidad
+    totalConsumido
+  }
+}
+
+query GetOrderById($id: UUID!) @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) @redact {
+    roles
+  }
+  order(key: { id: $id }) {
+    id
+    business {
+      id
+      nombre
+      saldoPrepagoInicial
+      saldoPrepagoConsumido
+      owner {
+        id @check(expr: "'SUPER_ADMIN' in response.user.roles || response.order.client.id == auth.uid || (response.order.employee != null && response.order.employee.id == auth.uid) || this == auth.uid", message: "No tienes permiso para ver esta orden")
+      }
+    }
+    costo
+    serviceName
+    status
+    observations
+    price
+    paymentMethod
+    type
+    client {
+      id
+      nombreCompleto
+      telefono
+      email
+    }
+    employee {
+      id
+      nombreCompleto
+    }
+  }
+}
+
+query GetPrepaidHistoryByOrderId($orderId: String!) @auth(level: USER) {
+  prepaidHistories(where: { orderId: { eq: $orderId } }, limit: 1) {
+    id
+    business {
+      owner {
+        id @check(expr: "this == auth.uid", message: "No tienes permiso para ver este registro")
+      }
+    }
+  }
+}
+
+query GetBusinessReservationConfig($businessId: UUID!) @auth(level: USER) {
+  businessReservationConfigs(where: { businessId: { eq: $businessId } }, limit: 1) {
+    id
+    capacidadSimultanea
+    tiempoAnticipacionMinutos
+    isConfigured
+    updatedAt
+  }
+}
+
+query GetActiveReservations($businessId: UUID!) @auth(level: USER) {
+  orderReservations(where: { businessId: { eq: $businessId } }) {
+    orderId
+    businessId
+    scheduledAt
+    serviceDurationMinutos
+    serviceId
+    createdAt
+  }
+}
+
+query GetReservationByOrderId($orderId: UUID!) @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) @redact {
+    roles
+  }
+  orderReservations(where: { orderId: { eq: $orderId } }, limit: 1) {
+    orderId
+    businessId
+    scheduledAt
+    serviceDurationMinutos
+    serviceId
+    createdAt
+    business {
+      owner {
+        id @check(expr: "'SUPER_ADMIN' in response.user.roles || response.orderReservations.exists(r, r.order.clientId == auth.uid) || this == auth.uid", message: "No tienes permiso para ver esta reserva")
+      }
+    }
+    order {
+      clientId
+    }
+  }
+}
+
+query GetBusinessReviews($businessId: UUID!) @auth(level: USER, insecureReason: "Obtener las reseñas del negocio") {
+  reviews(where: { businessId: { eq: $businessId } }) {
+    id
+    calificacion
+    comentario
+    fechaCreacion
+    employee {
+      id
+      nombreCompleto
+    }
+  }
+}
+
+query GetOrderReview($orderId: UUID!) @auth(level: USER, insecureReason: "Obtener reseña por id de orden") {
+  reviews(where: { orderId: { eq: $orderId } }) {
+    id
+    calificacion
+    comentario
+    appCalificacion
+    appComentario
+    fechaCreacion
+  }
+}
+
+query GetGlobalAppRatings @auth(level: PUBLIC, insecureReason: "Obtener calificaciones globales de la app") {
+  reviews {
+    id
+    appCalificacion
+    appComentario
+    fechaCreacion
+  }
+}
+
+
+query GetOrderDetailsForPayment($orderId: UUID!) @auth(level: NO_ACCESS) {
+  order(key: { id: $orderId }) {
+    id
+    clientId
+    status
+    price
+    serviceName
+    business {
+      id
+      nombre
+      owner {
+        id
+      }
+    }
+  }
+}
+
+query GetInvoiceByOrderId($orderId: UUID!) @auth(level: NO_ACCESS) {
+  invoices(where: { orderId: { eq: $orderId } }) {
+    id
+    invoiceStatus
+    pdfUrl
+  }
+}
+
+query GetInvoiceDetailsForUrl($invoiceId: UUID!) @auth(level: NO_ACCESS) {
+  invoice(key: { id: $invoiceId }) {
+    pdfUrl
+    order {
+      clientId
+      employeeId
+      business {
+        id
+        owner {
+          id
+        }
+      }
+    }
+  }
+}
+
+query CheckBusinessEmployeeAdmin($businessId: UUID!, $employeeId: String!) @auth(level: NO_ACCESS) {
+  businessEmployees(where: {
+    businessId: { eq: $businessId }
+    employeeId: { eq: $employeeId }
+    status: { eq: ACTIVE }
+  }) {
+    id
+  }
+  user(key: { id: $employeeId }) {
+    roles
+  }
+}

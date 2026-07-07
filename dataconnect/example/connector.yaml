@@ -1,0 +1,12 @@
+connectorId: example
+generate:
+  dartSdk:
+    outputDir: ../../lib/dataconnect-generated
+    package: washgo
+    clientCache:
+      maxAge: 5s
+      storage: memory
+  adminNodeSdk:
+    outputDir: ../../functions/dataconnect-generated
+    package: "@washgo/dataconnect-admin"
+    packageJsonDir: ../../functions

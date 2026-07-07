@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "822631956035",
+    "project_id": "washgo-app-8392",
+    "storage_bucket": "washgo-app-8392.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:822631956035:android:d63160c51c8dc202175ef6",
+        "android_client_info": {
+          "package_name": "com.example.washgo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDe5Dp2SL_7_04UOCEpxF8wWrroZptsRjs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,1244 @@
+# Example mutations for WashGo
+
+# Upsert (update or insert) a user's data based on their auth.uid
+mutation UpsertUser($email: String!, $nombreCompleto: String!, $roles: [UserRole!]!, $employeeStatus: EmployeeStatus = UNASSIGNED, $telefono: String, $fotoPerfil: String) @auth(level: USER) @transaction {
+  query @redact {
+    user(key: { id_expr: "auth.uid" }) {
+      roles @check(
+        expr: "(!(vars.roles.exists(r, r == 'SUPER_ADMIN')) || this.exists(r, r == 'SUPER_ADMIN')) && (!(vars.roles.exists(r, r == 'ADMINISTRADOR')) || (this.exists(r, r == 'SUPER_ADMIN') || this.exists(r, r == 'ADMINISTRADOR')))",
+        message: "No tienes permiso para asignarte roles administrativos"
+      )
+    }
+  }
+  user_upsert(data: { id_expr: "auth.uid", email: $email, nombreCompleto: $nombreCompleto, roles: $roles, employeeStatus: $employeeStatus, telefono: $telefono, fotoPerfil: $fotoPerfil })
+}
+
+mutation RequestEmployeeAccess($businessId: UUID!) @auth(level: USER) {
+  # Update the user's status to PENDING and set the business ID
+  user_update(key: { id_expr: "auth.uid" }, data: { employeeStatus: PENDING, currentBusinessId: $businessId })
+  
+  # Create the request
+  employeeRequest_insert(data: {
+    userId_expr: "auth.uid",
+    businessId: $businessId,
+    status: PENDING
+  })
+}
+
+mutation ApproveEmployeeRequest($requestId: UUID!, $employeeId: String!, $businessId: UUID!) @auth(level: USER) @transaction {
+  query @redact {
+    business(key: { id: $businessId }) {
+      owner {
+        id @check(expr: "this == auth.uid", message: "No eres el dueño de este negocio")
+      }
+    }
+  }
+  # 1. Update the request status
+  employeeRequest_update(key: { id: $requestId }, data: { status: ACTIVE })
+  
+  # 2. Update the user
+  user_update(key: { id: $employeeId }, data: { employeeStatus: ACTIVE, currentBusinessId: $businessId })
+  
+  # 3. Create the business employee relationship
+  businessEmployee_insert(data: {
+    businessId: $businessId,
+    employeeId: $employeeId,
+    status: ACTIVE
+  })
+}
+
+mutation RejectEmployeeRequest($requestId: UUID!, $employeeId: String!) @auth(level: USER) @transaction {
+  query @redact {
+    employeeRequest(key: { id: $requestId }) {
+      business {
+        owner {
+          id @check(expr: "this == auth.uid", message: "No tienes permiso para rechazar esta solicitud")
+        }
+      }
+    }
+  }
+  # 1. Update the request status
+  employeeRequest_update(key: { id: $requestId }, data: { status: REJECTED })
+  
+  # 2. Update the user back to UNASSIGNED and clear business
+  user_update(key: { id: $employeeId }, data: { employeeStatus: UNASSIGNED, currentBusinessId: null })
+}
+
+mutation CreateBusiness(
+  $id: UUID!,
+  $nombre: String!,
+  $ruc: String!,
+  $businessCode: String!,
+  $descripcion: String,
+  $telefono: String,
+  $latitud: Float,
+  $longitud: Float
+) @auth(level: USER) {
+  business_insert(data: {
+    id: $id,
+    ownerId_expr: "auth.uid",
+    nombre: $nombre,
+    ruc: $ruc,
+    businessCode: $businessCode,
+    descripcion: $descripcion,
+    telefono: $telefono,
+    latitud: $latitud,
+    longitud: $longitud,
+    status: PENDING_APPROVAL
+  })
+  
+  user_update(key: { id_expr: "auth.uid" }, data: { currentBusinessId: $id })
+}
+
+mutation UpdateBusiness(
+  $id: UUID!,
+  $nombre: String!,
+  $ruc: String!,
+  $descripcion: String,
+  $telefono: String,
+  $latitud: Float,
+  $longitud: Float
+) @auth(level: USER) @transaction {
+  query @redact {
+    business(key: { id: $id }) {
+      owner {
+        id @check(expr: "this == auth.uid", message: "No eres el dueño de este negocio")
+      }
+    }
+  }
+  business_update(key: { id: $id }, data: {
+    nombre: $nombre,
+    ruc: $ruc,
+    descripcion: $descripcion,
+    telefono: $telefono,
+    latitud: $latitud,
+    longitud: $longitud
+  })
+}
+
+mutation CreateOrder(
+  $businessId: UUID!,
+  $price: Float!,
+  $costo: Float!,
+  $serviceName: String!,
+  $type: OrderType!,
+  $paymentMethod: PaymentMethod!,
+  $observations: String
+) @auth(level: USER) {
+  order_insert(data: {
+    businessId: $businessId,
+    clientId_expr: "auth.uid",
+    price: $price,
+    costo: $costo,
+    serviceName: $serviceName,
+    type: $type,
+    paymentMethod: $paymentMethod,
+    status: EN_COLA,
+    observations: $observations
+  })
+}
+
+mutation AcceptOrder($orderId: UUID!, $employeeId: String!) @auth(level: USER, insecureReason: "El empleado es asignado dinámicamente") @transaction {
+  query @redact {
+    order(key: { id: $orderId }) {
+      status @check(expr: "this == 'EN_COLA'", message: "La orden ya ha sido aceptada por otro empleado.")
+    }
+  }
+  order_update(key: { id: $orderId }, data: {
+    employeeId: $employeeId,
+    status: ACEPTADO
+  })
+}
+
+mutation UpdateOrderStatus($orderId: UUID!, $status: OrderStatus!) @auth(level: USER) @transaction {
+  query @redact {
+    order(key: { id: $orderId }) {
+      clientId
+      employeeId
+      business {
+        owner {
+          id
+        }
+      }
+    }
+    user(key: { id_expr: "auth.uid" }) @check(expr: "this != null", message: "Usuario no registrado") {
+      roles @check(expr: "this.exists(r, r == 'SUPER_ADMIN') || (response.query.order != null && (response.query.order.clientId == auth.uid || response.query.order.employeeId == auth.uid || response.query.order.business.owner.id == auth.uid))", message: "No tienes permiso para modificar esta orden")
+    }
+  }
+  order_update(key: { id: $orderId }, data: {
+    status: $status
+  })
+}
+
+mutation RescheduleOrder($orderId: UUID!, $observations: String!) @auth(level: USER) @transaction {
+  query @redact {
+    order(key: { id: $orderId }) {
+      clientId
+      employeeId
+      business {
+        owner {
+          id
+        }
+      }
+    }
+    user(key: { id_expr: "auth.uid" }) @check(expr: "this != null", message: "Usuario no registrado") {
+      roles @check(expr: "this.exists(r, r == 'SUPER_ADMIN') || (response.query.order != null && (response.query.order.clientId == auth.uid || response.query.order.employeeId == auth.uid || response.query.order.business.owner.id == auth.uid))", message: "No tienes permiso para modificar esta orden")
+    }
+  }
+  order_update(key: { id: $orderId }, data: {
+    observations: $observations
+  })
+}
+
+mutation CreateService(
+  $businessId: UUID!,
+  $nombre: String!,
+  $descripcion: String,
+  $precioPequeno: Float!,
+  $precioMediano: Float!,
+  $precioGrande: Float!,
+  $precioMoto: Float!,
+  $duracionMinutos: Int!,
+  $tipo: ServiceType!
+) @auth(level: USER) @transaction {
+  query @redact {
+    business(key: { id: $businessId }) {
+      owner {
+        id @check(expr: "this == auth.uid", message: "No tienes permiso para crear servicios en este negocio")
+      }
+    }
+  }
+  service_insert(data: {
+    businessId: $businessId,
+    nombre: $nombre,
+    descripcion: $descripcion,
+    precioPequeno: 0.0,
+    precioMediano: 0.0,
+    precioGrande: 0.0,
+    precioMoto: 0.0,
+    precioOwnerPequeno: $precioPequeno,
+    precioOwnerMediano: $precioMediano,
+    precioOwnerGrande: $precioGrande,
+    precioOwnerMoto: $precioMoto,
+    precioPendiente: true,
+    costo: 0.0,
+    duracionMinutos: $duracionMinutos,
+    tipo: $tipo,
+    activo: false
+  })
+}
+
+mutation UpdateService(
+  $id: UUID!,
+  $nombre: String!,
+  $descripcion: String,
+  $precioPequeno: Float!,
+  $precioMediano: Float!,
+  $precioGrande: Float!,
+  $precioMoto: Float!,
+  $duracionMinutos: Int!,
+  $tipo: ServiceType!
+) @auth(level: USER) @transaction {
+  query @redact {
+    service(key: { id: $id }) {
+      business {
+        owner {
+          id @check(expr: "this == auth.uid", message: "No eres el dueño del negocio al que pertenece este servicio")
+        }
+      }
+    }
+  }
+  service_update(key: { id: $id }, data: {
+    nombre: $nombre,
+    descripcion: $descripcion,
+    precioOwnerPequeno: $precioPequeno,
+    precioOwnerMediano: $precioMediano,
+    precioOwnerGrande: $precioGrande,
+    precioOwnerMoto: $precioMoto,
+    precioPendiente: true,
+    duracionMinutos: $duracionMinutos,
+    tipo: $tipo,
+    activo: false
+  })
+}
+
+mutation UpdateServiceDetails(
+  $id: UUID!,
+  $nombre: String!,
+  $descripcion: String,
+  $duracionMinutos: Int!,
+  $tipo: ServiceType!
+) @auth(level: USER) @transaction {
+  query @redact {
+    service(key: { id: $id }) {
+      business {
+        owner {
+          id @check(expr: "this == auth.uid", message: "No eres el dueño del negocio al que pertenece este servicio")
+        }
+      }
+    }
+  }
+  service_update(key: { id: $id }, data: {
+    nombre: $nombre,
+    descripcion: $descripcion,
+    duracionMinutos: $duracionMinutos,
+    tipo: $tipo
+  })
+}
+
+mutation SuperAdminApproveServicePrice(
+  $id: UUID!,
+  $precioAprobadoPequeno: Float!,
+  $precioAprobadoMediano: Float!,
+  $precioAprobadoGrande: Float!,
+  $precioAprobadoMoto: Float!
+) @auth(level: USER) @transaction {
+  query @redact {
+    user(key: { id_expr: "auth.uid" }) {
+      roles @check(expr: "this.exists(r, r == 'SUPER_ADMIN')", message: "No tienes permisos de super administrador")
+    }
+  }
+  service_update(key: { id: $id }, data: {
+    precioPequeno: $precioAprobadoPequeno,
+    precioMediano: $precioAprobadoMediano,
+    precioGrande: $precioAprobadoGrande,
+    precioMoto: $precioAprobadoMoto,
+    precioPendiente: false,
+    activo: true
+  })
+}
+
+mutation DeleteService($id: UUID!) @auth(level: USER) @transaction {
+  query @redact {
+    service(key: { id: $id }) {
+      business {
+        owner {
+          id @check(expr: "this == auth.uid", message: "No eres el dueño del negocio al que pertenece este servicio")
+        }
+      }
+    }
+  }
+  service_delete(key: { id: $id })
+}
+
+mutation ToggleServiceActive($id: UUID!, $activo: Boolean!) @auth(level: USER) @transaction {
+  query @redact {
+    service(key: { id: $id }) {
+      business {
+        owner {
+          id @check(expr: "this == auth.uid", message: "No eres el dueño del negocio al que pertenece este servicio")
+        }
+      }
+    }
+  }
+  service_update(key: { id: $id }, data: {
+    activo: $activo
+  })
+}
+
+mutation CreateBusinessHour(
+  $businessId: UUID!,
+  $diaDeLaSemana: Int!,
+  $horaApertura: String,
+  $horaCierre: String,
+  $esDiaDescanso: Boolean!
+) @auth(level: USER) @transaction {
+  query @redact {
+    business(key: { id: $businessId }) {
+      owner {
+        id @check(expr: "this == auth.uid", message: "No eres el dueño de este negocio")
+      }
+    }
+  }
+  businessHour_insert(data: {
+    businessId: $businessId,
+    diaDeLaSemana: $diaDeLaSemana,
+    horaApertura: $horaApertura,
+    horaCierre: $horaCierre,
+    esDiaDescanso: $esDiaDescanso
+  })
+}
+
+mutation AddVehicle($modelId: UUID!, $plate: String) @auth(level: USER) {
+  vehicle_insert(data: {
+    clientId_expr: "auth.uid"
+    modelId: $modelId
+    plate: $plate
+  })
+}
+
+mutation DeleteVehicle($id: UUID!) @auth(level: USER) @transaction {
+  query @redact {
+    vehicle(key: { id: $id }) {
+      clientId @check(expr: "this == auth.uid", message: "No eres el dueño de este vehículo")
+    }
+  }
+  vehicle_delete(key: { id: $id })
+}
+
+mutation UpdateVehicle($id: UUID!, $modelId: UUID!, $plate: String) @auth(level: USER) @transaction {
+  query @redact {
+    vehicle(key: { id: $id }) {
+      clientId @check(expr: "this == auth.uid", message: "No eres el dueño de este vehículo")
+    }
+  }
+  vehicle_update(key: { id: $id }, data: {
+    modelId: $modelId
+    plate: $plate
+  })
+}
+
+mutation UpdateEmployeeAvailability($id: UUID!, $estadoDisponibilidad: Boolean!) @auth(level: USER) @transaction {
+  query @redact {
+    businessEmployee(key: { id: $id }) {
+      employeeId
+      business {
+        owner {
+          id
+        }
+      }
+    }
+    user(key: { id_expr: "auth.uid" }) @check(expr: "this != null", message: "Usuario no registrado") {
+      roles @check(expr: "this.exists(r, r == 'SUPER_ADMIN') || (response.query.businessEmployee != null && (response.query.businessEmployee.employeeId == auth.uid || response.query.businessEmployee.business.owner.id == auth.uid))", message: "No tienes permiso para modificar esta disponibilidad")
+    }
+  }
+  businessEmployee_update(key: { id: $id }, data: { estadoDisponibilidad: $estadoDisponibilidad })
+}
+
+mutation DeleteBusinessHours($businessId: UUID!) @auth(level: USER) @transaction {
+  query @redact {
+    business(key: { id: $businessId }) {
+      owner {
+        id @check(expr: "this == auth.uid", message: "No eres el dueño de este negocio")
+      }
+    }
+  }
+  businessHour_deleteMany(where: { businessId: { eq: $businessId } })
+}
+
+mutation SuperAdminUpdateBusinessStatus($id: UUID!, $status: BusinessStatus!) @auth(level: USER) @transaction {
+  query @redact {
+    user(key: { id_expr: "auth.uid" }) {
+      roles @check(expr: "this.exists(r, r == 'SUPER_ADMIN')", message: "No tienes permisos de super administrador")
+    }
+  }
+  business_update(key: { id: $id }, data: {
+    status: $status
+  })
+}
+
+mutation SwitchCurrentBusiness($businessId: UUID!) @auth(level: USER) {
+  user_update(key: { id_expr: "auth.uid" }, data: { currentBusinessId: $businessId })
+}
+
+mutation CreateWalkInUser($id: String!, $nombreCompleto: String!, $telefono: String!, $email: String!) @auth(level: USER) @transaction {
+  query @redact {
+    user(key: { id_expr: "auth.uid" }) @check(expr: "this != null", message: "Usuario no registrado") {
+      roles @check(expr: "this.exists(r, r == 'SUPER_ADMIN') || this.exists(r, r == 'ADMINISTRADOR') || this.exists(r, r == 'EMPLEADO')", message: "No tienes permiso para registrar clientes presenciales")
+    }
+  }
+  user_insert(data: {
+    id: $id,
+    nombreCompleto: $nombreCompleto,
+    telefono: $telefono,
+    email: $email,
+    roles: [CLIENTE],
+    employeeStatus: UNASSIGNED
+  })
+}
+
+mutation CreateWalkInOrder(
+  $businessId: UUID!,
+  $clientId: String!,
+  $price: Float!,
+  $costo: Float!,
+  $serviceName: String!,
+  $type: OrderType!,
+  $paymentMethod: PaymentMethod!,
+  $observations: String
+) @auth(level: USER) @transaction {
+  query @redact {
+    business(key: { id: $businessId }) {
+      owner {
+        id
+      }
+    }
+    businessEmployees(where: {
+      businessId: { eq: $businessId }
+      employeeId: { eq_expr: "auth.uid" }
+      status: { eq: ACTIVE }
+    }) @check(expr: "(response.query.business != null && response.query.business.owner != null && response.query.business.owner.id == auth.uid) || this.size() > 0", message: "No autorizado") {
+      id
+    }
+  }
+  order_insert(data: {
+    businessId: $businessId,
+    clientId: $clientId,
+    price: $price,
+    costo: $costo,
+    serviceName: $serviceName,
+    type: $type,
+    paymentMethod: $paymentMethod,
+    status: EN_COLA,
+    observations: $observations
+  })
+}
+
+mutation UpdateOrderCompletion(
+  $orderId: UUID!,
+  $observations: String,
+  $invoiceUrl: String
+) @auth(level: USER) @transaction {
+  query @redact {
+    order(key: { id: $orderId }) {
+      employeeId
+      business {
+        owner {
+          id
+        }
+      }
+    }
+    user(key: { id_expr: "auth.uid" }) @check(expr: "this != null", message: "Usuario no registrado") {
+      roles @check(expr: "this.exists(r, r == 'SUPER_ADMIN') || (response.query.order != null && (response.query.order.employeeId == auth.uid || response.query.order.business.owner.id == auth.uid))", message: "No tienes permiso para modificar esta orden")
+    }
+  }
+  order_update(key: { id: $orderId }, data: {
+    status: COMPLETADO,
+    observations: $observations,
+    invoiceUrl: $invoiceUrl
+  })
+}
+
+mutation CreateInvoice(
+  $id: UUID!,
+  $orderId: UUID!,
+  $numeroUnico: String!,
+  $subtotal: Float!,
+  $discount: Float!,
+  $tax: Float!,
+  $total: Float!,
+  $paymentMethod: PaymentMethod!,
+  $invoiceStatus: InvoiceStatus!,
+  $pdfUrl: String
+) @auth(level: USER) @transaction {
+  query @redact {
+    order(key: { id: $orderId }) {
+      employeeId
+      business {
+        owner {
+          id
+        }
+      }
+    }
+    user(key: { id_expr: "auth.uid" }) @check(expr: "this != null", message: "Usuario no registrado") {
+      roles @check(expr: "this.exists(r, r == 'SUPER_ADMIN') || (response.query.order != null && (response.query.order.employeeId == auth.uid || response.query.order.business.owner.id == auth.uid))", message: "No tienes permiso para crear facturas para esta orden")
+    }
+  }
+  invoice_insert(data: {
+    id: $id,
+    orderId: $orderId,
+    numeroUnico: $numeroUnico,
+    subtotal: $subtotal,
+    discount: $discount,
+    tax: $tax,
+    total: $total,
+    paymentMethod: $paymentMethod,
+    invoiceStatus: $invoiceStatus,
+    pdfUrl: $pdfUrl
+  })
+}
+
+mutation CreateInvoiceItem(
+  $invoiceId: UUID!,
+  $serviceName: String!,
+  $quantity: Int!,
+  $unitPrice: Float!,
+  $total: Float!
+) @auth(level: USER) @transaction {
+  query @redact {
+    invoice(key: { id: $invoiceId }) {
+      order {
+        employeeId
+        business {
+          owner {
+            id
+          }
+        }
+      }
+    }
+    user(key: { id_expr: "auth.uid" }) @check(expr: "this != null", message: "Usuario no registrado") {
+      roles @check(expr: "this.exists(r, r == 'SUPER_ADMIN') || (response.query.invoice != null && response.query.invoice.order != null && (response.query.invoice.order.employeeId == auth.uid || response.query.invoice.order.business.owner.id == auth.uid))", message: "No tienes permiso para crear items para esta factura")
+    }
+  }
+  invoiceItem_insert(data: {
+    invoiceId: $invoiceId,
+    serviceName: $serviceName,
+    quantity: $quantity,
+    unitPrice: $unitPrice,
+    total: $total
+  })
+}
+
+mutation UpdateInvoicePdf(
+  $id: UUID!,
+  $pdfUrl: String,
+  $invoiceStatus: InvoiceStatus!
+) @auth(level: USER) @transaction {
+  query @redact {
+    invoice(key: { id: $id }) {
+      order {
+        employeeId
+        business {
+          owner {
+            id
+          }
+        }
+      }
+    }
+    user(key: { id_expr: "auth.uid" }) @check(expr: "this != null", message: "Usuario no registrado") {
+      roles @check(expr: "this.exists(r, r == 'SUPER_ADMIN') || (response.query.invoice != null && response.query.invoice.order != null && (response.query.invoice.order.employeeId == auth.uid || response.query.invoice.order.business.owner.id == auth.uid))", message: "No tienes permiso para modificar esta factura")
+    }
+  }
+  invoice_update(key: { id: $id }, data: {
+    pdfUrl: $pdfUrl,
+    invoiceStatus: $invoiceStatus,
+    generatedAt_expr: "request.time"
+  })
+}
+
+mutation CreateReview(
+  $orderId: UUID!,
+  $businessId: UUID!,
+  $employeeId: String,
+  $calificacion: Int!,
+  $comentario: String,
+  $appCalificacion: Int,
+  $appComentario: String
+) @auth(level: USER) @transaction {
+  query @redact {
+    order(key: { id: $orderId }) {
+      clientId @check(expr: "this == auth.uid", message: "No puedes calificar una orden que no te pertenece")
+    }
+  }
+  review_insert(data: {
+    orderId: $orderId,
+    businessId: $businessId,
+    employeeId: $employeeId,
+    calificacion: $calificacion,
+    comentario: $comentario,
+    appCalificacion: $appCalificacion,
+    appComentario: $appComentario
+  })
+}
+
+mutation UpdateBusinessPrepaidBalance(
+  $id: UUID!,
+  $saldoPrepagoInicial: Float!,
+  $saldoPrepagoConsumido: Float!
+) @auth(level: NO_ACCESS) @transaction {
+  query @redact {
+    business(key: { id: $id }) {
+      owner {
+        id
+      }
+    }
+    businessEmployees(where: {
+      businessId: { eq: $id }
+      employeeId: { eq_expr: "auth.uid" }
+      status: { eq: ACTIVE }
+    }) @check(expr: "(response.query.business != null && response.query.business.owner != null && response.query.business.owner.id == auth.uid) || this.size() > 0", message: "No autorizado") {
+      id
+    }
+  }
+  business_update(key: { id: $id }, data: {
+    saldoPrepagoInicial: $saldoPrepagoInicial,
+    saldoPrepagoConsumido: $saldoPrepagoConsumido
+  })
+}
+
+mutation SuperAdminUpdateBusinessPrepaid(
+  $id: UUID!,
+  $saldoPrepagoInicial: Float!,
+  $saldoPrepagoConsumido: Float!
+) @auth(level: USER) @transaction {
+  query @redact {
+    user(key: { id_expr: "auth.uid" }) {
+      roles @check(expr: "this.exists(r, r == 'SUPER_ADMIN')", message: "No tienes permisos de super administrador")
+    }
+  }
+  business_update(key: { id: $id }, data: {
+    saldoPrepagoInicial: $saldoPrepagoInicial,
+    saldoPrepagoConsumido: $saldoPrepagoConsumido
+  })
+}
+
+mutation CreateNotification($userId: String!, $titulo: String!, $mensaje: String!) @auth(level: USER) @transaction {
+  query @redact {
+    user(key: { id_expr: "auth.uid" }) @check(expr: "this != null", message: "Usuario no registrado") {
+      roles @check(expr: "auth.uid == vars.userId || this.exists(r, r == 'SUPER_ADMIN') || this.exists(r, r == 'ADMINISTRADOR') || this.exists(r, r == 'EMPLEADO')", message: "No autorizado")
+    }
+  }
+  notification_insert(data: {
+    userId: $userId,
+    titulo: $titulo,
+    mensaje: $mensaje,
+    leida: false
+  })
+}
+
+mutation MarkNotificationAsRead($id: UUID!) @auth(level: USER) @transaction {
+  query @redact {
+    notification(key: { id: $id }) {
+      userId @check(expr: "this == auth.uid", message: "No puedes modificar notificaciones ajenas")
+    }
+  }
+  notification_update(key: { id: $id }, data: {
+    leida: true
+  })
+}
+
+mutation CreatePrepaidHistory(
+  $businessId: UUID!,
+  $orderId: String!,
+  $serviceName: String!,
+  $costoConsumido: Float!,
+  $saldoResultante: Float!
+) @auth(level: USER) @transaction {
+  query @redact {
+    business(key: { id: $businessId }) {
+      owner {
+        id
+      }
+    }
+    businessEmployees(where: {
+      businessId: { eq: $businessId }
+      employeeId: { eq_expr: "auth.uid" }
+      status: { eq: ACTIVE }
+    }) @check(expr: "(response.query.business != null && response.query.business.owner != null && response.query.business.owner.id == auth.uid) || this.size() > 0", message: "No autorizado") {
+      id
+    }
+  }
+  prepaidHistory_insert(data: {
+    businessId: $businessId,
+    orderId: $orderId,
+    serviceName: $serviceName,
+    costoConsumido: $costoConsumido,
+    saldoResultante: $saldoResultante
+  })
+}
+
+mutation CreatePrepaidServiceMetric(
+  $businessId: UUID!,
+  $serviceName: String!,
+  $costoUnitario: Float!,
+  $cantidad: Int!,
+  $totalConsumido: Float!
+) @auth(level: USER) @transaction {
+  query @redact {
+    business(key: { id: $businessId }) {
+      owner {
+        id
+      }
+    }
+    businessEmployees(where: {
+      businessId: { eq: $businessId }
+      employeeId: { eq_expr: "auth.uid" }
+      status: { eq: ACTIVE }
+    }) @check(expr: "(response.query.business != null && response.query.business.owner != null && response.query.business.owner.id == auth.uid) || this.size() > 0", message: "No autorizado") {
+      id
+    }
+  }
+  prepaidServiceMetric_insert(data: {
+    businessId: $businessId,
+    serviceName: $serviceName,
+    costoUnitario: $costoUnitario,
+    cantidad: $cantidad,
+    totalConsumido: $totalConsumido
+  })
+}
+
+mutation UpdatePrepaidServiceMetric(
+  $id: UUID!,
+  $cantidad: Int!,
+  $totalConsumido: Float!
+) @auth(level: USER) @transaction {
+  query @redact {
+    prepaidServiceMetric(key: { id: $id }) {
+      business {
+        id
+        owner {
+          id
+        }
+      }
+    }
+    businessEmployees(where: {
+      employeeId: { eq_expr: "auth.uid" }
+      status: { eq: ACTIVE }
+    }) @check(expr: "(response.query.prepaidServiceMetric != null && response.query.prepaidServiceMetric.business != null && (response.query.prepaidServiceMetric.business.owner.id == auth.uid || this.exists(e, e.businessId == response.query.prepaidServiceMetric.business.id)))", message: "No autorizado") {
+      businessId
+    }
+  }
+  prepaidServiceMetric_update(key: { id: $id }, data: {
+    cantidad: $cantidad,
+    totalConsumido: $totalConsumido
+  })
+}
+
+mutation CreateBusinessReservationConfig(
+  $businessId: UUID!,
+  $capacidadSimultanea: Int!,
+  $tiempoAnticipacionMinutos: Int!,
+  $isConfigured: Boolean!
+) @auth(level: USER) @transaction {
+  query @redact {
+    business(key: { id: $businessId }) {
+      owner {
+        id @check(expr: "this == auth.uid", message: "No eres el dueño de este negocio")
+      }
+    }
+  }
+  businessReservationConfig_insert(data: {
+    businessId: $businessId,
+    capacidadSimultanea: $capacidadSimultanea,
+    tiempoAnticipacionMinutos: $tiempoAnticipacionMinutos,
+    isConfigured: $isConfigured
+  })
+}
+
+mutation UpdateBusinessReservationConfig(
+  $id: UUID!,
+  $capacidadSimultanea: Int!,
+  $tiempoAnticipacionMinutos: Int!,
+  $isConfigured: Boolean!
+) @auth(level: USER) @transaction {
+  query @redact {
+    businessReservationConfig(key: { id: $id }) {
+      business {
+        owner {
+          id @check(expr: "this == auth.uid", message: "No eres el dueño de este negocio")
+        }
+      }
+    }
+  }
+  businessReservationConfig_update(key: { id: $id }, data: {
+    capacidadSimultanea: $capacidadSimultanea,
+    tiempoAnticipacionMinutos: $tiempoAnticipacionMinutos,
+    isConfigured: $isConfigured
+  })
+}
+
+mutation CreateOrderReservation(
+  $orderId: UUID!,
+  $businessId: UUID!,
+  $scheduledAt: Timestamp!,
+  $serviceDurationMinutos: Int!,
+  $serviceId: UUID!,
+  $createdAt: Timestamp!
+) @auth(level: USER) @transaction {
+  query @redact {
+    order(key: { id: $orderId }) {
+      clientId
+      business {
+        owner {
+          id
+        }
+      }
+    }
+    user(key: { id_expr: "auth.uid" }) @check(expr: "this != null", message: "Usuario no registrado") {
+      roles @check(expr: "this.exists(r, r == 'SUPER_ADMIN') || (response.query.order != null && (response.query.order.clientId == auth.uid || response.query.order.business.owner.id == auth.uid))", message: "No autorizado")
+    }
+  }
+  orderReservation_insert(data: {
+    orderId: $orderId,
+    businessId: $businessId,
+    scheduledAt: $scheduledAt,
+    serviceDurationMinutos: $serviceDurationMinutos,
+    serviceId: $serviceId,
+    createdAt: $createdAt
+  })
+}
+
+mutation DeleteOrderReservation($orderId: UUID!) @auth(level: USER) @transaction {
+  query @redact {
+    order(key: { id: $orderId }) {
+      clientId
+      business {
+        owner {
+          id
+        }
+      }
+    }
+    user(key: { id_expr: "auth.uid" }) @check(expr: "this != null", message: "Usuario no registrado") {
+      roles @check(expr: "this.exists(r, r == 'SUPER_ADMIN') || (response.query.order != null && (response.query.order.clientId == auth.uid || response.query.order.business.owner.id == auth.uid))", message: "No autorizado")
+    }
+  }
+  orderReservation_deleteMany(where: { orderId: { eq: $orderId } })
+}
+
+mutation UpsertVehicleBrand($id: UUID!, $name: String!) @auth(level: USER) @transaction {
+  query @redact {
+    user(key: { id_expr: "auth.uid" }) {
+      roles @check(expr: "this.exists(r, r == 'SUPER_ADMIN')", message: "No tienes permisos de super administrador")
+    }
+  }
+  vehicleBrand_upsert(data: { id: $id, name: $name })
+}
+
+mutation UpsertVehicleModel($id: UUID!, $brandId: UUID!, $name: String!, $category: String!) @auth(level: USER) @transaction {
+  query @redact {
+    user(key: { id_expr: "auth.uid" }) {
+      roles @check(expr: "this.exists(r, r == 'SUPER_ADMIN')", message: "No tienes permisos de super administrador")
+    }
+  }
+  vehicleModel_upsert(data: { id: $id, brandId: $brandId, name: $name, category: $category })
+}
+
+mutation UpdateUserPhone($telefono: String!) @auth(level: USER) {
+  user_update(key: { id_expr: "auth.uid" }, data: { telefono: $telefono })
+}
+
+mutation DeleteCurrentUser @auth(level: USER) {
+  user_delete(key: { id_expr: "auth.uid" })
+}
+
+
+mutation CompleteOrderWithInvoiceOnly(
+  $orderId: UUID!,
+  $observations: String,
+  $invoiceUrl: String,
+  $invoiceId: UUID!,
+  $numeroUnico: String!,
+  $subtotal: Float!,
+  $discount: Float!,
+  $tax: Float!,
+  $total: Float!,
+  $paymentMethod: PaymentMethod!,
+  $invoiceStatus: InvoiceStatus!
+) @auth(level: NO_ACCESS) @transaction {
+  query @redact {
+    order(key: { id: $orderId }) {
+      employeeId
+      business {
+        owner {
+          id
+        }
+      }
+    }
+    user(key: { id_expr: "auth.uid" }) @check(expr: "this != null", message: "Usuario no registrado") {
+      roles @check(
+        expr: "this.exists(r, r == 'SUPER_ADMIN') || (response.query.order != null && (response.query.order.employeeId == auth.uid || response.query.order.business.owner.id == auth.uid))",
+        message: "No tienes permiso para completar esta orden"
+      )
+    }
+  }
+  order_update(key: { id: $orderId }, data: {
+    status: COMPLETADO,
+    observations: $observations,
+    invoiceUrl: $invoiceUrl
+  })
+  invoice_insert(data: {
+    id: $invoiceId,
+    orderId: $orderId,
+    numeroUnico: $numeroUnico,
+    subtotal: $subtotal,
+    discount: $discount,
+    tax: $tax,
+    total: $total,
+    paymentMethod: $paymentMethod,
+    invoiceStatus: $invoiceStatus,
+    pdfUrl: $invoiceUrl
+  })
+}
+
+mutation CompleteOrderWithPrepaidAndUpdateMetric(
+  # Order updates
+  $orderId: UUID!,
+  $orderIdStr: String!,
+  $observations: String,
+  $invoiceUrl: String,
+  
+  # Invoice details
+  $invoiceId: UUID!,
+  $numeroUnico: String!,
+  $subtotal: Float!,
+  $discount: Float!,
+  $tax: Float!,
+  $total: Float!,
+  $paymentMethod: PaymentMethod!,
+  $invoiceStatus: InvoiceStatus!,
+  
+  # Business Prepaid Balance updates
+  $businessId: UUID!,
+  $saldoPrepagoInicial: Float!,
+  $saldoPrepagoConsumido: Float!,
+  
+  # Prepaid History
+  $historyId: UUID!,
+  $serviceName: String!,
+  $costoConsumido: Float!,
+  $saldoResultante: Float!,
+  
+  # Prepaid Service Metric updates
+  $metricId: UUID!,
+  $metricCantidad: Int!,
+  $metricTotalConsumido: Float!
+) @auth(level: NO_ACCESS) @transaction {
+  query @redact {
+    order(key: { id: $orderId }) {
+      employeeId
+      business {
+        id
+        owner {
+          id
+        }
+      }
+    }
+    user(key: { id_expr: "auth.uid" }) @check(expr: "this != null", message: "Usuario no registrado") {
+      roles @check(
+        expr: "this.exists(r, r == 'SUPER_ADMIN') || (response.query.order != null && (response.query.order.employeeId == auth.uid || response.query.order.business.owner.id == auth.uid))",
+        message: "No tienes permiso para completar esta orden"
+      )
+    }
+  }
+  
+  order_update(key: { id: $orderId }, data: {
+    status: COMPLETADO,
+    observations: $observations,
+    invoiceUrl: $invoiceUrl
+  })
+  
+  invoice_insert(data: {
+    id: $invoiceId,
+    orderId: $orderId,
+    numeroUnico: $numeroUnico,
+    subtotal: $subtotal,
+    discount: $discount,
+    tax: $tax,
+    total: $total,
+    paymentMethod: $paymentMethod,
+    invoiceStatus: $invoiceStatus,
+    pdfUrl: $invoiceUrl
+  })
+  
+  business_update(key: { id: $businessId }, data: {
+    saldoPrepagoInicial: $saldoPrepagoInicial,
+    saldoPrepagoConsumido: $saldoPrepagoConsumido
+  })
+  
+  prepaidHistory_insert(data: {
+    id: $historyId,
+    businessId: $businessId,
+    orderId: $orderIdStr,
+    serviceName: $serviceName,
+    costoConsumido: $costoConsumido,
+    saldoResultante: $saldoResultante
+  })
+  
+  prepaidServiceMetric_update(key: { id: $metricId }, data: {
+    cantidad: $metricCantidad,
+    totalConsumido: $metricTotalConsumido
+  })
+}
+
+mutation CompleteOrderWithPrepaidAndCreateMetric(
+  # Order updates
+  $orderId: UUID!,
+  $orderIdStr: String!,
+  $observations: String,
+  $invoiceUrl: String,
+  
+  # Invoice details
+  $invoiceId: UUID!,
+  $numeroUnico: String!,
+  $subtotal: Float!,
+  $discount: Float!,
+  $tax: Float!,
+  $total: Float!,
+  $paymentMethod: PaymentMethod!,
+  $invoiceStatus: InvoiceStatus!,
+  
+  # Business Prepaid Balance updates
+  $businessId: UUID!,
+  $saldoPrepagoInicial: Float!,
+  $saldoPrepagoConsumido: Float!,
+  
+  # Prepaid History
+  $historyId: UUID!,
+  $serviceName: String!,
+  $costoConsumido: Float!,
+  $saldoResultante: Float!,
+  
+  # Prepaid Service Metric creation
+  $metricId: UUID!,
+  $metricCostoUnitario: Float!
+) @auth(level: NO_ACCESS) @transaction {
+  query @redact {
+    order(key: { id: $orderId }) {
+      employeeId
+      business {
+        id
+        owner {
+          id
+        }
+      }
+    }
+    user(key: { id_expr: "auth.uid" }) @check(expr: "this != null", message: "Usuario no registrado") {
+      roles @check(
+        expr: "this.exists(r, r == 'SUPER_ADMIN') || (response.query.order != null && (response.query.order.employeeId == auth.uid || response.query.order.business.owner.id == auth.uid))",
+        message: "No tienes permiso para completar esta orden"
+      )
+    }
+  }
+  
+  order_update(key: { id: $orderId }, data: {
+    status: COMPLETADO,
+    observations: $observations,
+    invoiceUrl: $invoiceUrl
+  })
+  
+  invoice_insert(data: {
+    id: $invoiceId,
+    orderId: $orderId,
+    numeroUnico: $numeroUnico,
+    subtotal: $subtotal,
+    discount: $discount,
+    tax: $tax,
+    total: $total,
+    paymentMethod: $paymentMethod,
+    invoiceStatus: $invoiceStatus,
+    pdfUrl: $invoiceUrl
+  })
+  
+  business_update(key: { id: $businessId }, data: {
+    saldoPrepagoInicial: $saldoPrepagoInicial,
+    saldoPrepagoConsumido: $saldoPrepagoConsumido
+  })
+  
+  prepaidHistory_insert(data: {
+    id: $historyId,
+    businessId: $businessId,
+    orderId: $orderIdStr,
+    serviceName: $serviceName,
+    costoConsumido: $costoConsumido,
+    saldoResultante: $saldoResultante
+  })
+  
+  prepaidServiceMetric_insert(data: {
+    id: $metricId,
+    businessId: $businessId,
+    serviceName: $serviceName,
+    costoUnitario: $metricCostoUnitario,
+    cantidad: 1,
+    totalConsumido: $costoConsumido
+  })
+}
+
+mutation ConsumePrepaidAndUpdateMetric(
+  # Business Prepaid Balance updates
+  $businessId: UUID!,
+  $saldoPrepagoInicial: Float!,
+  $saldoPrepagoConsumido: Float!,
+  
+  # Prepaid History
+  $historyId: UUID!,
+  $orderId: String!,
+  $serviceName: String!,
+  $costoConsumido: Float!,
+  $saldoResultante: Float!,
+  
+  # Prepaid Service Metric updates
+  $metricId: UUID!,
+  $metricCantidad: Int!,
+  $metricTotalConsumido: Float!
+) @auth(level: NO_ACCESS) @transaction {
+  query @redact {
+    business(key: { id: $businessId }) {
+      owner {
+        id
+      }
+    }
+    businessEmployees(where: {
+      businessId: { eq: $businessId }
+      employeeId: { eq_expr: "auth.uid" }
+      status: { eq: ACTIVE }
+    }) @check(expr: "(response.query.business != null && response.query.business.owner != null && response.query.business.owner.id == auth.uid) || this.size() > 0", message: "No autorizado") {
+      id
+    }
+  }
+  
+  business_update(key: { id: $businessId }, data: {
+    saldoPrepagoInicial: $saldoPrepagoInicial,
+    saldoPrepagoConsumido: $saldoPrepagoConsumido
+  })
+  
+  prepaidHistory_insert(data: {
+    id: $historyId,
+    businessId: $businessId,
+    orderId: $orderId,
+    serviceName: $serviceName,
+    costoConsumido: $costoConsumido,
+    saldoResultante: $saldoResultante
+  })
+  
+  prepaidServiceMetric_update(key: { id: $metricId }, data: {
+    cantidad: $metricCantidad,
+    totalConsumido: $metricTotalConsumido
+  })
+}
+
+mutation ConsumePrepaidAndCreateMetric(
+  # Business Prepaid Balance updates
+  $businessId: UUID!,
+  $saldoPrepagoInicial: Float!,
+  $saldoPrepagoConsumido: Float!,
+  
+  # Prepaid History
+  $historyId: UUID!,
+  $orderId: String!,
+  $serviceName: String!,
+  $costoConsumido: Float!,
+  $saldoResultante: Float!,
+  
+  # Prepaid Service Metric creation
+  $metricId: UUID!,
+  $metricCostoUnitario: Float!
+) @auth(level: NO_ACCESS) @transaction {
+  query @redact {
+    business(key: { id: $businessId }) {
+      owner {
+        id
+      }
+    }
+    businessEmployees(where: {
+      businessId: { eq: $businessId }
+      employeeId: { eq_expr: "auth.uid" }
+      status: { eq: ACTIVE }
+    }) @check(expr: "(response.query.business != null && response.query.business.owner != null && response.query.business.owner.id == auth.uid) || this.size() > 0", message: "No autorizado") {
+      id
+    }
+  }
+  
+  business_update(key: { id: $businessId }, data: {
+    saldoPrepagoInicial: $saldoPrepagoInicial,
+    saldoPrepagoConsumido: $saldoPrepagoConsumido
+  })
+  
+  prepaidHistory_insert(data: {
+    id: $historyId,
+    businessId: $businessId,
+    orderId: $orderId,
+    serviceName: $serviceName,
+    costoConsumido: $costoConsumido,
+    saldoResultante: $saldoResultante
+  })
+  
+  prepaidServiceMetric_insert(data: {
+    id: $metricId,
+    businessId: $businessId,
+    serviceName: $serviceName,
+    costoUnitario: $metricCostoUnitario,
+    cantidad: 1,
+    totalConsumido: $costoConsumido
+  })
+}
+

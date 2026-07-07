@@ -1,0 +1,138 @@
+name: WashGo Flutter CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - dev
+      - staging
+  pull_request:
+    branches:
+      - main
+      - master
+      - dev
+      - staging
+
+jobs:
+  analyze_and_test:
+    name: Code Quality & Testing
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run code analysis (Linter)
+        run: flutter analyze
+
+      - name: Run unit & widget tests
+        run: flutter test
+
+  build_development:
+    name: Build Dev (Android APK & Web)
+    needs: analyze_and_test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev' || github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Web (Development)
+        run: flutter build web --dart-define=ENV=dev
+
+      - name: Build Android APK (Development Debug)
+        run: flutter build apk --debug --dart-define=ENV=dev
+
+  build_staging:
+    name: Build Staging (Android APK & Web)
+    needs: analyze_and_test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/staging'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Web (Staging)
+        run: flutter build web --dart-define=ENV=staging
+
+      - name: Build Android APK (Staging Release)
+        run: flutter build apk --release --no-shrink --dart-define=ENV=staging
+
+  build_production:
+    name: Build Production (Android App Bundle & Web)
+    needs: analyze_and_test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Web (Production)
+        run: flutter build web --dart-define=ENV=prod
+
+      - name: Build Android App Bundle (Production Release)
+        run: flutter build appbundle --release --dart-define=ENV=prod

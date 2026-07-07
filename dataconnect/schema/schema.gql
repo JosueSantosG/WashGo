@@ -1,0 +1,264 @@
+# Enums
+enum BusinessStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+}
+
+enum EmployeeStatus {
+  UNASSIGNED
+  PENDING
+  ACTIVE
+  REJECTED
+}
+
+enum OrderStatus {
+  PENDIENTE_PAGO
+  EN_COLA
+  ACEPTADO
+  EN_CAMINO
+  EN_SERVICIO
+  COMPLETADO
+  CANCELADO
+}
+
+enum OrderType {
+  LOCAL
+  DELIVERY
+}
+
+enum PaymentMethod {
+  PAYPAL
+  CASH
+}
+
+enum ServiceType {
+  LOCAL
+  DOMICILIO
+}
+
+enum UserRole {
+  CLIENTE
+  EMPLEADO
+  ADMINISTRADOR
+  SUPER_ADMIN
+}
+
+enum InvoiceStatus {
+  PENDING
+  GENERATED
+  FAILED
+}
+
+# Users table
+type User @table {
+  id: String! @default(expr: "auth.uid")
+  nombreCompleto: String!
+  email: String! @unique
+  telefono: String
+  fotoPerfil: String
+  fechaCreacion: Timestamp! @default(expr: "request.time")
+  roles: [UserRole!]!
+  employeeStatus: EmployeeStatus! @default(value: UNASSIGNED)
+  currentBusiness: Business
+}
+
+# Businesses table
+type Business @table {
+  id: UUID! @default(expr: "uuidV4()")
+  owner: User!
+  nombre: String!
+  ruc: String! @unique
+  businessCode: String! @unique
+  descripcion: String
+  telefono: String
+  latitud: Float
+  longitud: Float
+  status: BusinessStatus!
+  saldoPrepagoInicial: Float! @default(value: 0.0)
+  saldoPrepagoConsumido: Float! @default(value: 0.0)
+}
+
+# Business Hours
+type BusinessHour @table {
+  id: UUID! @default(expr: "uuidV4()")
+  business: Business!
+  diaDeLaSemana: Int!
+  horaApertura: String
+  horaCierre: String
+  esDiaDescanso: Boolean! @default(value: false)
+}
+
+# Business Employees
+type BusinessEmployee @table {
+  id: UUID! @default(expr: "uuidV4()")
+  business: Business!
+  employee: User!
+  estadoDisponibilidad: Boolean! @default(value: true)
+  joinedAt: Timestamp! @default(expr: "request.time")
+  status: EmployeeStatus! @default(value: ACTIVE)
+}
+
+# Employee Requests
+type EmployeeRequest @table {
+  id: UUID! @default(expr: "uuidV4()")
+  user: User!
+  business: Business!
+  status: EmployeeStatus! @default(value: PENDING)
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# Services
+type Service @table {
+  id: UUID! @default(expr: "uuidV4()")
+  business: Business!
+  nombre: String!
+  descripcion: String
+  precioPequeno: Float! @default(value: 0.0)
+  precioMediano: Float! @default(value: 0.0)
+  precioGrande: Float! @default(value: 0.0)
+  precioMoto: Float! @default(value: 0.0)
+  precioOwnerPequeno: Float! @default(value: 0.0)
+  precioOwnerMediano: Float! @default(value: 0.0)
+  precioOwnerGrande: Float! @default(value: 0.0)
+  precioOwnerMoto: Float! @default(value: 0.0)
+  precioPendiente: Boolean! @default(value: true)
+  costo: Float! @default(value: 0.0)
+  duracionMinutos: Int!
+  fotoUrl: String
+  tipo: ServiceType!
+  activo: Boolean @default(value: false)
+}
+
+# Orders
+type Order @table {
+  id: UUID! @default(expr: "uuidV4()")
+  business: Business!
+  client: User!
+  employee: User
+  service: Service
+  serviceName: String
+  price: Float!
+  costo: Float! @default(value: 0.0)
+  qrCode: String
+  invoiceUrl: String
+  observations: String
+  type: OrderType!
+  paymentMethod: PaymentMethod!
+  status: OrderStatus!
+}
+
+# Invoices
+type Invoice @table {
+  id: UUID! @default(expr: "uuidV4()")
+  order: Order! @unique
+  numeroUnico: String! @unique
+  fechaEmision: Timestamp! @default(expr: "request.time")
+  subtotal: Float!
+  discount: Float! @default(value: 0.0)
+  tax: Float!
+  total: Float!
+  paymentMethod: PaymentMethod!
+  invoiceStatus: InvoiceStatus! @default(value: PENDING)
+  generatedAt: Timestamp
+  pdfUrl: String
+}
+
+type InvoiceItem @table {
+  id: UUID! @default(expr: "uuidV4()")
+  invoice: Invoice!
+  serviceName: String!
+  quantity: Int! @default(value: 1)
+  unitPrice: Float!
+  total: Float!
+}
+
+# Reviews
+type Review @table {
+  id: UUID! @default(expr: "uuidV4()")
+  order: Order! @unique
+  business: Business!
+  employee: User
+  calificacion: Int!
+  comentario: String
+  appCalificacion: Int
+  appComentario: String
+  fechaCreacion: Timestamp! @default(expr: "request.time")
+}
+
+# Vehicle Brands
+type VehicleBrand @table {
+  id: UUID! @default(expr: "uuidV4()")
+  name: String! @unique
+}
+
+# Vehicle Models
+type VehicleModel @table {
+  id: UUID! @default(expr: "uuidV4()")
+  brand: VehicleBrand!
+  name: String!
+  category: String! # Pequeño, Mediano, Grande, Moto
+}
+
+# Vehicles
+type Vehicle @table {
+  id: UUID! @default(expr: "uuidV4()")
+  client: User!
+  model: VehicleModel!
+  plate: String
+}
+
+# Notifications
+type Notification @table {
+  id: UUID! @default(expr: "uuidV4()")
+  user: User!
+  titulo: String!
+  mensaje: String!
+  leida: Boolean! @default(value: false)
+  fechaCreacion: Timestamp! @default(expr: "request.time")
+}
+
+# Prepaid balance history
+type PrepaidHistory @table {
+  id: UUID! @default(expr: "uuidV4()")
+  business: Business!
+  orderId: String!
+  serviceName: String!
+  costoConsumido: Float!
+  saldoResultante: Float!
+  fecha: Timestamp! @default(expr: "request.time")
+}
+
+# Prepaid service metrics (accumulated consumption per service type)
+type PrepaidServiceMetric @table {
+  id: UUID! @default(expr: "uuidV4()")
+  business: Business!
+  serviceName: String!
+  costoUnitario: Float!
+  cantidad: Int! @default(value: 0)
+  totalConsumido: Float! @default(value: 0.0)
+}
+
+# Business Reservation Config (1-to-1 relationship with Business)
+type BusinessReservationConfig @table {
+  id: UUID! @default(expr: "uuidV4()")
+  business: Business! @unique
+  capacidadSimultanea: Int! @default(value: 1)
+  tiempoAnticipacionMinutos: Int! @default(value: 0)
+  isConfigured: Boolean! @default(value: false)
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+# Order Reservations (1-to-1 relationship with Order)
+type OrderReservation @table {
+  id: UUID! @default(expr: "uuidV4()")
+  order: Order! @unique
+  business: Business!
+  scheduledAt: Timestamp!
+  serviceDurationMinutos: Int!
+  service: Service!
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+
+

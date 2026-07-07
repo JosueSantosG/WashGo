@@ -1,0 +1,2028 @@
+extend type Mutation {
+  """
+  ✨ Insert a single `Business` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  business_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Business_Data!
+  ): Business_KeyOutput! @fdc_generated(from: "Business", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `BusinessEmployee` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  businessEmployee_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: BusinessEmployee_Data!
+  ): BusinessEmployee_KeyOutput! @fdc_generated(from: "BusinessEmployee", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `BusinessHour` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  businessHour_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: BusinessHour_Data!
+  ): BusinessHour_KeyOutput! @fdc_generated(from: "BusinessHour", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `BusinessReservationConfig` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  businessReservationConfig_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: BusinessReservationConfig_Data!
+  ): BusinessReservationConfig_KeyOutput! @fdc_generated(from: "BusinessReservationConfig", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `EmployeeRequest` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  employeeRequest_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: EmployeeRequest_Data!
+  ): EmployeeRequest_KeyOutput! @fdc_generated(from: "EmployeeRequest", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Invoice` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  invoice_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Invoice_Data!
+  ): Invoice_KeyOutput! @fdc_generated(from: "Invoice", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `InvoiceItem` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  invoiceItem_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: InvoiceItem_Data!
+  ): InvoiceItem_KeyOutput! @fdc_generated(from: "InvoiceItem", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Notification` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  notification_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Notification_Data!
+  ): Notification_KeyOutput! @fdc_generated(from: "Notification", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Order` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  order_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Order_Data!
+  ): Order_KeyOutput! @fdc_generated(from: "Order", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `OrderReservation` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  orderReservation_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: OrderReservation_Data!
+  ): OrderReservation_KeyOutput! @fdc_generated(from: "OrderReservation", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `PrepaidHistory` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  prepaidHistory_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: PrepaidHistory_Data!
+  ): PrepaidHistory_KeyOutput! @fdc_generated(from: "PrepaidHistory", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `PrepaidServiceMetric` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  prepaidServiceMetric_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: PrepaidServiceMetric_Data!
+  ): PrepaidServiceMetric_KeyOutput! @fdc_generated(from: "PrepaidServiceMetric", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Review` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  review_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Review_Data!
+  ): Review_KeyOutput! @fdc_generated(from: "Review", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Service` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  service_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Service_Data!
+  ): Service_KeyOutput! @fdc_generated(from: "Service", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `User` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  user_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: User_Data!
+  ): User_KeyOutput! @fdc_generated(from: "User", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Vehicle` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  vehicle_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Vehicle_Data!
+  ): Vehicle_KeyOutput! @fdc_generated(from: "Vehicle", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `VehicleBrand` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  vehicleBrand_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: VehicleBrand_Data!
+  ): VehicleBrand_KeyOutput! @fdc_generated(from: "VehicleBrand", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `VehicleModel` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  vehicleModel_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: VehicleModel_Data!
+  ): VehicleModel_KeyOutput! @fdc_generated(from: "VehicleModel", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert `Business` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  business_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Business_Data!]!
+  ): [Business_KeyOutput!]! @fdc_generated(from: "Business", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `BusinessEmployee` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  businessEmployee_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [BusinessEmployee_Data!]!
+  ): [BusinessEmployee_KeyOutput!]! @fdc_generated(from: "BusinessEmployee", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `BusinessHour` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  businessHour_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [BusinessHour_Data!]!
+  ): [BusinessHour_KeyOutput!]! @fdc_generated(from: "BusinessHour", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `BusinessReservationConfig` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  businessReservationConfig_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [BusinessReservationConfig_Data!]!
+  ): [BusinessReservationConfig_KeyOutput!]! @fdc_generated(from: "BusinessReservationConfig", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `EmployeeRequest` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  employeeRequest_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [EmployeeRequest_Data!]!
+  ): [EmployeeRequest_KeyOutput!]! @fdc_generated(from: "EmployeeRequest", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Invoice` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  invoice_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Invoice_Data!]!
+  ): [Invoice_KeyOutput!]! @fdc_generated(from: "Invoice", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `InvoiceItem` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  invoiceItem_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [InvoiceItem_Data!]!
+  ): [InvoiceItem_KeyOutput!]! @fdc_generated(from: "InvoiceItem", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Notification` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  notification_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Notification_Data!]!
+  ): [Notification_KeyOutput!]! @fdc_generated(from: "Notification", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Order` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  order_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Order_Data!]!
+  ): [Order_KeyOutput!]! @fdc_generated(from: "Order", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `OrderReservation` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  orderReservation_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [OrderReservation_Data!]!
+  ): [OrderReservation_KeyOutput!]! @fdc_generated(from: "OrderReservation", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `PrepaidHistory` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  prepaidHistory_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [PrepaidHistory_Data!]!
+  ): [PrepaidHistory_KeyOutput!]! @fdc_generated(from: "PrepaidHistory", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `PrepaidServiceMetric` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  prepaidServiceMetric_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [PrepaidServiceMetric_Data!]!
+  ): [PrepaidServiceMetric_KeyOutput!]! @fdc_generated(from: "PrepaidServiceMetric", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Review` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  review_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Review_Data!]!
+  ): [Review_KeyOutput!]! @fdc_generated(from: "Review", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Service` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  service_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Service_Data!]!
+  ): [Service_KeyOutput!]! @fdc_generated(from: "Service", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `User` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  user_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [User_Data!]!
+  ): [User_KeyOutput!]! @fdc_generated(from: "User", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Vehicle` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  vehicle_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Vehicle_Data!]!
+  ): [Vehicle_KeyOutput!]! @fdc_generated(from: "Vehicle", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `VehicleBrand` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  vehicleBrand_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [VehicleBrand_Data!]!
+  ): [VehicleBrand_KeyOutput!]! @fdc_generated(from: "VehicleBrand", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `VehicleModel` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  vehicleModel_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [VehicleModel_Data!]!
+  ): [VehicleModel_KeyOutput!]! @fdc_generated(from: "VehicleModel", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert or update a single `Business` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Business`.
+  """
+  business_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Business_Data!
+  ): Business_KeyOutput! @fdc_generated(from: "Business", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `BusinessEmployee` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `BusinessEmployee`.
+  """
+  businessEmployee_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: BusinessEmployee_Data!
+  ): BusinessEmployee_KeyOutput! @fdc_generated(from: "BusinessEmployee", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `BusinessHour` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `BusinessHour`.
+  """
+  businessHour_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: BusinessHour_Data!
+  ): BusinessHour_KeyOutput! @fdc_generated(from: "BusinessHour", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `BusinessReservationConfig` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `BusinessReservationConfig`.
+  """
+  businessReservationConfig_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: BusinessReservationConfig_Data!
+  ): BusinessReservationConfig_KeyOutput! @fdc_generated(from: "BusinessReservationConfig", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `EmployeeRequest` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `EmployeeRequest`.
+  """
+  employeeRequest_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: EmployeeRequest_Data!
+  ): EmployeeRequest_KeyOutput! @fdc_generated(from: "EmployeeRequest", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Invoice` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Invoice`.
+  """
+  invoice_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Invoice_Data!
+  ): Invoice_KeyOutput! @fdc_generated(from: "Invoice", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `InvoiceItem` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `InvoiceItem`.
+  """
+  invoiceItem_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: InvoiceItem_Data!
+  ): InvoiceItem_KeyOutput! @fdc_generated(from: "InvoiceItem", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Notification` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Notification`.
+  """
+  notification_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Notification_Data!
+  ): Notification_KeyOutput! @fdc_generated(from: "Notification", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Order` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Order`.
+  """
+  order_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Order_Data!
+  ): Order_KeyOutput! @fdc_generated(from: "Order", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `OrderReservation` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `OrderReservation`.
+  """
+  orderReservation_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: OrderReservation_Data!
+  ): OrderReservation_KeyOutput! @fdc_generated(from: "OrderReservation", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `PrepaidHistory` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PrepaidHistory`.
+  """
+  prepaidHistory_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: PrepaidHistory_Data!
+  ): PrepaidHistory_KeyOutput! @fdc_generated(from: "PrepaidHistory", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `PrepaidServiceMetric` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PrepaidServiceMetric`.
+  """
+  prepaidServiceMetric_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: PrepaidServiceMetric_Data!
+  ): PrepaidServiceMetric_KeyOutput! @fdc_generated(from: "PrepaidServiceMetric", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Review` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Review`.
+  """
+  review_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Review_Data!
+  ): Review_KeyOutput! @fdc_generated(from: "Review", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Service` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Service`.
+  """
+  service_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Service_Data!
+  ): Service_KeyOutput! @fdc_generated(from: "Service", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `User` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `User`.
+  """
+  user_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: User_Data!
+  ): User_KeyOutput! @fdc_generated(from: "User", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Vehicle` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Vehicle`.
+  """
+  vehicle_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Vehicle_Data!
+  ): Vehicle_KeyOutput! @fdc_generated(from: "Vehicle", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `VehicleBrand` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `VehicleBrand`.
+  """
+  vehicleBrand_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: VehicleBrand_Data!
+  ): VehicleBrand_KeyOutput! @fdc_generated(from: "VehicleBrand", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `VehicleModel` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `VehicleModel`.
+  """
+  vehicleModel_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: VehicleModel_Data!
+  ): VehicleModel_KeyOutput! @fdc_generated(from: "VehicleModel", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update `Business` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Business`.
+  """
+  business_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Business_Data!]!
+  ): [Business_KeyOutput!]! @fdc_generated(from: "Business", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `BusinessEmployee` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `BusinessEmployee`.
+  """
+  businessEmployee_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [BusinessEmployee_Data!]!
+  ): [BusinessEmployee_KeyOutput!]! @fdc_generated(from: "BusinessEmployee", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `BusinessHour` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `BusinessHour`.
+  """
+  businessHour_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [BusinessHour_Data!]!
+  ): [BusinessHour_KeyOutput!]! @fdc_generated(from: "BusinessHour", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `BusinessReservationConfig` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `BusinessReservationConfig`.
+  """
+  businessReservationConfig_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [BusinessReservationConfig_Data!]!
+  ): [BusinessReservationConfig_KeyOutput!]! @fdc_generated(from: "BusinessReservationConfig", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `EmployeeRequest` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `EmployeeRequest`.
+  """
+  employeeRequest_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [EmployeeRequest_Data!]!
+  ): [EmployeeRequest_KeyOutput!]! @fdc_generated(from: "EmployeeRequest", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Invoice` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Invoice`.
+  """
+  invoice_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Invoice_Data!]!
+  ): [Invoice_KeyOutput!]! @fdc_generated(from: "Invoice", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `InvoiceItem` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `InvoiceItem`.
+  """
+  invoiceItem_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [InvoiceItem_Data!]!
+  ): [InvoiceItem_KeyOutput!]! @fdc_generated(from: "InvoiceItem", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Notification` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Notification`.
+  """
+  notification_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Notification_Data!]!
+  ): [Notification_KeyOutput!]! @fdc_generated(from: "Notification", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Order` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Order`.
+  """
+  order_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Order_Data!]!
+  ): [Order_KeyOutput!]! @fdc_generated(from: "Order", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `OrderReservation` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `OrderReservation`.
+  """
+  orderReservation_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [OrderReservation_Data!]!
+  ): [OrderReservation_KeyOutput!]! @fdc_generated(from: "OrderReservation", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `PrepaidHistory` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PrepaidHistory`.
+  """
+  prepaidHistory_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [PrepaidHistory_Data!]!
+  ): [PrepaidHistory_KeyOutput!]! @fdc_generated(from: "PrepaidHistory", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `PrepaidServiceMetric` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PrepaidServiceMetric`.
+  """
+  prepaidServiceMetric_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [PrepaidServiceMetric_Data!]!
+  ): [PrepaidServiceMetric_KeyOutput!]! @fdc_generated(from: "PrepaidServiceMetric", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Review` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Review`.
+  """
+  review_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Review_Data!]!
+  ): [Review_KeyOutput!]! @fdc_generated(from: "Review", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Service` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Service`.
+  """
+  service_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Service_Data!]!
+  ): [Service_KeyOutput!]! @fdc_generated(from: "Service", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `User` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `User`.
+  """
+  user_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [User_Data!]!
+  ): [User_KeyOutput!]! @fdc_generated(from: "User", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Vehicle` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Vehicle`.
+  """
+  vehicle_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Vehicle_Data!]!
+  ): [Vehicle_KeyOutput!]! @fdc_generated(from: "Vehicle", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `VehicleBrand` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `VehicleBrand`.
+  """
+  vehicleBrand_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [VehicleBrand_Data!]!
+  ): [VehicleBrand_KeyOutput!]! @fdc_generated(from: "VehicleBrand", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `VehicleModel` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `VehicleModel`.
+  """
+  vehicleModel_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [VehicleModel_Data!]!
+  ): [VehicleModel_KeyOutput!]! @fdc_generated(from: "VehicleModel", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Update a single `Business` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Business` or `null` if not found.
+  """
+  business_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Business_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Business_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Business_Data!
+  ): Business_KeyOutput @fdc_generated(from: "Business", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `BusinessEmployee` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `BusinessEmployee` or `null` if not found.
+  """
+  businessEmployee_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: BusinessEmployee_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: BusinessEmployee_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: BusinessEmployee_Data!
+  ): BusinessEmployee_KeyOutput @fdc_generated(from: "BusinessEmployee", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `BusinessHour` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `BusinessHour` or `null` if not found.
+  """
+  businessHour_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: BusinessHour_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: BusinessHour_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: BusinessHour_Data!
+  ): BusinessHour_KeyOutput @fdc_generated(from: "BusinessHour", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `BusinessReservationConfig` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `BusinessReservationConfig` or `null` if not found.
+  """
+  businessReservationConfig_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: BusinessReservationConfig_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: BusinessReservationConfig_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: BusinessReservationConfig_Data!
+  ): BusinessReservationConfig_KeyOutput @fdc_generated(from: "BusinessReservationConfig", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `EmployeeRequest` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `EmployeeRequest` or `null` if not found.
+  """
+  employeeRequest_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: EmployeeRequest_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: EmployeeRequest_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: EmployeeRequest_Data!
+  ): EmployeeRequest_KeyOutput @fdc_generated(from: "EmployeeRequest", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Invoice` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Invoice` or `null` if not found.
+  """
+  invoice_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Invoice_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Invoice_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Invoice_Data!
+  ): Invoice_KeyOutput @fdc_generated(from: "Invoice", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `InvoiceItem` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `InvoiceItem` or `null` if not found.
+  """
+  invoiceItem_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: InvoiceItem_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: InvoiceItem_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: InvoiceItem_Data!
+  ): InvoiceItem_KeyOutput @fdc_generated(from: "InvoiceItem", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Notification` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Notification` or `null` if not found.
+  """
+  notification_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Notification_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Notification_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Notification_Data!
+  ): Notification_KeyOutput @fdc_generated(from: "Notification", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Order` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Order` or `null` if not found.
+  """
+  order_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Order_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Order_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Order_Data!
+  ): Order_KeyOutput @fdc_generated(from: "Order", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `OrderReservation` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `OrderReservation` or `null` if not found.
+  """
+  orderReservation_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: OrderReservation_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: OrderReservation_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: OrderReservation_Data!
+  ): OrderReservation_KeyOutput @fdc_generated(from: "OrderReservation", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `PrepaidHistory` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `PrepaidHistory` or `null` if not found.
+  """
+  prepaidHistory_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PrepaidHistory_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PrepaidHistory_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: PrepaidHistory_Data!
+  ): PrepaidHistory_KeyOutput @fdc_generated(from: "PrepaidHistory", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `PrepaidServiceMetric` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `PrepaidServiceMetric` or `null` if not found.
+  """
+  prepaidServiceMetric_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PrepaidServiceMetric_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PrepaidServiceMetric_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: PrepaidServiceMetric_Data!
+  ): PrepaidServiceMetric_KeyOutput @fdc_generated(from: "PrepaidServiceMetric", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Review` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Review` or `null` if not found.
+  """
+  review_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Review_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Review_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Review_Data!
+  ): Review_KeyOutput @fdc_generated(from: "Review", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Service` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Service` or `null` if not found.
+  """
+  service_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Service_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Service_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Service_Data!
+  ): Service_KeyOutput @fdc_generated(from: "Service", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `User` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `User` or `null` if not found.
+  """
+  user_update(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: User_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: User_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: User_Data!
+  ): User_KeyOutput @fdc_generated(from: "User", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Vehicle` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Vehicle` or `null` if not found.
+  """
+  vehicle_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Vehicle_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Vehicle_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Vehicle_Data!
+  ): Vehicle_KeyOutput @fdc_generated(from: "Vehicle", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `VehicleBrand` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `VehicleBrand` or `null` if not found.
+  """
+  vehicleBrand_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: VehicleBrand_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: VehicleBrand_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: VehicleBrand_Data!
+  ): VehicleBrand_KeyOutput @fdc_generated(from: "VehicleBrand", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `VehicleModel` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `VehicleModel` or `null` if not found.
+  """
+  vehicleModel_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: VehicleModel_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: VehicleModel_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: VehicleModel_Data!
+  ): VehicleModel_KeyOutput @fdc_generated(from: "VehicleModel", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update `Business` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  business_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Business_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Business_Data!
+  ): Int! @fdc_generated(from: "Business", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `BusinessEmployee` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  businessEmployee_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: BusinessEmployee_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: BusinessEmployee_Data!
+  ): Int! @fdc_generated(from: "BusinessEmployee", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `BusinessHour` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  businessHour_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: BusinessHour_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: BusinessHour_Data!
+  ): Int! @fdc_generated(from: "BusinessHour", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `BusinessReservationConfig` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  businessReservationConfig_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: BusinessReservationConfig_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: BusinessReservationConfig_Data!
+  ): Int! @fdc_generated(from: "BusinessReservationConfig", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `EmployeeRequest` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  employeeRequest_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: EmployeeRequest_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: EmployeeRequest_Data!
+  ): Int! @fdc_generated(from: "EmployeeRequest", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Invoice` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  invoice_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Invoice_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Invoice_Data!
+  ): Int! @fdc_generated(from: "Invoice", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `InvoiceItem` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  invoiceItem_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: InvoiceItem_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: InvoiceItem_Data!
+  ): Int! @fdc_generated(from: "InvoiceItem", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Notification` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  notification_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Notification_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Notification_Data!
+  ): Int! @fdc_generated(from: "Notification", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Order` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  order_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Order_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Order_Data!
+  ): Int! @fdc_generated(from: "Order", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `OrderReservation` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  orderReservation_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: OrderReservation_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: OrderReservation_Data!
+  ): Int! @fdc_generated(from: "OrderReservation", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `PrepaidHistory` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  prepaidHistory_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: PrepaidHistory_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: PrepaidHistory_Data!
+  ): Int! @fdc_generated(from: "PrepaidHistory", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `PrepaidServiceMetric` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  prepaidServiceMetric_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: PrepaidServiceMetric_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: PrepaidServiceMetric_Data!
+  ): Int! @fdc_generated(from: "PrepaidServiceMetric", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Review` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  review_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Review_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Review_Data!
+  ): Int! @fdc_generated(from: "Review", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Service` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  service_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Service_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Service_Data!
+  ): Int! @fdc_generated(from: "Service", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `User` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  user_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: User_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: User_Data!
+  ): Int! @fdc_generated(from: "User", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Vehicle` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  vehicle_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Vehicle_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Vehicle_Data!
+  ): Int! @fdc_generated(from: "Vehicle", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `VehicleBrand` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  vehicleBrand_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: VehicleBrand_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: VehicleBrand_Data!
+  ): Int! @fdc_generated(from: "VehicleBrand", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `VehicleModel` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  vehicleModel_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: VehicleModel_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: VehicleModel_Data!
+  ): Int! @fdc_generated(from: "VehicleModel", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Delete a single `Business` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  business_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Business_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Business_FirstRow
+  ): Business_KeyOutput @fdc_generated(from: "Business", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `BusinessEmployee` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  businessEmployee_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: BusinessEmployee_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: BusinessEmployee_FirstRow
+  ): BusinessEmployee_KeyOutput @fdc_generated(from: "BusinessEmployee", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `BusinessHour` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  businessHour_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: BusinessHour_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: BusinessHour_FirstRow
+  ): BusinessHour_KeyOutput @fdc_generated(from: "BusinessHour", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `BusinessReservationConfig` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  businessReservationConfig_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: BusinessReservationConfig_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: BusinessReservationConfig_FirstRow
+  ): BusinessReservationConfig_KeyOutput @fdc_generated(from: "BusinessReservationConfig", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `EmployeeRequest` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  employeeRequest_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: EmployeeRequest_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: EmployeeRequest_FirstRow
+  ): EmployeeRequest_KeyOutput @fdc_generated(from: "EmployeeRequest", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Invoice` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  invoice_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Invoice_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Invoice_FirstRow
+  ): Invoice_KeyOutput @fdc_generated(from: "Invoice", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `InvoiceItem` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  invoiceItem_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: InvoiceItem_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: InvoiceItem_FirstRow
+  ): InvoiceItem_KeyOutput @fdc_generated(from: "InvoiceItem", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Notification` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  notification_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Notification_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Notification_FirstRow
+  ): Notification_KeyOutput @fdc_generated(from: "Notification", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Order` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  order_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Order_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Order_FirstRow
+  ): Order_KeyOutput @fdc_generated(from: "Order", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `OrderReservation` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  orderReservation_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: OrderReservation_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: OrderReservation_FirstRow
+  ): OrderReservation_KeyOutput @fdc_generated(from: "OrderReservation", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `PrepaidHistory` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  prepaidHistory_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PrepaidHistory_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PrepaidHistory_FirstRow
+  ): PrepaidHistory_KeyOutput @fdc_generated(from: "PrepaidHistory", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `PrepaidServiceMetric` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  prepaidServiceMetric_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PrepaidServiceMetric_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PrepaidServiceMetric_FirstRow
+  ): PrepaidServiceMetric_KeyOutput @fdc_generated(from: "PrepaidServiceMetric", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Review` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  review_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Review_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Review_FirstRow
+  ): Review_KeyOutput @fdc_generated(from: "Review", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Service` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  service_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Service_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Service_FirstRow
+  ): Service_KeyOutput @fdc_generated(from: "Service", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `User` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  user_delete(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: User_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: User_FirstRow
+  ): User_KeyOutput @fdc_generated(from: "User", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Vehicle` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  vehicle_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Vehicle_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Vehicle_FirstRow
+  ): Vehicle_KeyOutput @fdc_generated(from: "Vehicle", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `VehicleBrand` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  vehicleBrand_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: VehicleBrand_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: VehicleBrand_FirstRow
+  ): VehicleBrand_KeyOutput @fdc_generated(from: "VehicleBrand", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `VehicleModel` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  vehicleModel_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: VehicleModel_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: VehicleModel_FirstRow
+  ): VehicleModel_KeyOutput @fdc_generated(from: "VehicleModel", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete `Business` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  business_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Business_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Business", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `BusinessEmployee` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  businessEmployee_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: BusinessEmployee_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "BusinessEmployee", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `BusinessHour` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  businessHour_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: BusinessHour_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "BusinessHour", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `BusinessReservationConfig` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  businessReservationConfig_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: BusinessReservationConfig_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "BusinessReservationConfig", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `EmployeeRequest` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  employeeRequest_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: EmployeeRequest_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "EmployeeRequest", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Invoice` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  invoice_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Invoice_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Invoice", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `InvoiceItem` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  invoiceItem_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: InvoiceItem_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "InvoiceItem", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Notification` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  notification_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Notification_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Notification", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Order` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  order_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Order_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Order", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `OrderReservation` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  orderReservation_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: OrderReservation_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "OrderReservation", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `PrepaidHistory` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  prepaidHistory_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: PrepaidHistory_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "PrepaidHistory", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `PrepaidServiceMetric` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  prepaidServiceMetric_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: PrepaidServiceMetric_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "PrepaidServiceMetric", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Review` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  review_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Review_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Review", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Service` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  service_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Service_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Service", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `User` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  user_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: User_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "User", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Vehicle` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  vehicle_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Vehicle_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Vehicle", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `VehicleBrand` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  vehicleBrand_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: VehicleBrand_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "VehicleBrand", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `VehicleModel` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  vehicleModel_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: VehicleModel_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "VehicleModel", purpose: DELETE_MULTIPLE)
+}

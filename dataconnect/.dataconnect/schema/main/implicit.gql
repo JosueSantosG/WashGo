@@ -1,0 +1,142 @@
+extend type Business {
+  """
+  ✨ Implicit foreign key field based on `Business`.`owner`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  ownerId: String! @fdc_generated(from: "Business.owner", purpose: IMPLICIT_REF_FIELD)
+}
+extend type BusinessEmployee {
+  """
+  ✨ Implicit foreign key field based on `BusinessEmployee`.`business`. It must match the value of `Business`.`id`. See `@ref` for how to customize it.
+  """
+  businessId: UUID! @fdc_generated(from: "BusinessEmployee.business", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `BusinessEmployee`.`employee`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  employeeId: String! @fdc_generated(from: "BusinessEmployee.employee", purpose: IMPLICIT_REF_FIELD)
+}
+extend type BusinessHour {
+  """
+  ✨ Implicit foreign key field based on `BusinessHour`.`business`. It must match the value of `Business`.`id`. See `@ref` for how to customize it.
+  """
+  businessId: UUID! @fdc_generated(from: "BusinessHour.business", purpose: IMPLICIT_REF_FIELD)
+}
+extend type BusinessReservationConfig {
+  """
+  ✨ Implicit foreign key field based on `BusinessReservationConfig`.`business`. It must match the value of `Business`.`id`. See `@ref` for how to customize it.
+  """
+  businessId: UUID! @fdc_generated(from: "BusinessReservationConfig.business", purpose: IMPLICIT_REF_FIELD)
+}
+extend type EmployeeRequest {
+  """
+  ✨ Implicit foreign key field based on `EmployeeRequest`.`business`. It must match the value of `Business`.`id`. See `@ref` for how to customize it.
+  """
+  businessId: UUID! @fdc_generated(from: "EmployeeRequest.business", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `EmployeeRequest`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  userId: String! @fdc_generated(from: "EmployeeRequest.user", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Invoice {
+  """
+  ✨ Implicit foreign key field based on `Invoice`.`order`. It must match the value of `Order`.`id`. See `@ref` for how to customize it.
+  """
+  orderId: UUID! @fdc_generated(from: "Invoice.order", purpose: IMPLICIT_REF_FIELD)
+}
+extend type InvoiceItem {
+  """
+  ✨ Implicit foreign key field based on `InvoiceItem`.`invoice`. It must match the value of `Invoice`.`id`. See `@ref` for how to customize it.
+  """
+  invoiceId: UUID! @fdc_generated(from: "InvoiceItem.invoice", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Notification {
+  """
+  ✨ Implicit foreign key field based on `Notification`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  userId: String! @fdc_generated(from: "Notification.user", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Order {
+  """
+  ✨ Implicit foreign key field based on `Order`.`business`. It must match the value of `Business`.`id`. See `@ref` for how to customize it.
+  """
+  businessId: UUID! @fdc_generated(from: "Order.business", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Order`.`client`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  clientId: String! @fdc_generated(from: "Order.client", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Order`.`employee`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  employeeId: String @fdc_generated(from: "Order.employee", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Order`.`service`. It must match the value of `Service`.`id`. See `@ref` for how to customize it.
+  """
+  serviceId: UUID @fdc_generated(from: "Order.service", purpose: IMPLICIT_REF_FIELD)
+}
+extend type OrderReservation {
+  """
+  ✨ Implicit foreign key field based on `OrderReservation`.`business`. It must match the value of `Business`.`id`. See `@ref` for how to customize it.
+  """
+  businessId: UUID! @fdc_generated(from: "OrderReservation.business", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `OrderReservation`.`order`. It must match the value of `Order`.`id`. See `@ref` for how to customize it.
+  """
+  orderId: UUID! @fdc_generated(from: "OrderReservation.order", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `OrderReservation`.`service`. It must match the value of `Service`.`id`. See `@ref` for how to customize it.
+  """
+  serviceId: UUID! @fdc_generated(from: "OrderReservation.service", purpose: IMPLICIT_REF_FIELD)
+}
+extend type PrepaidHistory {
+  """
+  ✨ Implicit foreign key field based on `PrepaidHistory`.`business`. It must match the value of `Business`.`id`. See `@ref` for how to customize it.
+  """
+  businessId: UUID! @fdc_generated(from: "PrepaidHistory.business", purpose: IMPLICIT_REF_FIELD)
+}
+extend type PrepaidServiceMetric {
+  """
+  ✨ Implicit foreign key field based on `PrepaidServiceMetric`.`business`. It must match the value of `Business`.`id`. See `@ref` for how to customize it.
+  """
+  businessId: UUID! @fdc_generated(from: "PrepaidServiceMetric.business", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Review {
+  """
+  ✨ Implicit foreign key field based on `Review`.`business`. It must match the value of `Business`.`id`. See `@ref` for how to customize it.
+  """
+  businessId: UUID! @fdc_generated(from: "Review.business", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Review`.`employee`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  employeeId: String @fdc_generated(from: "Review.employee", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Review`.`order`. It must match the value of `Order`.`id`. See `@ref` for how to customize it.
+  """
+  orderId: UUID! @fdc_generated(from: "Review.order", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Service {
+  """
+  ✨ Implicit foreign key field based on `Service`.`business`. It must match the value of `Business`.`id`. See `@ref` for how to customize it.
+  """
+  businessId: UUID! @fdc_generated(from: "Service.business", purpose: IMPLICIT_REF_FIELD)
+}
+extend type User {
+  """
+  ✨ Implicit foreign key field based on `User`.`currentBusiness`. It must match the value of `Business`.`id`. See `@ref` for how to customize it.
+  """
+  currentBusinessId: UUID @fdc_generated(from: "User.currentBusiness", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Vehicle {
+  """
+  ✨ Implicit foreign key field based on `Vehicle`.`client`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  clientId: String! @fdc_generated(from: "Vehicle.client", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Vehicle`.`model`. It must match the value of `VehicleModel`.`id`. See `@ref` for how to customize it.
+  """
+  modelId: UUID! @fdc_generated(from: "Vehicle.model", purpose: IMPLICIT_REF_FIELD)
+}
+extend type VehicleModel {
+  """
+  ✨ Implicit foreign key field based on `VehicleModel`.`brand`. It must match the value of `VehicleBrand`.`id`. See `@ref` for how to customize it.
+  """
+  brandId: UUID! @fdc_generated(from: "VehicleModel.brand", purpose: IMPLICIT_REF_FIELD)
+}

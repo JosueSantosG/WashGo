@@ -1,0 +1,38 @@
+# Ignorar carpetas de compilación y herramientas de Dart
+.dart_tool/
+build/
+.idea/
+.firebase/
+firebase-export/
+node_modules/
+
+# Ignorar plataformas nativas (opcional, para enfocarse en el código Flutter en lib/)
+android/
+ios/
+windows/
+macos/
+linux/
+web/
+
+# Ignorar imágenes y recursos visuales (para evitar requerir API de LLM)
+assets/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.webp
+*.ico
+*.xlsx
+
+# Ignorar documentación y reportes
+*.md
+*.txt
+*.log
+*.html
+*.js
+*.json
+*.rules
+*.yaml
+*.lock
+*.iml
