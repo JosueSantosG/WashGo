@@ -67,6 +67,7 @@ export interface AddVehicleData {
 export interface AddVehicleVariables {
   modelId: UUIDString;
   plate?: string | null;
+  category?: string | null;
 }
 
 export interface ApproveEmployeeRequestData {
@@ -1141,6 +1142,7 @@ export interface GetMyVehiclesData {
   vehicles: ({
     id: UUIDString;
     plate?: string | null;
+    category?: string | null;
     model: {
       id: UUIDString;
       name: string;
@@ -1659,6 +1661,7 @@ export interface UpdateVehicleVariables {
   id: UUIDString;
   modelId: UUIDString;
   plate?: string | null;
+  category?: string | null;
 }
 
 export interface UpsertUserData {
@@ -1713,6 +1716,216 @@ export interface Vehicle_Key {
   id: UUIDString;
   __typename?: 'Vehicle_Key';
 }
+
+/** Generated Node Admin SDK operation action function for the 'GetUsers' Query. Allow users to execute without passing in DataConnect. */
+export function getUsers(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetUsersData>>;
+/** Generated Node Admin SDK operation action function for the 'GetUsers' Query. Allow users to pass in custom DataConnect instances. */
+export function getUsers(options?: OperationOptions): Promise<ExecuteOperationResponse<GetUsersData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetCurrentUser' Query. Allow users to execute without passing in DataConnect. */
+export function getCurrentUser(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetCurrentUserData>>;
+/** Generated Node Admin SDK operation action function for the 'GetCurrentUser' Query. Allow users to pass in custom DataConnect instances. */
+export function getCurrentUser(options?: OperationOptions): Promise<ExecuteOperationResponse<GetCurrentUserData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetBusinessByCode' Query. Allow users to execute without passing in DataConnect. */
+export function getBusinessByCode(dc: DataConnect, vars: GetBusinessByCodeVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessByCodeData>>;
+/** Generated Node Admin SDK operation action function for the 'GetBusinessByCode' Query. Allow users to pass in custom DataConnect instances. */
+export function getBusinessByCode(vars: GetBusinessByCodeVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessByCodeData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetPendingEmployeeRequests' Query. Allow users to execute without passing in DataConnect. */
+export function getPendingEmployeeRequests(dc: DataConnect, vars: GetPendingEmployeeRequestsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPendingEmployeeRequestsData>>;
+/** Generated Node Admin SDK operation action function for the 'GetPendingEmployeeRequests' Query. Allow users to pass in custom DataConnect instances. */
+export function getPendingEmployeeRequests(vars: GetPendingEmployeeRequestsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPendingEmployeeRequestsData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetAllBusinesses' Query. Allow users to execute without passing in DataConnect. */
+export function getAllBusinesses(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetAllBusinessesData>>;
+/** Generated Node Admin SDK operation action function for the 'GetAllBusinesses' Query. Allow users to pass in custom DataConnect instances. */
+export function getAllBusinesses(options?: OperationOptions): Promise<ExecuteOperationResponse<GetAllBusinessesData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetClientOrders' Query. Allow users to execute without passing in DataConnect. */
+export function getClientOrders(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetClientOrdersData>>;
+/** Generated Node Admin SDK operation action function for the 'GetClientOrders' Query. Allow users to pass in custom DataConnect instances. */
+export function getClientOrders(options?: OperationOptions): Promise<ExecuteOperationResponse<GetClientOrdersData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetBusinessOrders' Query. Allow users to execute without passing in DataConnect. */
+export function getBusinessOrders(dc: DataConnect, vars: GetBusinessOrdersVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessOrdersData>>;
+/** Generated Node Admin SDK operation action function for the 'GetBusinessOrders' Query. Allow users to pass in custom DataConnect instances. */
+export function getBusinessOrders(vars: GetBusinessOrdersVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessOrdersData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetActiveEmployees' Query. Allow users to execute without passing in DataConnect. */
+export function getActiveEmployees(dc: DataConnect, vars: GetActiveEmployeesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetActiveEmployeesData>>;
+/** Generated Node Admin SDK operation action function for the 'GetActiveEmployees' Query. Allow users to pass in custom DataConnect instances. */
+export function getActiveEmployees(vars: GetActiveEmployeesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetActiveEmployeesData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetBusinessServices' Query. Allow users to execute without passing in DataConnect. */
+export function getBusinessServices(dc: DataConnect, vars: GetBusinessServicesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessServicesData>>;
+/** Generated Node Admin SDK operation action function for the 'GetBusinessServices' Query. Allow users to pass in custom DataConnect instances. */
+export function getBusinessServices(vars: GetBusinessServicesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessServicesData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetMyVehicles' Query. Allow users to execute without passing in DataConnect. */
+export function getMyVehicles(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetMyVehiclesData>>;
+/** Generated Node Admin SDK operation action function for the 'GetMyVehicles' Query. Allow users to pass in custom DataConnect instances. */
+export function getMyVehicles(options?: OperationOptions): Promise<ExecuteOperationResponse<GetMyVehiclesData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetVehicleBrands' Query. Allow users to execute without passing in DataConnect. */
+export function getVehicleBrands(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetVehicleBrandsData>>;
+/** Generated Node Admin SDK operation action function for the 'GetVehicleBrands' Query. Allow users to pass in custom DataConnect instances. */
+export function getVehicleBrands(options?: OperationOptions): Promise<ExecuteOperationResponse<GetVehicleBrandsData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetVehicleModelsByBrand' Query. Allow users to execute without passing in DataConnect. */
+export function getVehicleModelsByBrand(dc: DataConnect, vars: GetVehicleModelsByBrandVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetVehicleModelsByBrandData>>;
+/** Generated Node Admin SDK operation action function for the 'GetVehicleModelsByBrand' Query. Allow users to pass in custom DataConnect instances. */
+export function getVehicleModelsByBrand(vars: GetVehicleModelsByBrandVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetVehicleModelsByBrandData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetActiveBusinessOrders' Query. Allow users to execute without passing in DataConnect. */
+export function getActiveBusinessOrders(dc: DataConnect, vars: GetActiveBusinessOrdersVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetActiveBusinessOrdersData>>;
+/** Generated Node Admin SDK operation action function for the 'GetActiveBusinessOrders' Query. Allow users to pass in custom DataConnect instances. */
+export function getActiveBusinessOrders(vars: GetActiveBusinessOrdersVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetActiveBusinessOrdersData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetEmployeeAvailability' Query. Allow users to execute without passing in DataConnect. */
+export function getEmployeeAvailability(dc: DataConnect, vars: GetEmployeeAvailabilityVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetEmployeeAvailabilityData>>;
+/** Generated Node Admin SDK operation action function for the 'GetEmployeeAvailability' Query. Allow users to pass in custom DataConnect instances. */
+export function getEmployeeAvailability(vars: GetEmployeeAvailabilityVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetEmployeeAvailabilityData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetBusinessHours' Query. Allow users to execute without passing in DataConnect. */
+export function getBusinessHours(dc: DataConnect, vars: GetBusinessHoursVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessHoursData>>;
+/** Generated Node Admin SDK operation action function for the 'GetBusinessHours' Query. Allow users to pass in custom DataConnect instances. */
+export function getBusinessHours(vars: GetBusinessHoursVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessHoursData>>;
+
+/** Generated Node Admin SDK operation action function for the 'SuperAdminGetBusinesses' Query. Allow users to execute without passing in DataConnect. */
+export function superAdminGetBusinesses(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<SuperAdminGetBusinessesData>>;
+/** Generated Node Admin SDK operation action function for the 'SuperAdminGetBusinesses' Query. Allow users to pass in custom DataConnect instances. */
+export function superAdminGetBusinesses(options?: OperationOptions): Promise<ExecuteOperationResponse<SuperAdminGetBusinessesData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetMyBusinesses' Query. Allow users to execute without passing in DataConnect. */
+export function getMyBusinesses(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetMyBusinessesData>>;
+/** Generated Node Admin SDK operation action function for the 'GetMyBusinesses' Query. Allow users to pass in custom DataConnect instances. */
+export function getMyBusinesses(options?: OperationOptions): Promise<ExecuteOperationResponse<GetMyBusinessesData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetEmployeeHistoryOrdersPaged' Query. Allow users to execute without passing in DataConnect. */
+export function getEmployeeHistoryOrdersPaged(dc: DataConnect, vars: GetEmployeeHistoryOrdersPagedVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetEmployeeHistoryOrdersPagedData>>;
+/** Generated Node Admin SDK operation action function for the 'GetEmployeeHistoryOrdersPaged' Query. Allow users to pass in custom DataConnect instances. */
+export function getEmployeeHistoryOrdersPaged(vars: GetEmployeeHistoryOrdersPagedVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetEmployeeHistoryOrdersPagedData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetClientHistoryOrdersPaged' Query. Allow users to execute without passing in DataConnect. */
+export function getClientHistoryOrdersPaged(dc: DataConnect, vars: GetClientHistoryOrdersPagedVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetClientHistoryOrdersPagedData>>;
+/** Generated Node Admin SDK operation action function for the 'GetClientHistoryOrdersPaged' Query. Allow users to pass in custom DataConnect instances. */
+export function getClientHistoryOrdersPaged(vars: GetClientHistoryOrdersPagedVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetClientHistoryOrdersPagedData>>;
+
+/** Generated Node Admin SDK operation action function for the 'FindUserByPhone' Query. Allow users to execute without passing in DataConnect. */
+export function findUserByPhone(dc: DataConnect, vars: FindUserByPhoneVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<FindUserByPhoneData>>;
+/** Generated Node Admin SDK operation action function for the 'FindUserByPhone' Query. Allow users to pass in custom DataConnect instances. */
+export function findUserByPhone(vars: FindUserByPhoneVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<FindUserByPhoneData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetClientInvoices' Query. Allow users to execute without passing in DataConnect. */
+export function getClientInvoices(dc: DataConnect, vars?: GetClientInvoicesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetClientInvoicesData>>;
+/** Generated Node Admin SDK operation action function for the 'GetClientInvoices' Query. Allow users to pass in custom DataConnect instances. */
+export function getClientInvoices(vars?: GetClientInvoicesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetClientInvoicesData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetEmployeeInvoices' Query. Allow users to execute without passing in DataConnect. */
+export function getEmployeeInvoices(dc: DataConnect, vars?: GetEmployeeInvoicesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetEmployeeInvoicesData>>;
+/** Generated Node Admin SDK operation action function for the 'GetEmployeeInvoices' Query. Allow users to pass in custom DataConnect instances. */
+export function getEmployeeInvoices(vars?: GetEmployeeInvoicesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetEmployeeInvoicesData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetBusinessInvoices' Query. Allow users to execute without passing in DataConnect. */
+export function getBusinessInvoices(dc: DataConnect, vars: GetBusinessInvoicesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessInvoicesData>>;
+/** Generated Node Admin SDK operation action function for the 'GetBusinessInvoices' Query. Allow users to pass in custom DataConnect instances. */
+export function getBusinessInvoices(vars: GetBusinessInvoicesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessInvoicesData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetInvoiceById' Query. Allow users to execute without passing in DataConnect. */
+export function getInvoiceById(dc: DataConnect, vars: GetInvoiceByIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetInvoiceByIdData>>;
+/** Generated Node Admin SDK operation action function for the 'GetInvoiceById' Query. Allow users to pass in custom DataConnect instances. */
+export function getInvoiceById(vars: GetInvoiceByIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetInvoiceByIdData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetInvoicesByDateRange' Query. Allow users to execute without passing in DataConnect. */
+export function getInvoicesByDateRange(dc: DataConnect, vars: GetInvoicesByDateRangeVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetInvoicesByDateRangeData>>;
+/** Generated Node Admin SDK operation action function for the 'GetInvoicesByDateRange' Query. Allow users to pass in custom DataConnect instances. */
+export function getInvoicesByDateRange(vars: GetInvoicesByDateRangeVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetInvoicesByDateRangeData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetBusinessDetails' Query. Allow users to execute without passing in DataConnect. */
+export function getBusinessDetails(dc: DataConnect, vars: GetBusinessDetailsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessDetailsData>>;
+/** Generated Node Admin SDK operation action function for the 'GetBusinessDetails' Query. Allow users to pass in custom DataConnect instances. */
+export function getBusinessDetails(vars: GetBusinessDetailsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessDetailsData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetUserNotifications' Query. Allow users to execute without passing in DataConnect. */
+export function getUserNotifications(dc: DataConnect, vars: GetUserNotificationsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetUserNotificationsData>>;
+/** Generated Node Admin SDK operation action function for the 'GetUserNotifications' Query. Allow users to pass in custom DataConnect instances. */
+export function getUserNotifications(vars: GetUserNotificationsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetUserNotificationsData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetPrepaidHistory' Query. Allow users to execute without passing in DataConnect. */
+export function getPrepaidHistory(dc: DataConnect, vars: GetPrepaidHistoryVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPrepaidHistoryData>>;
+/** Generated Node Admin SDK operation action function for the 'GetPrepaidHistory' Query. Allow users to pass in custom DataConnect instances. */
+export function getPrepaidHistory(vars: GetPrepaidHistoryVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPrepaidHistoryData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetPrepaidServiceMetrics' Query. Allow users to execute without passing in DataConnect. */
+export function getPrepaidServiceMetrics(dc: DataConnect, vars: GetPrepaidServiceMetricsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPrepaidServiceMetricsData>>;
+/** Generated Node Admin SDK operation action function for the 'GetPrepaidServiceMetrics' Query. Allow users to pass in custom DataConnect instances. */
+export function getPrepaidServiceMetrics(vars: GetPrepaidServiceMetricsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPrepaidServiceMetricsData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetPrepaidServiceMetricByServiceName' Query. Allow users to execute without passing in DataConnect. */
+export function getPrepaidServiceMetricByServiceName(dc: DataConnect, vars: GetPrepaidServiceMetricByServiceNameVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPrepaidServiceMetricByServiceNameData>>;
+/** Generated Node Admin SDK operation action function for the 'GetPrepaidServiceMetricByServiceName' Query. Allow users to pass in custom DataConnect instances. */
+export function getPrepaidServiceMetricByServiceName(vars: GetPrepaidServiceMetricByServiceNameVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPrepaidServiceMetricByServiceNameData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetOrderById' Query. Allow users to execute without passing in DataConnect. */
+export function getOrderById(dc: DataConnect, vars: GetOrderByIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetOrderByIdData>>;
+/** Generated Node Admin SDK operation action function for the 'GetOrderById' Query. Allow users to pass in custom DataConnect instances. */
+export function getOrderById(vars: GetOrderByIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetOrderByIdData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetPrepaidHistoryByOrderId' Query. Allow users to execute without passing in DataConnect. */
+export function getPrepaidHistoryByOrderId(dc: DataConnect, vars: GetPrepaidHistoryByOrderIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPrepaidHistoryByOrderIdData>>;
+/** Generated Node Admin SDK operation action function for the 'GetPrepaidHistoryByOrderId' Query. Allow users to pass in custom DataConnect instances. */
+export function getPrepaidHistoryByOrderId(vars: GetPrepaidHistoryByOrderIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPrepaidHistoryByOrderIdData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetBusinessReservationConfig' Query. Allow users to execute without passing in DataConnect. */
+export function getBusinessReservationConfig(dc: DataConnect, vars: GetBusinessReservationConfigVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessReservationConfigData>>;
+/** Generated Node Admin SDK operation action function for the 'GetBusinessReservationConfig' Query. Allow users to pass in custom DataConnect instances. */
+export function getBusinessReservationConfig(vars: GetBusinessReservationConfigVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessReservationConfigData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetActiveReservations' Query. Allow users to execute without passing in DataConnect. */
+export function getActiveReservations(dc: DataConnect, vars: GetActiveReservationsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetActiveReservationsData>>;
+/** Generated Node Admin SDK operation action function for the 'GetActiveReservations' Query. Allow users to pass in custom DataConnect instances. */
+export function getActiveReservations(vars: GetActiveReservationsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetActiveReservationsData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetReservationByOrderId' Query. Allow users to execute without passing in DataConnect. */
+export function getReservationByOrderId(dc: DataConnect, vars: GetReservationByOrderIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetReservationByOrderIdData>>;
+/** Generated Node Admin SDK operation action function for the 'GetReservationByOrderId' Query. Allow users to pass in custom DataConnect instances. */
+export function getReservationByOrderId(vars: GetReservationByOrderIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetReservationByOrderIdData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetBusinessReviews' Query. Allow users to execute without passing in DataConnect. */
+export function getBusinessReviews(dc: DataConnect, vars: GetBusinessReviewsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessReviewsData>>;
+/** Generated Node Admin SDK operation action function for the 'GetBusinessReviews' Query. Allow users to pass in custom DataConnect instances. */
+export function getBusinessReviews(vars: GetBusinessReviewsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessReviewsData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetOrderReview' Query. Allow users to execute without passing in DataConnect. */
+export function getOrderReview(dc: DataConnect, vars: GetOrderReviewVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetOrderReviewData>>;
+/** Generated Node Admin SDK operation action function for the 'GetOrderReview' Query. Allow users to pass in custom DataConnect instances. */
+export function getOrderReview(vars: GetOrderReviewVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetOrderReviewData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetGlobalAppRatings' Query. Allow users to execute without passing in DataConnect. */
+export function getGlobalAppRatings(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetGlobalAppRatingsData>>;
+/** Generated Node Admin SDK operation action function for the 'GetGlobalAppRatings' Query. Allow users to pass in custom DataConnect instances. */
+export function getGlobalAppRatings(options?: OperationOptions): Promise<ExecuteOperationResponse<GetGlobalAppRatingsData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetOrderDetailsForPayment' Query. Allow users to execute without passing in DataConnect. */
+export function getOrderDetailsForPayment(dc: DataConnect, vars: GetOrderDetailsForPaymentVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetOrderDetailsForPaymentData>>;
+/** Generated Node Admin SDK operation action function for the 'GetOrderDetailsForPayment' Query. Allow users to pass in custom DataConnect instances. */
+export function getOrderDetailsForPayment(vars: GetOrderDetailsForPaymentVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetOrderDetailsForPaymentData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetInvoiceByOrderId' Query. Allow users to execute without passing in DataConnect. */
+export function getInvoiceByOrderId(dc: DataConnect, vars: GetInvoiceByOrderIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetInvoiceByOrderIdData>>;
+/** Generated Node Admin SDK operation action function for the 'GetInvoiceByOrderId' Query. Allow users to pass in custom DataConnect instances. */
+export function getInvoiceByOrderId(vars: GetInvoiceByOrderIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetInvoiceByOrderIdData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetInvoiceDetailsForUrl' Query. Allow users to execute without passing in DataConnect. */
+export function getInvoiceDetailsForUrl(dc: DataConnect, vars: GetInvoiceDetailsForUrlVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetInvoiceDetailsForUrlData>>;
+/** Generated Node Admin SDK operation action function for the 'GetInvoiceDetailsForUrl' Query. Allow users to pass in custom DataConnect instances. */
+export function getInvoiceDetailsForUrl(vars: GetInvoiceDetailsForUrlVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetInvoiceDetailsForUrlData>>;
+
+/** Generated Node Admin SDK operation action function for the 'CheckBusinessEmployeeAdmin' Query. Allow users to execute without passing in DataConnect. */
+export function checkBusinessEmployeeAdmin(dc: DataConnect, vars: CheckBusinessEmployeeAdminVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<CheckBusinessEmployeeAdminData>>;
+/** Generated Node Admin SDK operation action function for the 'CheckBusinessEmployeeAdmin' Query. Allow users to pass in custom DataConnect instances. */
+export function checkBusinessEmployeeAdmin(vars: CheckBusinessEmployeeAdminVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<CheckBusinessEmployeeAdminData>>;
 
 /** Generated Node Admin SDK operation action function for the 'UpsertUser' Mutation. Allow users to execute without passing in DataConnect. */
 export function upsertUser(dc: DataConnect, vars: UpsertUserVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<UpsertUserData>>;
@@ -1968,214 +2181,4 @@ export function consumePrepaidAndUpdateMetric(vars: ConsumePrepaidAndUpdateMetri
 export function consumePrepaidAndCreateMetric(dc: DataConnect, vars: ConsumePrepaidAndCreateMetricVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<ConsumePrepaidAndCreateMetricData>>;
 /** Generated Node Admin SDK operation action function for the 'ConsumePrepaidAndCreateMetric' Mutation. Allow users to pass in custom DataConnect instances. */
 export function consumePrepaidAndCreateMetric(vars: ConsumePrepaidAndCreateMetricVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<ConsumePrepaidAndCreateMetricData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetUsers' Query. Allow users to execute without passing in DataConnect. */
-export function getUsers(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetUsersData>>;
-/** Generated Node Admin SDK operation action function for the 'GetUsers' Query. Allow users to pass in custom DataConnect instances. */
-export function getUsers(options?: OperationOptions): Promise<ExecuteOperationResponse<GetUsersData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetCurrentUser' Query. Allow users to execute without passing in DataConnect. */
-export function getCurrentUser(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetCurrentUserData>>;
-/** Generated Node Admin SDK operation action function for the 'GetCurrentUser' Query. Allow users to pass in custom DataConnect instances. */
-export function getCurrentUser(options?: OperationOptions): Promise<ExecuteOperationResponse<GetCurrentUserData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetBusinessByCode' Query. Allow users to execute without passing in DataConnect. */
-export function getBusinessByCode(dc: DataConnect, vars: GetBusinessByCodeVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessByCodeData>>;
-/** Generated Node Admin SDK operation action function for the 'GetBusinessByCode' Query. Allow users to pass in custom DataConnect instances. */
-export function getBusinessByCode(vars: GetBusinessByCodeVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessByCodeData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetPendingEmployeeRequests' Query. Allow users to execute without passing in DataConnect. */
-export function getPendingEmployeeRequests(dc: DataConnect, vars: GetPendingEmployeeRequestsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPendingEmployeeRequestsData>>;
-/** Generated Node Admin SDK operation action function for the 'GetPendingEmployeeRequests' Query. Allow users to pass in custom DataConnect instances. */
-export function getPendingEmployeeRequests(vars: GetPendingEmployeeRequestsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPendingEmployeeRequestsData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetAllBusinesses' Query. Allow users to execute without passing in DataConnect. */
-export function getAllBusinesses(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetAllBusinessesData>>;
-/** Generated Node Admin SDK operation action function for the 'GetAllBusinesses' Query. Allow users to pass in custom DataConnect instances. */
-export function getAllBusinesses(options?: OperationOptions): Promise<ExecuteOperationResponse<GetAllBusinessesData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetClientOrders' Query. Allow users to execute without passing in DataConnect. */
-export function getClientOrders(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetClientOrdersData>>;
-/** Generated Node Admin SDK operation action function for the 'GetClientOrders' Query. Allow users to pass in custom DataConnect instances. */
-export function getClientOrders(options?: OperationOptions): Promise<ExecuteOperationResponse<GetClientOrdersData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetBusinessOrders' Query. Allow users to execute without passing in DataConnect. */
-export function getBusinessOrders(dc: DataConnect, vars: GetBusinessOrdersVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessOrdersData>>;
-/** Generated Node Admin SDK operation action function for the 'GetBusinessOrders' Query. Allow users to pass in custom DataConnect instances. */
-export function getBusinessOrders(vars: GetBusinessOrdersVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessOrdersData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetActiveEmployees' Query. Allow users to execute without passing in DataConnect. */
-export function getActiveEmployees(dc: DataConnect, vars: GetActiveEmployeesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetActiveEmployeesData>>;
-/** Generated Node Admin SDK operation action function for the 'GetActiveEmployees' Query. Allow users to pass in custom DataConnect instances. */
-export function getActiveEmployees(vars: GetActiveEmployeesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetActiveEmployeesData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetBusinessServices' Query. Allow users to execute without passing in DataConnect. */
-export function getBusinessServices(dc: DataConnect, vars: GetBusinessServicesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessServicesData>>;
-/** Generated Node Admin SDK operation action function for the 'GetBusinessServices' Query. Allow users to pass in custom DataConnect instances. */
-export function getBusinessServices(vars: GetBusinessServicesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessServicesData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetMyVehicles' Query. Allow users to execute without passing in DataConnect. */
-export function getMyVehicles(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetMyVehiclesData>>;
-/** Generated Node Admin SDK operation action function for the 'GetMyVehicles' Query. Allow users to pass in custom DataConnect instances. */
-export function getMyVehicles(options?: OperationOptions): Promise<ExecuteOperationResponse<GetMyVehiclesData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetVehicleBrands' Query. Allow users to execute without passing in DataConnect. */
-export function getVehicleBrands(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetVehicleBrandsData>>;
-/** Generated Node Admin SDK operation action function for the 'GetVehicleBrands' Query. Allow users to pass in custom DataConnect instances. */
-export function getVehicleBrands(options?: OperationOptions): Promise<ExecuteOperationResponse<GetVehicleBrandsData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetVehicleModelsByBrand' Query. Allow users to execute without passing in DataConnect. */
-export function getVehicleModelsByBrand(dc: DataConnect, vars: GetVehicleModelsByBrandVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetVehicleModelsByBrandData>>;
-/** Generated Node Admin SDK operation action function for the 'GetVehicleModelsByBrand' Query. Allow users to pass in custom DataConnect instances. */
-export function getVehicleModelsByBrand(vars: GetVehicleModelsByBrandVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetVehicleModelsByBrandData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetActiveBusinessOrders' Query. Allow users to execute without passing in DataConnect. */
-export function getActiveBusinessOrders(dc: DataConnect, vars: GetActiveBusinessOrdersVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetActiveBusinessOrdersData>>;
-/** Generated Node Admin SDK operation action function for the 'GetActiveBusinessOrders' Query. Allow users to pass in custom DataConnect instances. */
-export function getActiveBusinessOrders(vars: GetActiveBusinessOrdersVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetActiveBusinessOrdersData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetEmployeeAvailability' Query. Allow users to execute without passing in DataConnect. */
-export function getEmployeeAvailability(dc: DataConnect, vars: GetEmployeeAvailabilityVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetEmployeeAvailabilityData>>;
-/** Generated Node Admin SDK operation action function for the 'GetEmployeeAvailability' Query. Allow users to pass in custom DataConnect instances. */
-export function getEmployeeAvailability(vars: GetEmployeeAvailabilityVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetEmployeeAvailabilityData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetBusinessHours' Query. Allow users to execute without passing in DataConnect. */
-export function getBusinessHours(dc: DataConnect, vars: GetBusinessHoursVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessHoursData>>;
-/** Generated Node Admin SDK operation action function for the 'GetBusinessHours' Query. Allow users to pass in custom DataConnect instances. */
-export function getBusinessHours(vars: GetBusinessHoursVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessHoursData>>;
-
-/** Generated Node Admin SDK operation action function for the 'SuperAdminGetBusinesses' Query. Allow users to execute without passing in DataConnect. */
-export function superAdminGetBusinesses(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<SuperAdminGetBusinessesData>>;
-/** Generated Node Admin SDK operation action function for the 'SuperAdminGetBusinesses' Query. Allow users to pass in custom DataConnect instances. */
-export function superAdminGetBusinesses(options?: OperationOptions): Promise<ExecuteOperationResponse<SuperAdminGetBusinessesData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetMyBusinesses' Query. Allow users to execute without passing in DataConnect. */
-export function getMyBusinesses(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetMyBusinessesData>>;
-/** Generated Node Admin SDK operation action function for the 'GetMyBusinesses' Query. Allow users to pass in custom DataConnect instances. */
-export function getMyBusinesses(options?: OperationOptions): Promise<ExecuteOperationResponse<GetMyBusinessesData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetEmployeeHistoryOrdersPaged' Query. Allow users to execute without passing in DataConnect. */
-export function getEmployeeHistoryOrdersPaged(dc: DataConnect, vars: GetEmployeeHistoryOrdersPagedVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetEmployeeHistoryOrdersPagedData>>;
-/** Generated Node Admin SDK operation action function for the 'GetEmployeeHistoryOrdersPaged' Query. Allow users to pass in custom DataConnect instances. */
-export function getEmployeeHistoryOrdersPaged(vars: GetEmployeeHistoryOrdersPagedVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetEmployeeHistoryOrdersPagedData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetClientHistoryOrdersPaged' Query. Allow users to execute without passing in DataConnect. */
-export function getClientHistoryOrdersPaged(dc: DataConnect, vars: GetClientHistoryOrdersPagedVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetClientHistoryOrdersPagedData>>;
-/** Generated Node Admin SDK operation action function for the 'GetClientHistoryOrdersPaged' Query. Allow users to pass in custom DataConnect instances. */
-export function getClientHistoryOrdersPaged(vars: GetClientHistoryOrdersPagedVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetClientHistoryOrdersPagedData>>;
-
-/** Generated Node Admin SDK operation action function for the 'FindUserByPhone' Query. Allow users to execute without passing in DataConnect. */
-export function findUserByPhone(dc: DataConnect, vars: FindUserByPhoneVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<FindUserByPhoneData>>;
-/** Generated Node Admin SDK operation action function for the 'FindUserByPhone' Query. Allow users to pass in custom DataConnect instances. */
-export function findUserByPhone(vars: FindUserByPhoneVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<FindUserByPhoneData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetClientInvoices' Query. Allow users to execute without passing in DataConnect. */
-export function getClientInvoices(dc: DataConnect, vars?: GetClientInvoicesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetClientInvoicesData>>;
-/** Generated Node Admin SDK operation action function for the 'GetClientInvoices' Query. Allow users to pass in custom DataConnect instances. */
-export function getClientInvoices(vars?: GetClientInvoicesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetClientInvoicesData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetEmployeeInvoices' Query. Allow users to execute without passing in DataConnect. */
-export function getEmployeeInvoices(dc: DataConnect, vars?: GetEmployeeInvoicesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetEmployeeInvoicesData>>;
-/** Generated Node Admin SDK operation action function for the 'GetEmployeeInvoices' Query. Allow users to pass in custom DataConnect instances. */
-export function getEmployeeInvoices(vars?: GetEmployeeInvoicesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetEmployeeInvoicesData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetBusinessInvoices' Query. Allow users to execute without passing in DataConnect. */
-export function getBusinessInvoices(dc: DataConnect, vars: GetBusinessInvoicesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessInvoicesData>>;
-/** Generated Node Admin SDK operation action function for the 'GetBusinessInvoices' Query. Allow users to pass in custom DataConnect instances. */
-export function getBusinessInvoices(vars: GetBusinessInvoicesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessInvoicesData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetInvoiceById' Query. Allow users to execute without passing in DataConnect. */
-export function getInvoiceById(dc: DataConnect, vars: GetInvoiceByIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetInvoiceByIdData>>;
-/** Generated Node Admin SDK operation action function for the 'GetInvoiceById' Query. Allow users to pass in custom DataConnect instances. */
-export function getInvoiceById(vars: GetInvoiceByIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetInvoiceByIdData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetInvoicesByDateRange' Query. Allow users to execute without passing in DataConnect. */
-export function getInvoicesByDateRange(dc: DataConnect, vars: GetInvoicesByDateRangeVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetInvoicesByDateRangeData>>;
-/** Generated Node Admin SDK operation action function for the 'GetInvoicesByDateRange' Query. Allow users to pass in custom DataConnect instances. */
-export function getInvoicesByDateRange(vars: GetInvoicesByDateRangeVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetInvoicesByDateRangeData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetBusinessDetails' Query. Allow users to execute without passing in DataConnect. */
-export function getBusinessDetails(dc: DataConnect, vars: GetBusinessDetailsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessDetailsData>>;
-/** Generated Node Admin SDK operation action function for the 'GetBusinessDetails' Query. Allow users to pass in custom DataConnect instances. */
-export function getBusinessDetails(vars: GetBusinessDetailsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessDetailsData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetUserNotifications' Query. Allow users to execute without passing in DataConnect. */
-export function getUserNotifications(dc: DataConnect, vars: GetUserNotificationsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetUserNotificationsData>>;
-/** Generated Node Admin SDK operation action function for the 'GetUserNotifications' Query. Allow users to pass in custom DataConnect instances. */
-export function getUserNotifications(vars: GetUserNotificationsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetUserNotificationsData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetPrepaidHistory' Query. Allow users to execute without passing in DataConnect. */
-export function getPrepaidHistory(dc: DataConnect, vars: GetPrepaidHistoryVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPrepaidHistoryData>>;
-/** Generated Node Admin SDK operation action function for the 'GetPrepaidHistory' Query. Allow users to pass in custom DataConnect instances. */
-export function getPrepaidHistory(vars: GetPrepaidHistoryVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPrepaidHistoryData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetPrepaidServiceMetrics' Query. Allow users to execute without passing in DataConnect. */
-export function getPrepaidServiceMetrics(dc: DataConnect, vars: GetPrepaidServiceMetricsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPrepaidServiceMetricsData>>;
-/** Generated Node Admin SDK operation action function for the 'GetPrepaidServiceMetrics' Query. Allow users to pass in custom DataConnect instances. */
-export function getPrepaidServiceMetrics(vars: GetPrepaidServiceMetricsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPrepaidServiceMetricsData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetPrepaidServiceMetricByServiceName' Query. Allow users to execute without passing in DataConnect. */
-export function getPrepaidServiceMetricByServiceName(dc: DataConnect, vars: GetPrepaidServiceMetricByServiceNameVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPrepaidServiceMetricByServiceNameData>>;
-/** Generated Node Admin SDK operation action function for the 'GetPrepaidServiceMetricByServiceName' Query. Allow users to pass in custom DataConnect instances. */
-export function getPrepaidServiceMetricByServiceName(vars: GetPrepaidServiceMetricByServiceNameVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPrepaidServiceMetricByServiceNameData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetOrderById' Query. Allow users to execute without passing in DataConnect. */
-export function getOrderById(dc: DataConnect, vars: GetOrderByIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetOrderByIdData>>;
-/** Generated Node Admin SDK operation action function for the 'GetOrderById' Query. Allow users to pass in custom DataConnect instances. */
-export function getOrderById(vars: GetOrderByIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetOrderByIdData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetPrepaidHistoryByOrderId' Query. Allow users to execute without passing in DataConnect. */
-export function getPrepaidHistoryByOrderId(dc: DataConnect, vars: GetPrepaidHistoryByOrderIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPrepaidHistoryByOrderIdData>>;
-/** Generated Node Admin SDK operation action function for the 'GetPrepaidHistoryByOrderId' Query. Allow users to pass in custom DataConnect instances. */
-export function getPrepaidHistoryByOrderId(vars: GetPrepaidHistoryByOrderIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPrepaidHistoryByOrderIdData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetBusinessReservationConfig' Query. Allow users to execute without passing in DataConnect. */
-export function getBusinessReservationConfig(dc: DataConnect, vars: GetBusinessReservationConfigVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessReservationConfigData>>;
-/** Generated Node Admin SDK operation action function for the 'GetBusinessReservationConfig' Query. Allow users to pass in custom DataConnect instances. */
-export function getBusinessReservationConfig(vars: GetBusinessReservationConfigVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessReservationConfigData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetActiveReservations' Query. Allow users to execute without passing in DataConnect. */
-export function getActiveReservations(dc: DataConnect, vars: GetActiveReservationsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetActiveReservationsData>>;
-/** Generated Node Admin SDK operation action function for the 'GetActiveReservations' Query. Allow users to pass in custom DataConnect instances. */
-export function getActiveReservations(vars: GetActiveReservationsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetActiveReservationsData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetReservationByOrderId' Query. Allow users to execute without passing in DataConnect. */
-export function getReservationByOrderId(dc: DataConnect, vars: GetReservationByOrderIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetReservationByOrderIdData>>;
-/** Generated Node Admin SDK operation action function for the 'GetReservationByOrderId' Query. Allow users to pass in custom DataConnect instances. */
-export function getReservationByOrderId(vars: GetReservationByOrderIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetReservationByOrderIdData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetBusinessReviews' Query. Allow users to execute without passing in DataConnect. */
-export function getBusinessReviews(dc: DataConnect, vars: GetBusinessReviewsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessReviewsData>>;
-/** Generated Node Admin SDK operation action function for the 'GetBusinessReviews' Query. Allow users to pass in custom DataConnect instances. */
-export function getBusinessReviews(vars: GetBusinessReviewsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessReviewsData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetOrderReview' Query. Allow users to execute without passing in DataConnect. */
-export function getOrderReview(dc: DataConnect, vars: GetOrderReviewVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetOrderReviewData>>;
-/** Generated Node Admin SDK operation action function for the 'GetOrderReview' Query. Allow users to pass in custom DataConnect instances. */
-export function getOrderReview(vars: GetOrderReviewVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetOrderReviewData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetGlobalAppRatings' Query. Allow users to execute without passing in DataConnect. */
-export function getGlobalAppRatings(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetGlobalAppRatingsData>>;
-/** Generated Node Admin SDK operation action function for the 'GetGlobalAppRatings' Query. Allow users to pass in custom DataConnect instances. */
-export function getGlobalAppRatings(options?: OperationOptions): Promise<ExecuteOperationResponse<GetGlobalAppRatingsData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetOrderDetailsForPayment' Query. Allow users to execute without passing in DataConnect. */
-export function getOrderDetailsForPayment(dc: DataConnect, vars: GetOrderDetailsForPaymentVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetOrderDetailsForPaymentData>>;
-/** Generated Node Admin SDK operation action function for the 'GetOrderDetailsForPayment' Query. Allow users to pass in custom DataConnect instances. */
-export function getOrderDetailsForPayment(vars: GetOrderDetailsForPaymentVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetOrderDetailsForPaymentData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetInvoiceByOrderId' Query. Allow users to execute without passing in DataConnect. */
-export function getInvoiceByOrderId(dc: DataConnect, vars: GetInvoiceByOrderIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetInvoiceByOrderIdData>>;
-/** Generated Node Admin SDK operation action function for the 'GetInvoiceByOrderId' Query. Allow users to pass in custom DataConnect instances. */
-export function getInvoiceByOrderId(vars: GetInvoiceByOrderIdVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetInvoiceByOrderIdData>>;
-
-/** Generated Node Admin SDK operation action function for the 'GetInvoiceDetailsForUrl' Query. Allow users to execute without passing in DataConnect. */
-export function getInvoiceDetailsForUrl(dc: DataConnect, vars: GetInvoiceDetailsForUrlVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetInvoiceDetailsForUrlData>>;
-/** Generated Node Admin SDK operation action function for the 'GetInvoiceDetailsForUrl' Query. Allow users to pass in custom DataConnect instances. */
-export function getInvoiceDetailsForUrl(vars: GetInvoiceDetailsForUrlVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetInvoiceDetailsForUrlData>>;
-
-/** Generated Node Admin SDK operation action function for the 'CheckBusinessEmployeeAdmin' Query. Allow users to execute without passing in DataConnect. */
-export function checkBusinessEmployeeAdmin(dc: DataConnect, vars: CheckBusinessEmployeeAdminVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<CheckBusinessEmployeeAdminData>>;
-/** Generated Node Admin SDK operation action function for the 'CheckBusinessEmployeeAdmin' Query. Allow users to pass in custom DataConnect instances. */
-export function checkBusinessEmployeeAdmin(vars: CheckBusinessEmployeeAdminVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<CheckBusinessEmployeeAdminData>>;
 

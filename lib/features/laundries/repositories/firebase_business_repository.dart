@@ -7,6 +7,21 @@ import 'package:washgo/features/laundries/models/active_employee.dart';
 import 'package:washgo/features/laundries/models/prepaid_models.dart';
 import 'business_repository.dart';
 
+/// Safely converts a value that might be a bool, int, or double to a double.
+/// Handles Firebase Data Connect SDK issue on Flutter Web.
+double _safeDouble(dynamic value) {
+  if (value is double) return value;
+  if (value is int) return value.toDouble();
+  if (value is num) return value.toDouble();
+  if (value is bool) return 0.0;
+  return 0.0;
+}
+
+double? _safeDoubleNullable(dynamic value) {
+  if (value == null) return null;
+  return _safeDouble(value);
+}
+
 class FirebaseBusinessRepository implements BusinessRepository {
   final ExampleConnector _connector = ExampleConnector.instance;
 
@@ -22,11 +37,11 @@ class FirebaseBusinessRepository implements BusinessRepository {
       businessCode: business.businessCode,
       descripcion: business.descripcion,
       telefono: business.telefono,
-      latitud: business.latitud,
-      longitud: business.longitud,
+      latitud: _safeDoubleNullable(business.latitud),
+      longitud: _safeDoubleNullable(business.longitud),
       status: business.status.stringValue,
-      saldoPrepagoInicial: business.saldoPrepagoInicial,
-      saldoPrepagoConsumido: business.saldoPrepagoConsumido,
+      saldoPrepagoInicial: _safeDouble(business.saldoPrepagoInicial),
+      saldoPrepagoConsumido: _safeDouble(business.saldoPrepagoConsumido),
     );
   }
 
@@ -77,16 +92,16 @@ class FirebaseBusinessRepository implements BusinessRepository {
         id: svc.id,
         nombre: svc.nombre,
         descripcion: svc.descripcion,
-        precioPequeno: svc.precioPequeno,
-        precioMediano: svc.precioMediano,
-        precioGrande: svc.precioGrande,
-        precioMoto: svc.precioMoto,
-        precioOwnerPequeno: svc.precioOwnerPequeno,
-        precioOwnerMediano: svc.precioOwnerMediano,
-        precioOwnerGrande: svc.precioOwnerGrande,
-        precioOwnerMoto: svc.precioOwnerMoto,
+        precioPequeno: _safeDouble(svc.precioPequeno),
+        precioMediano: _safeDouble(svc.precioMediano),
+        precioGrande: _safeDouble(svc.precioGrande),
+        precioMoto: _safeDouble(svc.precioMoto),
+        precioOwnerPequeno: _safeDouble(svc.precioOwnerPequeno),
+        precioOwnerMediano: _safeDouble(svc.precioOwnerMediano),
+        precioOwnerGrande: _safeDouble(svc.precioOwnerGrande),
+        precioOwnerMoto: _safeDouble(svc.precioOwnerMoto),
         precioPendiente: svc.precioPendiente,
-        costo: svc.costo,
+        costo: _safeDouble(svc.costo),
         duracionMinutos: svc.duracionMinutos,
         tipo: svc.tipo is Known<ServiceType>
             ? (svc.tipo as Known<ServiceType>).value
@@ -328,11 +343,11 @@ class FirebaseBusinessRepository implements BusinessRepository {
         businessCode: b.businessCode,
         descripcion: b.descripcion,
         telefono: b.telefono,
-        latitud: b.latitud,
-        longitud: b.longitud,
+        latitud: _safeDoubleNullable(b.latitud),
+        longitud: _safeDoubleNullable(b.longitud),
         status: b.status.stringValue,
-        saldoPrepagoInicial: b.saldoPrepagoInicial,
-        saldoPrepagoConsumido: b.saldoPrepagoConsumido,
+        saldoPrepagoInicial: _safeDouble(b.saldoPrepagoInicial),
+        saldoPrepagoConsumido: _safeDouble(b.saldoPrepagoConsumido),
       );
     }).toList();
   }
@@ -364,9 +379,9 @@ class FirebaseBusinessRepository implements BusinessRepository {
       return PrepaidServiceMetricModel(
         id: m.id,
         serviceName: m.serviceName,
-        costoUnitario: m.costoUnitario,
+        costoUnitario: _safeDouble(m.costoUnitario),
         cantidad: m.cantidad,
-        totalConsumido: m.totalConsumido,
+        totalConsumido: _safeDouble(m.totalConsumido),
       );
     }).toList();
   }
@@ -379,8 +394,8 @@ class FirebaseBusinessRepository implements BusinessRepository {
         id: h.id,
         orderId: h.orderId,
         serviceName: h.serviceName,
-        costoConsumido: h.costoConsumido,
-        saldoResultante: h.saldoResultante,
+        costoConsumido: _safeDouble(h.costoConsumido),
+        saldoResultante: _safeDouble(h.saldoResultante),
         fecha: h.fecha.toDateTime(),
       );
     }).toList();

@@ -1026,7 +1026,7 @@ class LaundryBookingSheet {
                               Expanded(
                                 child: myVehicles.isEmpty
                                     ? Text(
-                                        'Sin vehículo (Toyota Corolla)',
+                                        'Sin vehículo registrado',
                                         style: GoogleFonts.inter(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 13,
@@ -1045,7 +1045,7 @@ class LaundryBookingSheet {
                                             >(
                                               value: car,
                                               child: Text(
-                                                car.brandModel,
+                                                '${car.categoryDisplayName} (${car.plate})',
                                                 style: GoogleFonts.inter(
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 13,

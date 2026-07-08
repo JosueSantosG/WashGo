@@ -72,6 +72,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   List<ClientOrder> _clientOrders = [];
   bool _loadingOrders = false;
   StreamSubscription<List<ClientOrder>>? _ordersSubscription;
+  StreamSubscription<User?>? _authStateSubscription;
 
   bool _showFilterPanel = false;
   final bool _filterEcoOnly = false;
@@ -91,6 +92,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   void _subscribeToClientOrders() {
     _ordersSubscription?.cancel();
+    if (FirebaseAuth.instance.currentUser == null) {
+      if (mounted) {
+        setState(() {
+          _clientOrders = [];
+          _loadingOrders = false;
+        });
+      }
+      return;
+    }
     _ordersSubscription = _orderRepository.watchClientOrders().listen(
       (orders) {
         if (mounted) {
@@ -108,6 +118,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _fetchClientOrders() async {
     if (!mounted) return;
+    if (FirebaseAuth.instance.currentUser == null) {
+      setState(() {
+        _clientOrders = [];
+        _loadingOrders = false;
+      });
+      return;
+    }
     setState(() {
       _loadingOrders = true;
     });
@@ -362,6 +379,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _fetchMyVehicles() async {
     if (!mounted) return;
+    if (FirebaseAuth.instance.currentUser == null) {
+      setState(() {
+        _myVehicles = [];
+        _loadingVehicles = false;
+      });
+      return;
+    }
     setState(() {
       _loadingVehicles = true;
     });
@@ -418,11 +442,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     super.initState();
     _selectedIndex = widget.initialTab;
     _filteredLaundries = List.from(_allLaundries);
-    _loadCurrentUser();
     _initLocationTracking();
     _fetchSavedBusinesses();
-    _subscribeToClientOrders();
-    _fetchMyVehicles();
+
+    _authStateSubscription = FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (user != null) {
+        _loadCurrentUser();
+        _subscribeToClientOrders();
+        _fetchMyVehicles();
+      } else {
+        if (mounted) {
+          setState(() {
+            _washGoUser = null;
+            _userRoles = [];
+            _myVehicles = [];
+            _clientOrders = [];
+            _isRolesLoading = false;
+          });
+        }
+        _ordersSubscription?.cancel();
+      }
+    });
   }
 
   @override
@@ -442,6 +482,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void dispose() {
     _positionSubscription?.cancel();
     _ordersSubscription?.cancel();
+    _authStateSubscription?.cancel();
     _mapAnimationController?.dispose();
     _mapController.dispose();
     _pageController.dispose();

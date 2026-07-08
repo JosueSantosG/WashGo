@@ -6,6 +6,8 @@ import 'package:washgo/features/invoices/models/invoice.dart';
 import 'package:washgo/features/invoices/repositories/invoice_repository.dart';
 import 'package:washgo/features/invoices/utils/invoice_cache_manager.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 
 
 class ClientInvoiceHistoryPage extends StatefulWidget {
@@ -42,7 +44,11 @@ class _ClientInvoiceHistoryPageState extends State<ClientInvoiceHistoryPage> {
   void initState() {
     super.initState();
     _scrollController.addListener(_scrollListener);
-    _fetchInvoices();
+    if (FirebaseAuth.instance.currentUser != null) {
+      _fetchInvoices();
+    } else {
+      _isLoading = false;
+    }
   }
 
   @override
@@ -642,6 +648,7 @@ class _ClientInvoiceHistoryPageState extends State<ClientInvoiceHistoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isGuest = FirebaseAuth.instance.currentUser == null;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -656,9 +663,11 @@ class _ClientInvoiceHistoryPageState extends State<ClientInvoiceHistoryPage> {
         elevation: 0,
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          // Filter Panel
+      body: isGuest
+          ? _buildGuestPlaceholder(context)
+          : Column(
+              children: [
+                // Filter Panel
           Container(
             color: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -910,6 +919,76 @@ class _ClientInvoiceHistoryPageState extends State<ClientInvoiceHistoryPage> {
                           ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildGuestPlaceholder(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.receipt_long_rounded,
+                size: 80,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Tus Facturas',
+              style: GoogleFonts.inter(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Inicia sesión para ver tu historial de facturas y detalles de tus pagos.',
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                color: AppColors.onSurfaceVariant,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: () {
+                  GoRouter.of(context).go('/login');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  'Iniciar Sesión',
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

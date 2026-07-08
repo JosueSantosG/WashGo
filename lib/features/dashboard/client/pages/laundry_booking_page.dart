@@ -190,7 +190,7 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
     if (_selectedVehicle != null) {
       return _selectedVehicle!.type;
     }
-    return 'Sedan';
+    return 'Pequeño';
   }
 
   double _getServicePriceForCategory(Map<String, dynamic> service, String category) {
@@ -208,11 +208,11 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
       return null;
     }
 
-    if (cat == 'hatchback') {
+    if (cat == 'pequeño' || cat == 'pequeno' || cat == 'hatchback') {
       price = readPositivePrice('precioPequeno');
-    } else if (cat == 'sedan') {
+    } else if (cat == 'mediano' || cat == 'sedan') {
       price = readPositivePrice('precioMediano');
-    } else if (cat == 'suv') {
+    } else if (cat == 'grande' || cat == 'suv') {
       price = readPositivePrice('precioGrande');
     } else if (cat == 'moto') {
       price = readPositivePrice('precioMoto');
@@ -681,7 +681,7 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
                                                         const Icon(Icons.directions_car_rounded, color: AppColors.textSecondary, size: 20),
                                                         const SizedBox(width: 12),
                                                         Text(
-                                                          '${car.brandModel} (${car.plate})',
+                                                          '${car.categoryDisplayName} (${car.plate})',
                                                           style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                                                         ),
                                                       ],
@@ -1840,12 +1840,12 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
 
             String obs = '$schedulePrefix - Vehículo: ';
             if (_selectedVehicle != null) {
-              obs += _selectedVehicle!.brandModel;
+              obs += _selectedVehicle!.categoryDisplayName;
               if (_selectedVehicle!.plate.isNotEmpty) {
                 obs += ' - Placa: ${_selectedVehicle!.plate}';
               }
             } else {
-              obs += 'Toyota Corolla';
+              obs += 'Sin vehículo registrado';
             }
 
             final result = await _orderRepository.createOrder(

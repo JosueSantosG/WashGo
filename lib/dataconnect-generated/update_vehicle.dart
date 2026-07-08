@@ -4,9 +4,14 @@ class UpdateVehicleVariablesBuilder {
   String id;
   String modelId;
   Optional<String> _plate = Optional.optional(nativeFromJson, nativeToJson);
+  Optional<String> _category = Optional.optional(nativeFromJson, nativeToJson);
 
   final FirebaseDataConnect _dataConnect;  UpdateVehicleVariablesBuilder plate(String? t) {
    _plate.value = t;
+   return this;
+  }
+  UpdateVehicleVariablesBuilder category(String? t) {
+   _category.value = t;
    return this;
   }
 
@@ -18,7 +23,7 @@ class UpdateVehicleVariablesBuilder {
   }
 
   MutationRef<UpdateVehicleData, UpdateVehicleVariables> ref() {
-    UpdateVehicleVariables vars= UpdateVehicleVariables(id: id,modelId: modelId,plate: _plate,);
+    UpdateVehicleVariables vars= UpdateVehicleVariables(id: id,modelId: modelId,plate: _plate,category: _category,);
     return _dataConnect.mutation("UpdateVehicle", dataDeserializer, varsSerializer, vars);
   }
 }
@@ -98,6 +103,7 @@ class UpdateVehicleVariables {
   final String id;
   final String modelId;
   late final Optional<String>plate;
+  late final Optional<String>category;
   @Deprecated('fromJson is deprecated for Variable classes as they are no longer required for deserialization.')
   UpdateVehicleVariables.fromJson(Map<String, dynamic> json):
   
@@ -109,6 +115,10 @@ class UpdateVehicleVariables {
   
     plate = Optional.optional(nativeFromJson, nativeToJson);
     plate.value = json['plate'] == null ? null : nativeFromJson<String>(json['plate']);
+  
+  
+    category = Optional.optional(nativeFromJson, nativeToJson);
+    category.value = json['category'] == null ? null : nativeFromJson<String>(json['category']);
   
   }
   @override
@@ -123,11 +133,12 @@ class UpdateVehicleVariables {
     final UpdateVehicleVariables otherTyped = other as UpdateVehicleVariables;
     return id == otherTyped.id && 
     modelId == otherTyped.modelId && 
-    plate == otherTyped.plate;
+    plate == otherTyped.plate && 
+    category == otherTyped.category;
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, modelId.hashCode, plate.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, modelId.hashCode, plate.hashCode, category.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -137,6 +148,9 @@ class UpdateVehicleVariables {
     if(plate.state == OptionalState.set) {
       json['plate'] = plate.toJson();
     }
+    if(category.state == OptionalState.set) {
+      json['category'] = category.toJson();
+    }
     return json;
   }
 
@@ -144,6 +158,7 @@ class UpdateVehicleVariables {
     required this.id,
     required this.modelId,
     required this.plate,
+    required this.category,
   });
 }
 

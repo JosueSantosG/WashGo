@@ -206,6 +206,7 @@ type Vehicle @table {
   client: User!
   model: VehicleModel!
   plate: String
+  category: String
 }
 
 # Notifications

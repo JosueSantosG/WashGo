@@ -204,7 +204,7 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'Vehículo: ${widget.selectedVehicle!.brandModel} ${widget.selectedVehicle!.plate.isNotEmpty ? "(${widget.selectedVehicle!.plate})" : ""}',
+                                    'Vehículo: ${widget.selectedVehicle!.categoryDisplayName} ${widget.selectedVehicle!.plate.isNotEmpty ? "(${widget.selectedVehicle!.plate})" : ""}',
                                     style: GoogleFonts.inter(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,

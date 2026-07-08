@@ -7,11 +7,13 @@ abstract class VehicleRepository {
   Future<void> addVehicle({
     required String modelId,
     String? plate,
+    String? category,
   });
   Future<void> updateVehicle({
     required String id,
     required String modelId,
     String? plate,
+    String? category,
   });
   Future<void> deleteVehicle(String id);
 }

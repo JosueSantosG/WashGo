@@ -30,7 +30,12 @@ String? authRedirect(BuildContext context, GoRouterState state) {
   final bool isLoggingIn =
       state.matchedLocation == AppRoutes.login || state.matchedLocation == AppRoutes.register;
 
-  final bool isPublicRoute = state.matchedLocation == AppRoutes.terms ||
+  final bool isPublicRoute = state.matchedLocation == AppRoutes.home ||
+      state.matchedLocation == '/explore' ||
+      state.matchedLocation == '/reservas' ||
+      state.matchedLocation == '/facturas' ||
+      state.matchedLocation == '/perfil' ||
+      state.matchedLocation == AppRoutes.terms ||
       state.matchedLocation == AppRoutes.privacy ||
       state.matchedLocation == AppRoutes.paypalSuccess ||
       state.matchedLocation == AppRoutes.paypalCancel ||

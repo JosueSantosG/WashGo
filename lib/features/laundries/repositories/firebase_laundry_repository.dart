@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:firebase_data_connect/firebase_data_connect.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
 import 'package:washgo/features/dashboard/client/models/laundry_item.dart';
+import 'package:washgo/core/utils/type_utils.dart';
 import 'laundry_repository.dart';
 
 class FirebaseLaundryRepository implements LaundryRepository {
@@ -181,13 +182,13 @@ class FirebaseLaundryRepository implements LaundryRepository {
         final activeServices = b.services_on_business.where((s) => s.activo == true && s.precioPendiente == false).toList();
         if (activeServices.isNotEmpty) {
           final minPrice = activeServices.map((s) {
-            final prices = [s.precioPequeno, s.precioMediano, s.precioGrande, s.precioMoto];
+            final prices = [safeDouble(s.precioPequeno), safeDouble(s.precioMediano), safeDouble(s.precioGrande), safeDouble(s.precioMoto)];
             return prices.reduce((a, b) => a < b ? a : b);
           }).reduce((a, b) => a < b ? a : b);
           resolvedPrice = minPrice;
         } else if (b.services_on_business.isNotEmpty) {
           final minPrice = b.services_on_business.map((s) {
-            final prices = [s.precioPequeno, s.precioMediano, s.precioGrande, s.precioMoto];
+            final prices = [safeDouble(s.precioPequeno), safeDouble(s.precioMediano), safeDouble(s.precioGrande), safeDouble(s.precioMoto)];
             return prices.reduce((a, b) => a < b ? a : b);
           }).reduce((a, b) => a < b ? a : b);
           resolvedPrice = minPrice;
@@ -251,13 +252,13 @@ class FirebaseLaundryRepository implements LaundryRepository {
           'id': s.id,
           'nombre': s.nombre,
           'descripcion': s.descripcion,
-          'precio': basePrice > 0 ? basePrice : s.precioPequeno,
+          'precio': basePrice > 0 ? basePrice : safeDouble(s.precioPequeno),
           'precioBase': basePrice,
-          'precioPequeno': s.precioPequeno,
-          'precioMediano': s.precioMediano,
-          'precioGrande': s.precioGrande,
-          'precioMoto': s.precioMoto,
-          'costo': s.costo,
+          'precioPequeno': safeDouble(s.precioPequeno),
+          'precioMediano': safeDouble(s.precioMediano),
+          'precioGrande': safeDouble(s.precioGrande),
+          'precioMoto': safeDouble(s.precioMoto),
+          'costo': safeDouble(s.costo),
           'duracionMinutos': s.duracionMinutos,
           'tipo': tVal == ServiceType.LOCAL ? 'LOCAL' : 'DOMICILIO',
         };

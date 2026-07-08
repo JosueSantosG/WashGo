@@ -8,12 +8,14 @@ import 'package:washgo/config/routes/app_routes.dart';
 import 'package:washgo/features/auth/models/super_admin_session.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
 import 'package:washgo/features/dashboard/admin/widgets/app_ratings_tab.dart';
+import 'package:washgo/core/utils/type_utils.dart';
 
 class SuperAdminDashboardPage extends StatefulWidget {
   const SuperAdminDashboardPage({super.key});
 
   @override
-  State<SuperAdminDashboardPage> createState() => _SuperAdminDashboardPageState();
+  State<SuperAdminDashboardPage> createState() =>
+      _SuperAdminDashboardPageState();
 }
 
 class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
@@ -49,8 +51,10 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
     });
 
     try {
-      final response = await ExampleConnector.instance.superAdminGetBusinesses().execute();
-      
+      final response = await ExampleConnector.instance
+          .superAdminGetBusinesses()
+          .execute();
+
       // Clear old controllers to avoid memory leaks and reload with fresh data
       for (final controller in _priceControllers.values) {
         controller.dispose();
@@ -69,7 +73,10 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
     }
   }
 
-  Future<void> _updateStatus(String businessId, BusinessStatus newStatus) async {
+  Future<void> _updateStatus(
+    String businessId,
+    BusinessStatus newStatus,
+  ) async {
     setState(() {
       _updatingIds[businessId] = true;
     });
@@ -93,10 +100,18 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
           final gController = _priceControllers[gKey];
           final moController = _priceControllers[moKey];
 
-          final defaultP = service.precioPendiente ? service.precioOwnerPequeno : service.precioPequeno;
-          final defaultM = service.precioPendiente ? service.precioOwnerMediano : service.precioMediano;
-          final defaultG = service.precioPendiente ? service.precioOwnerGrande : service.precioGrande;
-          final defaultMo = service.precioPendiente ? service.precioOwnerMoto : service.precioMoto;
+          final defaultP = service.precioPendiente
+              ? safeDouble(service.precioOwnerPequeno)
+              : safeDouble(service.precioPequeno);
+          final defaultM = service.precioPendiente
+              ? safeDouble(service.precioOwnerMediano)
+              : safeDouble(service.precioMediano);
+          final defaultG = service.precioPendiente
+              ? safeDouble(service.precioOwnerGrande)
+              : safeDouble(service.precioGrande);
+          final defaultMo = service.precioPendiente
+              ? safeDouble(service.precioOwnerMoto)
+              : safeDouble(service.precioMoto);
 
           var pPrice = pController != null
               ? (double.tryParse(pController.text.trim()) ?? defaultP)
@@ -117,21 +132,22 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
               ? (double.tryParse(moController.text.trim()) ?? defaultMo)
               : defaultMo;
           if (moPrice < 0) moPrice = defaultMo;
-          
-          await ExampleConnector.instance.superAdminApproveServicePrice(
-            id: service.id,
-            precioAprobadoPequeno: pPrice,
-            precioAprobadoMediano: mPrice,
-            precioAprobadoGrande: gPrice,
-            precioAprobadoMoto: moPrice,
-          ).execute();
+
+          await ExampleConnector.instance
+              .superAdminApproveServicePrice(
+                id: service.id,
+                precioAprobadoPequeno: pPrice,
+                precioAprobadoMediano: mPrice,
+                precioAprobadoGrande: gPrice,
+                precioAprobadoMoto: moPrice,
+              )
+              .execute();
         }
       }
 
-      await ExampleConnector.instance.superAdminUpdateBusinessStatus(
-        id: businessId,
-        status: newStatus,
-      ).execute();
+      await ExampleConnector.instance
+          .superAdminUpdateBusinessStatus(id: businessId, status: newStatus)
+          .execute();
 
       // Create notification
       try {
@@ -139,20 +155,25 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
         String mensaje;
         if (newStatus == BusinessStatus.APPROVED) {
           titulo = '¡Local Aprobado!';
-          mensaje = '¡Tu local "$businessName" fue aprobado! Los precios de tus servicios están activos.';
+          mensaje =
+              '¡Tu local "$businessName" fue aprobado! Los precios de tus servicios están activos.';
         } else if (newStatus == BusinessStatus.REJECTED) {
           titulo = 'Local Rechazado';
-          mensaje = 'Tu local "$businessName" ha sido rechazado por el súper administrador.';
+          mensaje =
+              'Tu local "$businessName" ha sido rechazado por el súper administrador.';
         } else {
           titulo = 'Local en Pendiente';
-          mensaje = 'El estado de tu local "$businessName" ha sido cambiado a pendiente de aprobación.';
+          mensaje =
+              'El estado de tu local "$businessName" ha sido cambiado a pendiente de aprobación.';
         }
 
-        await ExampleConnector.instance.createNotification(
-          userId: ownerId,
-          titulo: titulo,
-          mensaje: mensaje,
-        ).execute();
+        await ExampleConnector.instance
+            .createNotification(
+              userId: ownerId,
+              titulo: titulo,
+              mensaje: mensaje,
+            )
+            .execute();
       } catch (e) {
         debugPrint('Error creating notification: $e');
       }
@@ -163,8 +184,8 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
         newStatus == BusinessStatus.APPROVED
             ? 'Local aprobado exitosamente'
             : newStatus == BusinessStatus.REJECTED
-                ? 'Local rechazado exitosamente'
-                : 'Local puesto en pendiente exitosamente',
+            ? 'Local rechazado exitosamente'
+            : 'Local puesto en pendiente exitosamente',
         isError: false,
       );
 
@@ -208,7 +229,9 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
     _showSnackBar('Sesión cerrada correctamente', isError: false);
   }
 
-  BusinessStatus? _getBusinessStatus(SuperAdminGetBusinessesBusinesses laundry) {
+  BusinessStatus? _getBusinessStatus(
+    SuperAdminGetBusinessesBusinesses laundry,
+  ) {
     final s = laundry.status;
     return s is Known<BusinessStatus> ? s.value : null;
   }
@@ -216,13 +239,21 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
   List<SuperAdminGetBusinessesBusinesses> get _filteredBusinesses {
     if (_activeFilter == 'ALL') return _allBusinesses;
     if (_activeFilter == 'PENDING') {
-      return _allBusinesses.where((b) => _getBusinessStatus(b) == BusinessStatus.PENDING_APPROVAL).toList();
+      return _allBusinesses
+          .where(
+            (b) => _getBusinessStatus(b) == BusinessStatus.PENDING_APPROVAL,
+          )
+          .toList();
     }
     if (_activeFilter == 'APPROVED') {
-      return _allBusinesses.where((b) => _getBusinessStatus(b) == BusinessStatus.APPROVED).toList();
+      return _allBusinesses
+          .where((b) => _getBusinessStatus(b) == BusinessStatus.APPROVED)
+          .toList();
     }
     if (_activeFilter == 'REJECTED') {
-      return _allBusinesses.where((b) => _getBusinessStatus(b) == BusinessStatus.REJECTED).toList();
+      return _allBusinesses
+          .where((b) => _getBusinessStatus(b) == BusinessStatus.REJECTED)
+          .toList();
     }
     return _allBusinesses;
   }
@@ -231,9 +262,15 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
   Widget build(BuildContext context) {
     // Stats counters
     final total = _allBusinesses.length;
-    final pending = _allBusinesses.where((b) => _getBusinessStatus(b) == BusinessStatus.PENDING_APPROVAL).length;
-    final approved = _allBusinesses.where((b) => _getBusinessStatus(b) == BusinessStatus.APPROVED).length;
-    final rejected = _allBusinesses.where((b) => _getBusinessStatus(b) == BusinessStatus.REJECTED).length;
+    final pending = _allBusinesses
+        .where((b) => _getBusinessStatus(b) == BusinessStatus.PENDING_APPROVAL)
+        .length;
+    final approved = _allBusinesses
+        .where((b) => _getBusinessStatus(b) == BusinessStatus.APPROVED)
+        .length;
+    final rejected = _allBusinesses
+        .where((b) => _getBusinessStatus(b) == BusinessStatus.REJECTED)
+        .length;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -251,10 +288,7 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
             ),
             Text(
               'Panel de Control Global',
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: AppColors.outline,
-              ),
+              style: GoogleFonts.inter(fontSize: 12, color: AppColors.outline),
             ),
           ],
         ),
@@ -286,100 +320,111 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
       ),
       body: _selectedIndex == 0
           ? (_isLoading && _allBusinesses.isEmpty
-              ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
-                  onRefresh: _loadBusinesses,
-                  child: CustomScrollView(
-                    slivers: [
-                      // Stats Section
-                      SliverPadding(
-                        padding: const EdgeInsets.all(20.0),
-                        sliver: SliverToBoxAdapter(
-                          child: LayoutBuilder(
-                            builder: (context, constraints) {
-                              final cardWidth = (constraints.maxWidth - 20) / 2;
-                              return Wrap(
-                                spacing: 16,
-                                runSpacing: 16,
-                                children: [
-                                  _buildStatCard(
-                                    title: 'Total Locales',
-                                    value: total.toString(),
-                                    icon: Icons.store,
-                                    color: AppColors.primary,
-                                    width: cardWidth,
-                                  ),
-                                  _buildStatCard(
-                                    title: 'Pendientes',
-                                    value: pending.toString(),
-                                    icon: Icons.pending_actions,
-                                    color: AppColors.warning,
-                                    width: cardWidth,
-                                  ),
-                                  _buildStatCard(
-                                    title: 'Aprobados',
-                                    value: approved.toString(),
-                                    icon: Icons.check_circle_outline,
-                                    color: Colors.green.shade600,
-                                    width: cardWidth,
-                                  ),
-                                  _buildStatCard(
-                                    title: 'Rechazados',
-                                    value: rejected.toString(),
-                                    icon: Icons.cancel_outlined,
-                                    color: AppColors.error,
-                                    width: cardWidth,
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-
-                      // Filter Tabs
-                      SliverToBoxAdapter(
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          child: Row(
-                            children: [
-                              _buildFilterTab(label: 'Pendientes ($pending)', filterKey: 'PENDING'),
-                              const SizedBox(width: 8),
-                              _buildFilterTab(label: 'Aprobados ($approved)', filterKey: 'APPROVED'),
-                              const SizedBox(width: 8),
-                              _buildFilterTab(label: 'Rechazados ($rejected)', filterKey: 'REJECTED'),
-                              const SizedBox(width: 8),
-                              _buildFilterTab(label: 'Todos ($total)', filterKey: 'ALL'),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      // Business List
-                      SliverPadding(
-                        padding: const EdgeInsets.all(20.0),
-                        sliver: _errorMessage.isNotEmpty
-                            ? SliverToBoxAdapter(
-                                child: _buildErrorWidget(),
-                              )
-                            : _filteredBusinesses.isEmpty
-                                ? SliverToBoxAdapter(
-                                    child: _buildEmptyWidget(),
-                                  )
-                                : SliverList(
-                                    delegate: SliverChildBuilderDelegate(
-                                      (context, index) {
-                                        final laundry = _filteredBusinesses[index];
-                                        return _buildLaundryCard(laundry);
-                                      },
-                                      childCount: _filteredBusinesses.length,
+                ? const Center(child: CircularProgressIndicator())
+                : RefreshIndicator(
+                    onRefresh: _loadBusinesses,
+                    child: CustomScrollView(
+                      slivers: [
+                        // Stats Section
+                        SliverPadding(
+                          padding: const EdgeInsets.all(20.0),
+                          sliver: SliverToBoxAdapter(
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                final cardWidth =
+                                    (constraints.maxWidth - 20) / 2;
+                                return Wrap(
+                                  spacing: 16,
+                                  runSpacing: 16,
+                                  children: [
+                                    _buildStatCard(
+                                      title: 'Total Locales',
+                                      value: total.toString(),
+                                      icon: Icons.store,
+                                      color: AppColors.primary,
+                                      width: cardWidth,
                                     ),
-                                  ),
-                      ),
-                    ],
-                  ),
-                ))
+                                    _buildStatCard(
+                                      title: 'Pendientes',
+                                      value: pending.toString(),
+                                      icon: Icons.pending_actions,
+                                      color: AppColors.warning,
+                                      width: cardWidth,
+                                    ),
+                                    _buildStatCard(
+                                      title: 'Aprobados',
+                                      value: approved.toString(),
+                                      icon: Icons.check_circle_outline,
+                                      color: Colors.green.shade600,
+                                      width: cardWidth,
+                                    ),
+                                    _buildStatCard(
+                                      title: 'Rechazados',
+                                      value: rejected.toString(),
+                                      icon: Icons.cancel_outlined,
+                                      color: AppColors.error,
+                                      width: cardWidth,
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+
+                        // Filter Tabs
+                        SliverToBoxAdapter(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20.0,
+                            ),
+                            child: Row(
+                              children: [
+                                _buildFilterTab(
+                                  label: 'Pendientes ($pending)',
+                                  filterKey: 'PENDING',
+                                ),
+                                const SizedBox(width: 8),
+                                _buildFilterTab(
+                                  label: 'Aprobados ($approved)',
+                                  filterKey: 'APPROVED',
+                                ),
+                                const SizedBox(width: 8),
+                                _buildFilterTab(
+                                  label: 'Rechazados ($rejected)',
+                                  filterKey: 'REJECTED',
+                                ),
+                                const SizedBox(width: 8),
+                                _buildFilterTab(
+                                  label: 'Todos ($total)',
+                                  filterKey: 'ALL',
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Business List
+                        SliverPadding(
+                          padding: const EdgeInsets.all(20.0),
+                          sliver: _errorMessage.isNotEmpty
+                              ? SliverToBoxAdapter(child: _buildErrorWidget())
+                              : _filteredBusinesses.isEmpty
+                              ? SliverToBoxAdapter(child: _buildEmptyWidget())
+                              : SliverList(
+                                  delegate: SliverChildBuilderDelegate((
+                                    context,
+                                    index,
+                                  ) {
+                                    final laundry = _filteredBusinesses[index];
+                                    return _buildLaundryCard(laundry);
+                                  }, childCount: _filteredBusinesses.length),
+                                ),
+                        ),
+                      ],
+                    ),
+                  ))
           : const AppRatingsTab(),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -513,7 +558,9 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.primary.withValues(alpha: 0.15) : AppColors.surface,
+          color: isActive
+              ? AppColors.primary.withValues(alpha: 0.15)
+              : AppColors.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isActive ? AppColors.primary : AppColors.outlineVariant,
@@ -571,7 +618,8 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          key: PageStorageKey<String>(laundry.id),
+          key: ValueKey<String>('expansion_${laundry.id}'),
+          initiallyExpanded: _expandedBusinessIds[laundry.id] ?? false,
           onExpansionChanged: (expanded) {
             setState(() {
               _expandedBusinessIds[laundry.id] = expanded;
@@ -603,8 +651,8 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
               status == BusinessStatus.APPROVED
                   ? Icons.store
                   : status == BusinessStatus.REJECTED
-                      ? Icons.store_mall_directory_outlined
-                      : Icons.storefront,
+                  ? Icons.store_mall_directory_outlined
+                  : Icons.storefront,
               color: badgeColor,
             ),
           ),
@@ -624,7 +672,10 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: badgeColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
@@ -640,21 +691,33 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
                 ),
                 Text(
                   'Código: ${laundry.businessCode}',
-                  style: GoogleFonts.inter(fontSize: 11, color: AppColors.outline),
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: AppColors.outline,
+                  ),
                 ),
                 if (status == BusinessStatus.APPROVED &&
                     laundry.services_on_business.any((s) => s.precioPendiente))
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.warning.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: AppColors.warning.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.notifications_active, size: 10, color: AppColors.warning),
+                        const Icon(
+                          Icons.notifications_active,
+                          size: 10,
+                          color: AppColors.warning,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           'Cambio de precio pendiente (${laundry.services_on_business.where((s) => s.precioPendiente).length})',
@@ -673,260 +736,308 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
           children: [
             if (_expandedBusinessIds[laundry.id] == true)
               Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Divider(color: AppColors.outlineVariant),
-                  const SizedBox(height: 8),
-                  _buildDetailRow('Propietario', laundry.owner.nombreCompleto),
-                  _buildDetailRow('RUC', laundry.ruc),
-                  _buildDetailRow(
-                    'Descripción',
-                    laundry.descripcion ?? 'Sin descripción proporcionada.',
-                  ),
-                  if (laundry.latitud != null && laundry.longitud != null) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Ubicación: ',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.onSurfaceVariant,
-                            ),
-                          ),
-                          Expanded(
-                            child: InkWell(
-                              onTap: () async {
-                                final lat = laundry.latitud;
-                                final lng = laundry.longitud;
-                                final uri = Uri.parse(
-                                  'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
-                                );
-                                try {
-                                  if (await canLaunchUrl(uri)) {
-                                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                                  } else {
-                                    debugPrint('Could not launch $uri');
-                                  }
-                                } catch (e) {
-                                  debugPrint('Error launching navigation URL: $e');
-                                }
-                              },
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.map_outlined,
-                                    size: 16,
-                                    color: AppColors.primary,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Flexible(
-                                    child: Text(
-                                      'Ver en Google Maps',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 13,
-                                        color: AppColors.primary,
-                                        fontWeight: FontWeight.w600,
-                                        decoration: TextDecoration.underline,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Divider(color: AppColors.outlineVariant),
+                    const SizedBox(height: 8),
+                    _buildDetailRow(
+                      'Propietario',
+                      laundry.owner.nombreCompleto,
                     ),
-                  ] else ...[
-                    _buildDetailRow('Ubicación', 'No especificada'),
-                  ],
-                  const SizedBox(height: 12),
-                  
-                  // Tarjeta de Saldo Prepago
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.15),
-                        width: 1,
-                      ),
+                    _buildDetailRow('RUC', laundry.ruc),
+                    _buildDetailRow(
+                      'Descripción',
+                      laundry.descripcion ?? 'Sin descripción proporcionada.',
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                    if (laundry.latitud != null &&
+                        laundry.longitud != null) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.account_balance_wallet_outlined, 
-                              size: 16, color: AppColors.primary),
-                            const SizedBox(width: 8),
                             Text(
-                              'Saldo Prepago del Local',
+                              'Ubicación: ',
                               style: GoogleFonts.inter(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
+                                color: AppColors.onSurfaceVariant,
+                              ),
+                            ),
+                            Expanded(
+                              child: InkWell(
+                                onTap: () async {
+                                  final lat = laundry.latitud;
+                                  final lng = laundry.longitud;
+                                  final uri = Uri.parse(
+                                    'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+                                  );
+                                  try {
+                                    if (await canLaunchUrl(uri)) {
+                                      await launchUrl(
+                                        uri,
+                                        mode: LaunchMode.externalApplication,
+                                      );
+                                    } else {
+                                      debugPrint('Could not launch $uri');
+                                    }
+                                  } catch (e) {
+                                    debugPrint(
+                                      'Error launching navigation URL: $e',
+                                    );
+                                  }
+                                },
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.map_outlined,
+                                      size: 16,
+                                      color: AppColors.primary,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        'Ver en Google Maps',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 13,
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.w600,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _buildPrepaidItem('Inicial', '\$${laundry.saldoPrepagoInicial.toStringAsFixed(2)}'),
-                            _buildPrepaidItem('Consumido', '\$${laundry.saldoPrepagoConsumido.toStringAsFixed(2)}'),
-                            _buildPrepaidItem(
-                              'Disponible',
-                              '\$${(laundry.saldoPrepagoInicial - laundry.saldoPrepagoConsumido).toStringAsFixed(2)}',
-                              isHighlight: true,
-                            ),
-                          ],
+                      ),
+                    ] else ...[
+                      _buildDetailRow('Ubicación', 'No especificada'),
+                    ],
+                    const SizedBox(height: 12),
+
+                    // Tarjeta de Saldo Prepago
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.15),
+                          width: 1,
                         ),
-                        const SizedBox(height: 8),
-                        const Divider(height: 1, color: AppColors.outlineVariant),
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton.icon(
-                              onPressed: () {
-                                context.push(
-                                  AppRoutes.prepaidConsumption,
-                                  extra: {
-                                    'businessId': laundry.id,
-                                    'businessName': laundry.nombre,
-                                    'saldoInicial': laundry.saldoPrepagoInicial,
-                                    'saldoConsumido': laundry.saldoPrepagoConsumido,
-                                    'saldoDisponible': laundry.saldoPrepagoInicial - laundry.saldoPrepagoConsumido,
-                                  },
-                                );
-                              },
-                              icon: const Icon(Icons.bar_chart_rounded, size: 16, color: AppColors.primary),
-                              label: Text(
-                                'Ver Estadísticas',
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.account_balance_wallet_outlined,
+                                size: 16,
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Saldo Prepago del Local',
                                 style: GoogleFonts.inter(
-                                  fontSize: 12,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.primary,
                                 ),
                               ),
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildPrepaidItem(
+                                'Inicial',
+                                '\$${laundry.saldoPrepagoInicial.toStringAsFixed(2)}',
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  _buildServicesSection(laundry),
-                  const SizedBox(height: 20),
-
-                  // Actions
-                  if (isUpdating)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: CircularProgressIndicator(),
+                              _buildPrepaidItem(
+                                'Consumido',
+                                '\$${laundry.saldoPrepagoConsumido.toStringAsFixed(2)}',
+                              ),
+                              _buildPrepaidItem(
+                                'Disponible',
+                                '\$${(laundry.saldoPrepagoInicial - laundry.saldoPrepagoConsumido).toStringAsFixed(2)}',
+                                isHighlight: true,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          const Divider(
+                            height: 1,
+                            color: AppColors.outlineVariant,
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton.icon(
+                                onPressed: () {
+                                  context.push(
+                                    AppRoutes.prepaidConsumption,
+                                    extra: {
+                                      'businessId': laundry.id,
+                                      'businessName': laundry.nombre,
+                                      'saldoInicial':
+                                          laundry.saldoPrepagoInicial,
+                                      'saldoConsumido':
+                                          laundry.saldoPrepagoConsumido,
+                                      'saldoDisponible':
+                                          laundry.saldoPrepagoInicial -
+                                          laundry.saldoPrepagoConsumido,
+                                    },
+                                  );
+                                },
+                                icon: const Icon(
+                                  Icons.bar_chart_rounded,
+                                  size: 16,
+                                  color: AppColors.primary,
+                                ),
+                                label: Text(
+                                  'Ver Estadísticas',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    )
-                  else
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      alignment: WrapAlignment.end,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                            foregroundColor: AppColors.primary,
-                            elevation: 0,
-                            minimumSize: const Size(0, 40),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          icon: const Icon(Icons.account_balance_wallet, size: 16),
-                          label: const Text('Gestionar Prepago'),
-                          onPressed: () => _showManagePrepaidDialog(laundry),
+                    ),
+                    _buildServicesSection(laundry),
+                    const SizedBox(height: 20),
+
+                    // Actions
+                    if (isUpdating)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: CircularProgressIndicator(),
                         ),
-                        if (status != BusinessStatus.REJECTED)
-                          OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.error,
-                              side: const BorderSide(color: AppColors.error),
-                              minimumSize: const Size(0, 40),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            icon: const Icon(Icons.close, size: 16),
-                            label: const Text('Rechazar'),
-                            onPressed: () => _updateStatus(laundry.id, BusinessStatus.REJECTED),
-                          ),
-                        if (status != BusinessStatus.APPROVED)
+                      )
+                    else
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        alignment: WrapAlignment.end,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
+                              backgroundColor: AppColors.primary.withValues(
+                                alpha: 0.1,
+                              ),
+                              foregroundColor: AppColors.primary,
                               elevation: 0,
                               minimumSize: const Size(0, 40),
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                            ),
-                            icon: const Icon(Icons.check, size: 16),
-                            label: const Text('Aprobar'),
-                            onPressed: () => _updateStatus(laundry.id, BusinessStatus.APPROVED),
-                          )
-                        else
-                          // Si ya está aprobado, permitimos pasarlo a pendiente
-                          OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.warning,
-                              side: const BorderSide(color: AppColors.warning),
-                              minimumSize: const Size(0, 40),
-                              shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                            icon: const Icon(Icons.history, size: 16),
-                            label: const Text('Desactivar (Pendiente)'),
-                            onPressed: () => _updateStatus(laundry.id, BusinessStatus.PENDING_APPROVAL),
+                            icon: const Icon(
+                              Icons.account_balance_wallet,
+                              size: 16,
+                            ),
+                            label: const Text('Gestionar Prepago'),
+                            onPressed: () => _showManagePrepaidDialog(laundry),
                           ),
-                      ],
-                    ),
-                ],
-              ),
-            )
-          else
-            const SizedBox.shrink(),
-        ],
+                          if (status != BusinessStatus.REJECTED)
+                            OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.error,
+                                side: const BorderSide(color: AppColors.error),
+                                minimumSize: const Size(0, 40),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              icon: const Icon(Icons.close, size: 16),
+                              label: const Text('Rechazar'),
+                              onPressed: () => _updateStatus(
+                                laundry.id,
+                                BusinessStatus.REJECTED,
+                              ),
+                            ),
+                          if (status != BusinessStatus.APPROVED)
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                minimumSize: const Size(0, 40),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              icon: const Icon(Icons.check, size: 16),
+                              label: const Text('Aprobar'),
+                              onPressed: () => _updateStatus(
+                                laundry.id,
+                                BusinessStatus.APPROVED,
+                              ),
+                            )
+                          else
+                            // Si ya está aprobado, permitimos pasarlo a pendiente
+                            OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.warning,
+                                side: const BorderSide(
+                                  color: AppColors.warning,
+                                ),
+                                minimumSize: const Size(0, 40),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              icon: const Icon(Icons.history, size: 16),
+                              label: const Text('Desactivar (Pendiente)'),
+                              onPressed: () => _updateStatus(
+                                laundry.id,
+                                BusinessStatus.PENDING_APPROVAL,
+                              ),
+                            ),
+                        ],
+                      ),
+                  ],
+                ),
+              )
+            else
+              const SizedBox.shrink(),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildPrepaidItem(String label, String value, {bool isHighlight = false}) {
+  Widget _buildPrepaidItem(
+    String label,
+    String value, {
+    bool isHighlight = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: GoogleFonts.inter(
-            fontSize: 11,
-            color: AppColors.outline,
-          ),
+          style: GoogleFonts.inter(fontSize: 11, color: AppColors.outline),
         ),
         const SizedBox(height: 2),
         Text(
@@ -943,22 +1054,34 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
 
   void _showManagePrepaidDialog(SuperAdminGetBusinessesBusinesses laundry) {
     final formKey = GlobalKey<FormState>();
-    final inicialController = TextEditingController(text: laundry.saldoPrepagoInicial.toString());
-    final consumidoController = TextEditingController(text: laundry.saldoPrepagoConsumido.toString());
+    final inicialController = TextEditingController(
+      text: laundry.saldoPrepagoInicial.toString(),
+    );
+    final consumidoController = TextEditingController(
+      text: laundry.saldoPrepagoConsumido.toString(),
+    );
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Row(
             children: [
-              const Icon(Icons.account_balance_wallet, color: AppColors.primary),
+              const Icon(
+                Icons.account_balance_wallet,
+                color: AppColors.primary,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Gestionar Prepago',
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18),
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
                 ),
               ),
             ],
@@ -972,17 +1095,24 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
                 children: [
                   Text(
                     'Local: ${laundry.nombre}',
-                    style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14),
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: inicialController,
                     decoration: InputDecoration(
                       labelText: 'Saldo Prepago Inicial (\$)',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                       prefixIcon: const Icon(Icons.add_circle_outline),
                     ),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Por favor ingresa un valor';
@@ -1002,10 +1132,14 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
                     controller: consumidoController,
                     decoration: InputDecoration(
                       labelText: 'Saldo Prepago Consumido (\$)',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                       prefixIcon: const Icon(Icons.remove_circle_outline),
                     ),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Por favor ingresa un valor';
@@ -1036,7 +1170,9 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               onPressed: () {
                 if (formKey.currentState!.validate()) {
@@ -1075,30 +1211,32 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
     });
 
     try {
-      await ExampleConnector.instance.superAdminUpdateBusinessPrepaid(
-        id: businessId,
-        saldoPrepagoInicial: inicial,
-        saldoPrepagoConsumido: consumido,
-      ).execute();
+      await ExampleConnector.instance
+          .superAdminUpdateBusinessPrepaid(
+            id: businessId,
+            saldoPrepagoInicial: inicial,
+            saldoPrepagoConsumido: consumido,
+          )
+          .execute();
 
       // Create notification
       try {
         final disponible = inicial - consumido;
-        await ExampleConnector.instance.createNotification(
-          userId: ownerId,
-          titulo: 'Saldo Prepago Actualizado',
-          mensaje: 'El súper administrador ha actualizado el saldo de "$businessName". Nuevo saldo disponible: \$${disponible.toStringAsFixed(2)}',
-        ).execute();
+        await ExampleConnector.instance
+            .createNotification(
+              userId: ownerId,
+              titulo: 'Saldo Prepago Actualizado',
+              mensaje:
+                  'El súper administrador ha actualizado el saldo de "$businessName". Nuevo saldo disponible: \$${disponible.toStringAsFixed(2)}',
+            )
+            .execute();
       } catch (e) {
         debugPrint('Error al crear notificación de prepago: $e');
       }
 
       if (!mounted) return;
 
-      _showSnackBar(
-        'Saldo prepago actualizado exitosamente',
-        isError: false,
-      );
+      _showSnackBar('Saldo prepago actualizado exitosamente', isError: false);
 
       // Recargar datos
       await _loadBusinesses();
@@ -1123,7 +1261,10 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
           children: [
             TextSpan(
               text: '$label: ',
-              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.onSurfaceVariant),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColors.onSurfaceVariant,
+              ),
             ),
             TextSpan(text: value),
           ],
@@ -1229,10 +1370,7 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
               isPendingApproval
                   ? 'Dueño: \$${proposedPrice.toStringAsFixed(2)}'
                   : 'Dueño: \$${proposedPrice.toStringAsFixed(2)} • Activo: \$${currentPrice.toStringAsFixed(2)}',
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                color: AppColors.outline,
-              ),
+              style: GoogleFonts.inter(fontSize: 10, color: AppColors.outline),
             ),
           ],
         ),
@@ -1242,8 +1380,13 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
           child: TextFormField(
             controller: controller,
             decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 4,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
               prefixIcon: const Icon(Icons.attach_money, size: 14),
             ),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -1257,7 +1400,7 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
   Widget _buildServicesSection(SuperAdminGetBusinessesBusinesses laundry) {
     final status = _getBusinessStatus(laundry);
     final isPendingApproval = status == BusinessStatus.PENDING_APPROVAL;
-    
+
     // We show all services so that the super admin can edit/update prices at any time
     final servicesToShow = laundry.services_on_business;
 
@@ -1272,7 +1415,11 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.info_outline, color: AppColors.outline, size: 16),
+              const Icon(
+                Icons.info_outline,
+                color: AppColors.outline,
+                size: 16,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Este local aún no tiene servicios registrados.',
@@ -1298,21 +1445,25 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              isPendingApproval 
-                  ? 'Servicios a Aprobar' 
+              isPendingApproval
+                  ? 'Servicios a Aprobar'
                   : hasPendingChanges
-                      ? 'Servicios con Cambios Pendientes'
-                      : 'Servicios y Precios Activos',
+                  ? 'Servicios con Cambios Pendientes'
+                  : 'Servicios y Precios Activos',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: hasPendingChanges ? AppColors.warning : AppColors.onSurface,
+                color: hasPendingChanges
+                    ? AppColors.warning
+                    : AppColors.onSurface,
               ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: (hasPendingChanges ? AppColors.warning : AppColors.primary).withValues(alpha: 0.1),
+                color:
+                    (hasPendingChanges ? AppColors.warning : AppColors.primary)
+                        .withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -1320,7 +1471,9 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: hasPendingChanges ? AppColors.warning : AppColors.primary,
+                  color: hasPendingChanges
+                      ? AppColors.warning
+                      : AppColors.primary,
                 ),
               ),
             ),
@@ -1338,64 +1491,59 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
             final mKey = '${laundry.id}_${service.id}_mediano';
             final gKey = '${laundry.id}_${service.id}_grande';
             final moKey = '${laundry.id}_${service.id}_moto';
-            
-            final initialP = service.precioPendiente ? service.precioOwnerPequeno : service.precioPequeno;
-            final initialM = service.precioPendiente ? service.precioOwnerMediano : service.precioMediano;
-            final initialG = service.precioPendiente ? service.precioOwnerGrande : service.precioGrande;
-            final initialMo = service.precioPendiente ? service.precioOwnerMoto : service.precioMoto;
 
-            final isServiceExpanded = _expandedServiceIds['${laundry.id}_${service.id}'] == true;
+            final initialP = service.precioPendiente
+                ? safeDouble(service.precioOwnerPequeno)
+                : safeDouble(service.precioPequeno);
+            final initialM = service.precioPendiente
+                ? safeDouble(service.precioOwnerMediano)
+                : safeDouble(service.precioMediano);
+            final initialG = service.precioPendiente
+                ? safeDouble(service.precioOwnerGrande)
+                : safeDouble(service.precioGrande);
+            final initialMo = service.precioPendiente
+                ? safeDouble(service.precioOwnerMoto)
+                : safeDouble(service.precioMoto);
 
-            if (isServiceExpanded) {
-              if (!_priceControllers.containsKey(pKey)) {
-                _priceControllers[pKey] = TextEditingController(
-                  text: initialP.toStringAsFixed(2),
-                );
-              }
-              if (!_priceControllers.containsKey(mKey)) {
-                _priceControllers[mKey] = TextEditingController(
-                  text: initialM.toStringAsFixed(2),
-                );
-              }
-              if (!_priceControllers.containsKey(gKey)) {
-                _priceControllers[gKey] = TextEditingController(
-                  text: initialG.toStringAsFixed(2),
-                );
-              }
-              if (!_priceControllers.containsKey(moKey)) {
-                _priceControllers[moKey] = TextEditingController(
-                  text: initialMo.toStringAsFixed(2),
-                );
-              }
+            if (!_priceControllers.containsKey(pKey)) {
+              _priceControllers[pKey] = TextEditingController(
+                text: initialP.toStringAsFixed(2),
+              );
+            }
+            if (!_priceControllers.containsKey(mKey)) {
+              _priceControllers[mKey] = TextEditingController(
+                text: initialM.toStringAsFixed(2),
+              );
+            }
+            if (!_priceControllers.containsKey(gKey)) {
+              _priceControllers[gKey] = TextEditingController(
+                text: initialG.toStringAsFixed(2),
+              );
+            }
+            if (!_priceControllers.containsKey(moKey)) {
+              _priceControllers[moKey] = TextEditingController(
+                text: initialMo.toStringAsFixed(2),
+              );
             }
 
-            final hasBeenExpanded = _priceControllers.containsKey(pKey);
-
             return Container(
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: service.precioPendiente 
-                    ? AppColors.warning.withValues(alpha: 0.03) 
+                color: service.precioPendiente
+                    ? AppColors.warning.withValues(alpha: 0.03)
                     : AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: service.precioPendiente 
-                      ? AppColors.warning.withValues(alpha: 0.3) 
+                  color: service.precioPendiente
+                      ? AppColors.warning.withValues(alpha: 0.3)
                       : AppColors.outlineVariant,
                   width: 1,
                 ),
               ),
-              child: Theme(
-                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                child: ExpansionTile(
-                  key: ValueKey('${laundry.id}_service_${service.id}'),
-                  onExpansionChanged: (expanded) {
-                    setState(() {
-                      _expandedServiceIds['${laundry.id}_${service.id}'] = expanded;
-                    });
-                  },
-                  iconColor: service.precioPendiente ? AppColors.warning : AppColors.primary,
-                  collapsedIconColor: AppColors.outline,
-                  title: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
                       if (service.precioPendiente)
                         const Padding(
@@ -1418,74 +1566,74 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
                       ),
                     ],
                   ),
-                  subtitle: Text(
+                  const SizedBox(height: 4),
+                  Text(
                     '${service.duracionMinutos} min • ${service.tipo.stringValue == 'LOCAL' ? 'En Local' : 'A Domicilio'}',
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       color: AppColors.outline,
                     ),
                   ),
-                  childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  initiallyExpanded: false,
-                  children: hasBeenExpanded
-                      ? [
-                          const Divider(height: 1, color: AppColors.outlineVariant),
-                          const SizedBox(height: 12),
-                          // Price Input Grid (2 columns, 2 rows)
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildCategoryPriceInput(
-                                  label: 'Pequeño',
-                                  currentPrice: service.precioPequeno,
-                                  proposedPrice: service.precioOwnerPequeno,
-                                  controller: _priceControllers[pKey]!,
-                                  isPendingApproval: isPendingApproval,
-                                  hasPendingPrice: service.precioPendiente,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildCategoryPriceInput(
-                                  label: 'Mediano',
-                                  currentPrice: service.precioMediano,
-                                  proposedPrice: service.precioOwnerMediano,
-                                  controller: _priceControllers[mKey]!,
-                                  isPendingApproval: isPendingApproval,
-                                  hasPendingPrice: service.precioPendiente,
-                                ),
-                              ),
-                            ],
+                  const SizedBox(height: 12),
+                  const Divider(height: 1, color: AppColors.outlineVariant),
+                  const SizedBox(height: 12),
+                  // Price Input Grid (2 columns, 2 rows)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildCategoryPriceInput(
+                          label: 'Pequeño',
+                          currentPrice: safeDouble(service.precioPequeno),
+                          proposedPrice: safeDouble(
+                            service.precioOwnerPequeno,
                           ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildCategoryPriceInput(
-                                  label: 'Grande',
-                                  currentPrice: service.precioGrande,
-                                  proposedPrice: service.precioOwnerGrande,
-                                  controller: _priceControllers[gKey]!,
-                                  isPendingApproval: isPendingApproval,
-                                  hasPendingPrice: service.precioPendiente,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildCategoryPriceInput(
-                                  label: 'Moto',
-                                  currentPrice: service.precioMoto,
-                                  proposedPrice: service.precioOwnerMoto,
-                                  controller: _priceControllers[moKey]!,
-                                  isPendingApproval: isPendingApproval,
-                                  hasPendingPrice: service.precioPendiente,
-                                ),
-                              ),
-                            ],
+                          controller: _priceControllers[pKey]!,
+                          isPendingApproval: isPendingApproval,
+                          hasPendingPrice: service.precioPendiente,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildCategoryPriceInput(
+                          label: 'Mediano',
+                          currentPrice: safeDouble(service.precioMediano),
+                          proposedPrice: safeDouble(
+                            service.precioOwnerMediano,
                           ),
-                        ]
-                      : [],
-                ),
+                          controller: _priceControllers[mKey]!,
+                          isPendingApproval: isPendingApproval,
+                          hasPendingPrice: service.precioPendiente,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildCategoryPriceInput(
+                          label: 'Grande',
+                          currentPrice: safeDouble(service.precioGrande),
+                          proposedPrice: safeDouble(service.precioOwnerGrande),
+                          controller: _priceControllers[gKey]!,
+                          isPendingApproval: isPendingApproval,
+                          hasPendingPrice: service.precioPendiente,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildCategoryPriceInput(
+                          label: 'Moto',
+                          currentPrice: safeDouble(service.precioMoto),
+                          proposedPrice: safeDouble(service.precioOwnerMoto),
+                          controller: _priceControllers[moKey]!,
+                          isPendingApproval: isPendingApproval,
+                          hasPendingPrice: service.precioPendiente,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             );
           },
@@ -1496,7 +1644,9 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
             alignment: Alignment.centerRight,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: hasPendingChanges ? AppColors.warning : AppColors.primary,
+                backgroundColor: hasPendingChanges
+                    ? AppColors.warning
+                    : AppColors.primary,
                 foregroundColor: AppColors.white,
                 elevation: 0,
                 minimumSize: const Size(0, 36),
@@ -1505,11 +1655,15 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
                 ),
               ),
               icon: Icon(
-                hasPendingChanges ? Icons.check_circle_outline : Icons.save_outlined,
+                hasPendingChanges
+                    ? Icons.check_circle_outline
+                    : Icons.save_outlined,
                 size: 16,
               ),
               label: Text(
-                hasPendingChanges ? 'Aprobar y Guardar Precios' : 'Guardar Cambios de Precios',
+                hasPendingChanges
+                    ? 'Aprobar y Guardar Precios'
+                    : 'Guardar Cambios de Precios',
               ),
               onPressed: () => _approvePendingPrices(laundry, servicesToShow),
             ),
@@ -1540,10 +1694,18 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
         final gController = _priceControllers[gKey];
         final moController = _priceControllers[moKey];
 
-        final defaultP = service.precioPendiente ? service.precioOwnerPequeno : service.precioPequeno;
-        final defaultM = service.precioPendiente ? service.precioOwnerMediano : service.precioMediano;
-        final defaultG = service.precioPendiente ? service.precioOwnerGrande : service.precioGrande;
-        final defaultMo = service.precioPendiente ? service.precioOwnerMoto : service.precioMoto;
+        final defaultP = service.precioPendiente
+            ? safeDouble(service.precioOwnerPequeno)
+            : safeDouble(service.precioPequeno);
+        final defaultM = service.precioPendiente
+            ? safeDouble(service.precioOwnerMediano)
+            : safeDouble(service.precioMediano);
+        final defaultG = service.precioPendiente
+            ? safeDouble(service.precioOwnerGrande)
+            : safeDouble(service.precioGrande);
+        final defaultMo = service.precioPendiente
+            ? safeDouble(service.precioOwnerMoto)
+            : safeDouble(service.precioMoto);
 
         var pPrice = pController != null
             ? (double.tryParse(pController.text.trim()) ?? defaultP)
@@ -1566,43 +1728,48 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
         if (moPrice < 0) moPrice = defaultMo;
 
         // Call the mutation
-        await ExampleConnector.instance.superAdminApproveServicePrice(
-          id: service.id,
-          precioAprobadoPequeno: pPrice,
-          precioAprobadoMediano: mPrice,
-          precioAprobadoGrande: gPrice,
-          precioAprobadoMoto: moPrice,
-        ).execute();
+        await ExampleConnector.instance
+            .superAdminApproveServicePrice(
+              id: service.id,
+              precioAprobadoPequeno: pPrice,
+              precioAprobadoMediano: mPrice,
+              precioAprobadoGrande: gPrice,
+              precioAprobadoMoto: moPrice,
+            )
+            .execute();
 
         approvedDetails.add(
-          '${service.nombre}: Peq: \$${pPrice.toStringAsFixed(2)}, Med: \$${mPrice.toStringAsFixed(2)}, Gra: \$${gPrice.toStringAsFixed(2)}, Moto: \$${moPrice.toStringAsFixed(2)}'
+          '${service.nombre}: Peq: \$${pPrice.toStringAsFixed(2)}, Med: \$${mPrice.toStringAsFixed(2)}, Gra: \$${gPrice.toStringAsFixed(2)}, Moto: \$${moPrice.toStringAsFixed(2)}',
         );
       }
 
       // Send notification to the owner about the approved service prices
       try {
         final ownerId = laundry.owner.id;
-        final hasPending = laundry.services_on_business.any((s) => s.precioPendiente);
-        final titulo = hasPending ? 'Cambios de Precio Aprobados' : 'Precios de Servicios Actualizados';
-        final messageText = hasPending 
+        final hasPending = laundry.services_on_business.any(
+          (s) => s.precioPendiente,
+        );
+        final titulo = hasPending
+            ? 'Cambios de Precio Aprobados'
+            : 'Precios de Servicios Actualizados';
+        final messageText = hasPending
             ? 'Los precios de los siguientes servicios han sido aprobados y ya están activos:\n${approvedDetails.join('\n')}'
             : 'El súper administrador ha actualizado los precios de tus servicios:\n${approvedDetails.join('\n')}';
-        
-        await ExampleConnector.instance.createNotification(
-          userId: ownerId,
-          titulo: titulo,
-          mensaje: messageText,
-        ).execute();
+
+        await ExampleConnector.instance
+            .createNotification(
+              userId: ownerId,
+              titulo: titulo,
+              mensaje: messageText,
+            )
+            .execute();
       } catch (e) {
         debugPrint('Error al crear notificación de aprobación de precios: $e');
       }
 
       if (!mounted) return;
 
-      _showSnackBar(
-        'Precios actualizados exitosamente',
-        isError: false,
-      );
+      _showSnackBar('Precios actualizados exitosamente', isError: false);
 
       // Reload businesses
       await _loadBusinesses();

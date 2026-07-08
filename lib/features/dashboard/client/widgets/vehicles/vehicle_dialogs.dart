@@ -44,7 +44,7 @@ class VehicleDialogs {
             style: GoogleFonts.inter(fontWeight: FontWeight.bold),
           ),
           content: Text(
-            '¿Estás seguro de que deseas eliminar tu ${vehicle.brandModel}?',
+            '¿Estás seguro de que deseas eliminar tu ${vehicle.categoryDisplayName}?',
             style: GoogleFonts.inter(color: AppColors.onSurfaceVariant),
           ),
           actions: [
@@ -125,6 +125,16 @@ class VehicleDialogs {
   }
 }
 
+String _normalizeDbCategory(String? dbCategory) {
+  if (dbCategory == null) return 'Pequeño';
+  final lower = dbCategory.toLowerCase().trim();
+  if (lower.contains('moto')) return 'Moto';
+  if (lower.contains('hatchback') || lower.contains('pequeñ') || lower.contains('pequen')) return 'Pequeño';
+  if (lower.contains('suv') || lower.contains('grand')) return 'Grande';
+  if (lower.contains('median') || lower.contains('sedan') || lower.contains('crossover')) return 'Mediano';
+  return 'Pequeño'; // Default fallback
+}
+
 class AddVehicleDialog extends StatefulWidget {
   final VehicleRepository vehicleRepository;
   final VoidCallback onVehicleChanged;
@@ -142,86 +152,86 @@ class AddVehicleDialog extends StatefulWidget {
 class _AddVehicleDialogState extends State<AddVehicleDialog> {
   final _formKey = GlobalKey<FormState>();
   final _plateController = TextEditingController();
-  final _categoryController = TextEditingController();
 
-  List<Map<String, String>> _brands = [];
-  List<Map<String, dynamic>> _models = [];
-
-  String? _selectedBrandId;
+  Map<String, String> _categoryToModelIdMap = {};
+  String? _selectedCategory;
   String? _selectedModelId;
-  String? _detectedCategory;
 
-  bool _loadingBrands = false;
-  bool _loadingModels = false;
+  bool _loadingData = false;
   bool _saving = false;
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _loadBrands();
+    _initializeCategoryMapping();
   }
 
   @override
   void dispose() {
     _plateController.dispose();
-    _categoryController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadBrands() async {
+  Future<void> _initializeCategoryMapping() async {
     if (!mounted) return;
     setState(() {
-      _loadingBrands = true;
+      _loadingData = true;
       _errorMessage = null;
     });
     try {
       final brands = await widget.vehicleRepository.getVehicleBrands();
       if (!mounted) return;
-      setState(() {
-        _brands = brands;
-        _loadingBrands = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loadingBrands = false;
-        _errorMessage = 'Error al cargar marcas: $e';
-      });
-    }
-  }
 
-  Future<void> _loadModels(String brandId) async {
-    if (!mounted) return;
-    setState(() {
-      _loadingModels = true;
-      _selectedModelId = null;
-      _detectedCategory = null;
-      _categoryController.clear();
-      _models = [];
-      _errorMessage = null;
-    });
-    try {
-      final models = await widget.vehicleRepository.getVehicleModelsByBrand(brandId);
+      final results = await Future.wait(
+        brands.map((b) => widget.vehicleRepository.getVehicleModelsByBrand(b['id']!))
+      );
+
       if (!mounted) return;
+
+      final newMap = <String, String>{};
+      for (final modelsList in results) {
+        for (final model in modelsList) {
+          final id = model['id'] as String?;
+          final cat = model['category'] as String?;
+          if (id == null || cat == null) continue;
+
+          final normalized = _normalizeDbCategory(cat);
+          if (!newMap.containsKey(normalized)) {
+            newMap[normalized] = id;
+          }
+        }
+      }
+
       setState(() {
-        _models = models;
-        _loadingModels = false;
+        _categoryToModelIdMap = newMap;
+        _loadingData = false;
+        if (_selectedCategory != null) {
+          _selectedModelId = _categoryToModelIdMap[_selectedCategory];
+        }
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _loadingModels = false;
-        _errorMessage = 'Error al cargar modelos: $e';
+        _loadingData = false;
+        _errorMessage = 'Error al inicializar categorías: $e';
       });
     }
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedModelId == null || _detectedCategory == null) {
+    if (_selectedCategory == null) {
       setState(() {
-        _errorMessage = 'Por favor, selecciona una marca y un modelo.';
+        _errorMessage = 'Por favor, selecciona una categoría.';
+      });
+      return;
+    }
+
+    final modelId = _selectedModelId ?? _categoryToModelIdMap[_selectedCategory];
+    if (modelId == null) {
+      setState(() {
+        _errorMessage = 'Error al asignar el modelo para esta categoría. Inténtalo de nuevo.';
       });
       return;
     }
@@ -234,8 +244,9 @@ class _AddVehicleDialogState extends State<AddVehicleDialog> {
     try {
       final plateVal = _plateController.text.trim().toUpperCase();
       await widget.vehicleRepository.addVehicle(
-        modelId: _selectedModelId!,
+        modelId: modelId,
         plate: plateVal.isEmpty ? null : plateVal,
+        category: _selectedCategory,
       );
       if (mounted) {
         Navigator.pop(context);
@@ -252,11 +263,6 @@ class _AddVehicleDialogState extends State<AddVehicleDialog> {
 
   @override
   Widget build(BuildContext context) {
-    IconData categoryIcon = Icons.directions_car_filled_rounded;
-    if (_detectedCategory == 'SUV') categoryIcon = Icons.airport_shuttle_rounded;
-    if (_detectedCategory == 'Hatchback') categoryIcon = Icons.directions_car_filled_rounded;
-    if (_detectedCategory == 'Moto') categoryIcon = Icons.motorcycle_rounded;
-
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       backgroundColor: Colors.white,
@@ -291,115 +297,45 @@ class _AddVehicleDialogState extends State<AddVehicleDialog> {
                 const SizedBox(height: 16),
               ],
               
-              // BRAND DROPDOWN
-              _loadingBrands
-                  ? const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12.0),
-                      child: CircularProgressIndicator(),
-                    )
-                  : DropdownButtonFormField<String>(
-                      initialValue: _selectedBrandId,
-                      style: GoogleFonts.inter(fontSize: 14, color: AppColors.onSurface),
-                      decoration: InputDecoration(
-                        labelText: 'Marca',
-                        labelStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.outline),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        prefixIcon: const Icon(Icons.branding_watermark, color: AppColors.primary),
-                      ),
-                      validator: (value) => value == null ? 'Por favor selecciona una marca' : null,
-                      items: _brands.map((brand) {
-                        return DropdownMenuItem<String>(
-                          value: brand['id'],
-                          child: Text(brand['name'] ?? ''),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() {
-                            _selectedBrandId = val;
-                          });
-                          _loadModels(val);
-                        }
-                      },
+              if (_loadingData)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 32.0),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text('Cargando categorías...'),
+                      ],
                     ),
-              const SizedBox(height: 16),
-
-              // MODEL DROPDOWN
-              DropdownButtonFormField<String>(
-                initialValue: _selectedModelId,
-                disabledHint: Text(
-                  _selectedBrandId == null ? 'Selecciona una marca primero' : 'Cargando modelos...',
-                  style: GoogleFonts.inter(fontSize: 13, color: AppColors.outline),
-                ),
-                style: GoogleFonts.inter(fontSize: 14, color: AppColors.onSurface),
-                decoration: InputDecoration(
-                  labelText: 'Modelo',
-                  labelStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.outline),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  prefixIcon: const Icon(Icons.car_rental, color: AppColors.primary),
-                  suffixIcon: _loadingModels
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: Padding(
-                            padding: EdgeInsets.all(4.0),
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        )
-                      : null,
-                ),
-                validator: (value) => value == null ? 'Por favor selecciona un modelo' : null,
-                items: _models.map((model) {
-                  return DropdownMenuItem<String>(
-                    value: model['id'],
-                    child: Text(model['name'] ?? ''),
-                  );
-                }).toList(),
-                onChanged: _selectedBrandId == null || _loadingModels
-                    ? null
-                    : (val) {
-                        if (val != null) {
-                          final selectedModel = _models.firstWhere((m) => m['id'] == val);
-                          setState(() {
-                            _selectedModelId = val;
-                            _detectedCategory = selectedModel['category'];
-                            _categoryController.text = _detectedCategory ?? '';
-                          });
-                        }
-                      },
-              ),
-              const SizedBox(height: 16),
-
-              // CATEGORY DISPLAY (READ ONLY)
-              if (_detectedCategory != null) ...[
-                TextField(
-                  controller: _categoryController,
-                  readOnly: true,
-                  style: GoogleFonts.inter(fontSize: 14, color: AppColors.onSurface),
-                  decoration: InputDecoration(
-                    labelText: 'Categoría Auto-detectada',
-                    labelStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.outline),
-                    filled: true,
-                    fillColor: AppColors.surfaceContainerLow,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    prefixIcon: Icon(categoryIcon, color: AppColors.primary),
                   ),
+                )
+              else ...[
+                // CATEGORY SELECTOR (PREMIUM CARDS)
+                VehicleCategorySelector(
+                  selectedCategory: _selectedCategory,
+                  onSelected: (cat) {
+                    setState(() {
+                      _selectedCategory = cat;
+                      _selectedModelId = _categoryToModelIdMap[cat];
+                    });
+                  },
                 ),
                 const SizedBox(height: 16),
-              ],
 
-              // PLATE FIELD
-              TextField(
-                controller: _plateController,
-                textCapitalization: TextCapitalization.characters,
-                style: GoogleFonts.inter(fontSize: 14, color: AppColors.onSurface),
-                decoration: InputDecoration(
-                  labelText: 'Placa (Opcional - ej: GYB-1234)',
-                  labelStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.outline),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  prefixIcon: const Icon(Icons.pin, color: AppColors.primary),
+                // PLATE FIELD
+                TextField(
+                  controller: _plateController,
+                  textCapitalization: TextCapitalization.characters,
+                  style: GoogleFonts.inter(fontSize: 14, color: AppColors.onSurface),
+                  decoration: InputDecoration(
+                    labelText: 'Placa (Opcional - ej: GYB-1234)',
+                    labelStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.outline),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: const Icon(Icons.pin, color: AppColors.primary),
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),
@@ -414,7 +350,7 @@ class _AddVehicleDialogState extends State<AddVehicleDialog> {
           ),
         ),
         ElevatedButton(
-          onPressed: _saving ? null : _save,
+          onPressed: (_saving || _loadingData) ? null : _save,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
@@ -457,17 +393,12 @@ class EditVehicleDialog extends StatefulWidget {
 class _EditVehicleDialogState extends State<EditVehicleDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _plateController;
-  final _categoryController = TextEditingController();
 
-  List<Map<String, String>> _brands = [];
-  List<Map<String, dynamic>> _models = [];
-
-  String? _selectedBrandId;
+  Map<String, String> _categoryToModelIdMap = {};
+  String? _selectedCategory;
   String? _selectedModelId;
-  String? _detectedCategory;
 
-  bool _loadingBrands = false;
-  bool _loadingModels = false;
+  bool _loadingData = false;
   bool _saving = false;
   String? _errorMessage;
 
@@ -475,86 +406,81 @@ class _EditVehicleDialogState extends State<EditVehicleDialog> {
   void initState() {
     super.initState();
     _plateController = TextEditingController(text: widget.vehicle.plate);
-    _selectedBrandId = widget.vehicle.brandId;
+    _selectedCategory = _normalizeDbCategory(widget.vehicle.type);
     _selectedModelId = widget.vehicle.modelId;
-    _detectedCategory = widget.vehicle.type;
-    _categoryController.text = _detectedCategory ?? '';
-    _initializeData();
+    _initializeCategoryMapping();
   }
 
   @override
   void dispose() {
     _plateController.dispose();
-    _categoryController.dispose();
     super.dispose();
   }
 
-  Future<void> _initializeData() async {
+  Future<void> _initializeCategoryMapping() async {
     if (!mounted) return;
     setState(() {
-      _loadingBrands = true;
+      _loadingData = true;
       _errorMessage = null;
     });
     try {
       final brands = await widget.vehicleRepository.getVehicleBrands();
       if (!mounted) return;
-      setState(() {
-        _brands = brands;
-        _loadingBrands = false;
-      });
 
-      if (_selectedBrandId != null) {
-        setState(() {
-          _loadingModels = true;
-        });
-        final models = await widget.vehicleRepository.getVehicleModelsByBrand(_selectedBrandId!);
-        if (!mounted) return;
-        setState(() {
-          _models = models;
-          _loadingModels = false;
-        });
+      final results = await Future.wait(
+        brands.map((b) => widget.vehicleRepository.getVehicleModelsByBrand(b['id']!))
+      );
+
+      if (!mounted) return;
+
+      final newMap = <String, String>{};
+      for (final modelsList in results) {
+        for (final model in modelsList) {
+          final id = model['id'] as String?;
+          final cat = model['category'] as String?;
+          if (id == null || cat == null) continue;
+
+          final normalized = _normalizeDbCategory(cat);
+          if (!newMap.containsKey(normalized)) {
+            newMap[normalized] = id;
+          }
+        }
       }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loadingBrands = false;
-        _loadingModels = false;
-        _errorMessage = 'Error al cargar datos del vehículo: $e';
-      });
-    }
-  }
 
-  Future<void> _loadModels(String brandId) async {
-    if (!mounted) return;
-    setState(() {
-      _loadingModels = true;
-      _selectedModelId = null;
-      _detectedCategory = null;
-      _categoryController.clear();
-      _models = [];
-      _errorMessage = null;
-    });
-    try {
-      final models = await widget.vehicleRepository.getVehicleModelsByBrand(brandId);
-      if (!mounted) return;
       setState(() {
-        _models = models;
-        _loadingModels = false;
+        _categoryToModelIdMap = newMap;
+        _loadingData = false;
+        if (_selectedCategory != null && _selectedModelId == null) {
+          _selectedModelId = _categoryToModelIdMap[_selectedCategory];
+        }
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _loadingModels = false;
-        _errorMessage = 'Error al cargar modelos: $e';
+        _loadingData = false;
+        _errorMessage = 'Error al inicializar categorías: $e';
       });
     }
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedModelId == null || _detectedCategory == null) {
+    if (_selectedCategory == null) {
       setState(() {
-        _errorMessage = 'Por favor, selecciona una marca y un modelo.';
+        _errorMessage = 'Por favor, selecciona una categoría.';
+      });
+      return;
+    }
+
+    // If they changed the category, resolve the mapped model ID. Otherwise, keep current.
+    String? modelId = _selectedModelId;
+    if (_selectedCategory != _normalizeDbCategory(widget.vehicle.type)) {
+      modelId = _categoryToModelIdMap[_selectedCategory];
+    }
+
+    if (modelId == null) {
+      setState(() {
+        _errorMessage = 'Error al asignar el modelo para esta categoría. Inténtalo de nuevo.';
       });
       return;
     }
@@ -568,8 +494,9 @@ class _EditVehicleDialogState extends State<EditVehicleDialog> {
       final plateVal = _plateController.text.trim().toUpperCase();
       await widget.vehicleRepository.updateVehicle(
         id: widget.vehicle.id,
-        modelId: _selectedModelId!,
+        modelId: modelId,
         plate: plateVal.isEmpty ? null : plateVal,
+        category: _selectedCategory,
       );
       if (mounted) {
         Navigator.pop(context);
@@ -586,11 +513,6 @@ class _EditVehicleDialogState extends State<EditVehicleDialog> {
 
   @override
   Widget build(BuildContext context) {
-    IconData categoryIcon = Icons.directions_car_filled_rounded;
-    if (_detectedCategory == 'SUV') categoryIcon = Icons.airport_shuttle_rounded;
-    if (_detectedCategory == 'Hatchback') categoryIcon = Icons.directions_car_filled_rounded;
-    if (_detectedCategory == 'Moto') categoryIcon = Icons.motorcycle_rounded;
-
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       backgroundColor: Colors.white,
@@ -625,115 +547,45 @@ class _EditVehicleDialogState extends State<EditVehicleDialog> {
                 const SizedBox(height: 16),
               ],
 
-              // BRAND DROPDOWN
-              _loadingBrands
-                  ? const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12.0),
-                      child: CircularProgressIndicator(),
-                    )
-                  : DropdownButtonFormField<String>(
-                      initialValue: _selectedBrandId,
-                      style: GoogleFonts.inter(fontSize: 14, color: AppColors.onSurface),
-                      decoration: InputDecoration(
-                        labelText: 'Marca',
-                        labelStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.outline),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        prefixIcon: const Icon(Icons.branding_watermark, color: AppColors.primary),
-                      ),
-                      validator: (value) => value == null ? 'Por favor selecciona una marca' : null,
-                      items: _brands.map((brand) {
-                        return DropdownMenuItem<String>(
-                          value: brand['id'],
-                          child: Text(brand['name'] ?? ''),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() {
-                            _selectedBrandId = val;
-                          });
-                          _loadModels(val);
-                        }
-                      },
+              if (_loadingData)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 32.0),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text('Cargando categorías...'),
+                      ],
                     ),
-              const SizedBox(height: 16),
-
-              // MODEL DROPDOWN
-              DropdownButtonFormField<String>(
-                initialValue: _selectedModelId,
-                disabledHint: Text(
-                  _selectedBrandId == null ? 'Selecciona una marca primero' : 'Cargando modelos...',
-                  style: GoogleFonts.inter(fontSize: 13, color: AppColors.outline),
-                ),
-                style: GoogleFonts.inter(fontSize: 14, color: AppColors.onSurface),
-                decoration: InputDecoration(
-                  labelText: 'Modelo',
-                  labelStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.outline),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  prefixIcon: const Icon(Icons.car_rental, color: AppColors.primary),
-                  suffixIcon: _loadingModels
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: Padding(
-                            padding: EdgeInsets.all(4.0),
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        )
-                      : null,
-                ),
-                validator: (value) => value == null ? 'Por favor selecciona un modelo' : null,
-                items: _models.map((model) {
-                  return DropdownMenuItem<String>(
-                    value: model['id'],
-                    child: Text(model['name'] ?? ''),
-                  );
-                }).toList(),
-                onChanged: _selectedBrandId == null || _loadingModels
-                    ? null
-                    : (val) {
-                        if (val != null) {
-                          final selectedModel = _models.firstWhere((m) => m['id'] == val);
-                          setState(() {
-                            _selectedModelId = val;
-                            _detectedCategory = selectedModel['category'];
-                            _categoryController.text = _detectedCategory ?? '';
-                          });
-                        }
-                      },
-              ),
-              const SizedBox(height: 16),
-
-              // CATEGORY DISPLAY (READ ONLY)
-              if (_detectedCategory != null) ...[
-                TextField(
-                  controller: _categoryController,
-                  readOnly: true,
-                  style: GoogleFonts.inter(fontSize: 14, color: AppColors.onSurface),
-                  decoration: InputDecoration(
-                    labelText: 'Categoría Auto-detectada',
-                    labelStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.outline),
-                    filled: true,
-                    fillColor: AppColors.surfaceContainerLow,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    prefixIcon: Icon(categoryIcon, color: AppColors.primary),
                   ),
+                )
+              else ...[
+                // CATEGORY SELECTOR (PREMIUM CARDS)
+                VehicleCategorySelector(
+                  selectedCategory: _selectedCategory,
+                  onSelected: (cat) {
+                    setState(() {
+                      _selectedCategory = cat;
+                      _selectedModelId = _categoryToModelIdMap[cat];
+                    });
+                  },
                 ),
                 const SizedBox(height: 16),
-              ],
 
-              // PLATE FIELD
-              TextField(
-                controller: _plateController,
-                textCapitalization: TextCapitalization.characters,
-                style: GoogleFonts.inter(fontSize: 14, color: AppColors.onSurface),
-                decoration: InputDecoration(
-                  labelText: 'Placa (Opcional - ej: GYB-1234)',
-                  labelStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.outline),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  prefixIcon: const Icon(Icons.pin, color: AppColors.primary),
+                // PLATE FIELD
+                TextField(
+                  controller: _plateController,
+                  textCapitalization: TextCapitalization.characters,
+                  style: GoogleFonts.inter(fontSize: 14, color: AppColors.onSurface),
+                  decoration: InputDecoration(
+                    labelText: 'Placa (Opcional - ej: GYB-1234)',
+                    labelStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.outline),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: const Icon(Icons.pin, color: AppColors.primary),
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),
@@ -748,7 +600,7 @@ class _EditVehicleDialogState extends State<EditVehicleDialog> {
           ),
         ),
         ElevatedButton(
-          onPressed: _saving ? null : _save,
+          onPressed: (_saving || _loadingData) ? null : _save,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
@@ -767,6 +619,180 @@ class _EditVehicleDialogState extends State<EditVehicleDialog> {
                   style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                 ),
         ),
+      ],
+    );
+  }
+}
+
+class CategoryOption {
+  final String key; // 'Moto', 'Pequeño', 'Mediano', 'Grande'
+  final String title;
+  final String examples;
+  final IconData icon;
+  final String emoji;
+
+  const CategoryOption({
+    required this.key,
+    required this.title,
+    required this.examples,
+    required this.icon,
+    required this.emoji,
+  });
+}
+
+const List<CategoryOption> _categoryOptions = [
+  CategoryOption(
+    key: 'Moto',
+    title: 'Moto',
+    examples: 'Motocicleta, Scooter, Motoneta',
+    icon: Icons.motorcycle_rounded,
+    emoji: '🏍',
+  ),
+  CategoryOption(
+    key: 'Pequeño',
+    title: 'Pequeño',
+    examples: 'Hatchback, Sedán compacto, Coupé',
+    icon: Icons.directions_car_filled_rounded,
+    emoji: '🚗',
+  ),
+  CategoryOption(
+    key: 'Mediano',
+    title: 'Mediano',
+    examples: 'Sedán mediano, Crossover, SUV compacto',
+    icon: Icons.directions_car_rounded,
+    emoji: '🚙',
+  ),
+  CategoryOption(
+    key: 'Grande',
+    title: 'Grande',
+    examples: 'SUV grande, Pick-up / Camioneta, Minivan / Van',
+    icon: Icons.airport_shuttle_rounded,
+    emoji: '🚐',
+  ),
+];
+
+class VehicleCategorySelector extends StatelessWidget {
+  final String? selectedCategory;
+  final ValueChanged<String> onSelected;
+
+  const VehicleCategorySelector({
+    super.key,
+    required this.selectedCategory,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6.0, top: 4.0),
+          child: Text(
+            'Categoría del Vehículo',
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: AppColors.onSurface,
+            ),
+          ),
+        ),
+        Text(
+          'Selecciona la categoría que mejor describa el tamaño de tu vehículo. Esta categoría será utilizada por los establecimientos para calcular el precio de los servicios.',
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            color: AppColors.outline,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ..._categoryOptions.map((option) {
+          final isSelected = selectedCategory == option.key;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: InkWell(
+              onTap: () => onSelected(option.key),
+              borderRadius: BorderRadius.circular(16),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isSelected 
+                      ? AppColors.primary.withValues(alpha: 0.06) 
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                    width: isSelected ? 2.0 : 1.0,
+                  ),
+                  boxShadow: isSelected 
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          )
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isSelected 
+                            ? AppColors.primary.withValues(alpha: 0.12) 
+                            : Colors.grey.shade100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        option.emoji,
+                        style: const TextStyle(fontSize: 24),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            option.title,
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: isSelected ? AppColors.primary : AppColors.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            option.examples,
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: isSelected 
+                                  ? AppColors.primary.withValues(alpha: 0.8) 
+                                  : AppColors.outline,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (isSelected)
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        color: AppColors.primary,
+                        size: 24,
+                      )
+                    else
+                      Icon(
+                        Icons.radio_button_unchecked_rounded,
+                        color: Colors.grey.shade400,
+                        size: 24,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
       ],
     );
   }

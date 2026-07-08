@@ -59,13 +59,17 @@ class _SuperAdminLoginPageState extends State<SuperAdminLoginPage> {
           }
         }
 
-        // Seed the user in PostgreSQL via Data Connect
+        // Seed the user in PostgreSQL via Data Connect if they don't exist yet
         try {
-          await FirebaseAuthRepository().upsertUser(
-            nombreCompleto: 'Super Administrador',
-            email: 'root@washgo.com',
-            roles: [UserRole.SUPER_ADMIN],
-          );
+          final authRepo = FirebaseAuthRepository();
+          final existingUser = await authRepo.getCurrentUser();
+          if (existingUser == null) {
+            await authRepo.upsertUser(
+              nombreCompleto: 'Super Administrador',
+              email: 'root@washgo.com',
+              roles: [UserRole.SUPER_ADMIN],
+            );
+          }
         } catch (dbError) {
           debugPrint('Error al guardar SuperAdministrador en DB: $dbError');
         }

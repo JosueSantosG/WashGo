@@ -359,11 +359,12 @@ mutation CreateBusinessHour(
   })
 }
 
-mutation AddVehicle($modelId: UUID!, $plate: String) @auth(level: USER) {
+mutation AddVehicle($modelId: UUID!, $plate: String, $category: String) @auth(level: USER) {
   vehicle_insert(data: {
     clientId_expr: "auth.uid"
     modelId: $modelId
     plate: $plate
+    category: $category
   })
 }
 
@@ -376,7 +377,7 @@ mutation DeleteVehicle($id: UUID!) @auth(level: USER) @transaction {
   vehicle_delete(key: { id: $id })
 }
 
-mutation UpdateVehicle($id: UUID!, $modelId: UUID!, $plate: String) @auth(level: USER) @transaction {
+mutation UpdateVehicle($id: UUID!, $modelId: UUID!, $plate: String, $category: String) @auth(level: USER) @transaction {
   query @redact {
     vehicle(key: { id: $id }) {
       clientId @check(expr: "this == auth.uid", message: "No eres el dueño de este vehículo")
@@ -385,6 +386,7 @@ mutation UpdateVehicle($id: UUID!, $modelId: UUID!, $plate: String) @auth(level:
   vehicle_update(key: { id: $id }, data: {
     modelId: $modelId
     plate: $plate
+    category: $category
   })
 }
 

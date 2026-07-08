@@ -20,11 +20,13 @@ class GetMyVehiclesVariablesBuilder {
 class GetMyVehiclesVehicles {
   final String id;
   final String? plate;
+  final String? category;
   final GetMyVehiclesVehiclesModel model;
   GetMyVehiclesVehicles.fromJson(dynamic json):
   
   id = nativeFromJson<String>(json['id']),
   plate = json['plate'] == null ? null : nativeFromJson<String>(json['plate']),
+  category = json['category'] == null ? null : nativeFromJson<String>(json['category']),
   model = GetMyVehiclesVehiclesModel.fromJson(json['model']);
   @override
   bool operator ==(Object other) {
@@ -38,11 +40,12 @@ class GetMyVehiclesVehicles {
     final GetMyVehiclesVehicles otherTyped = other as GetMyVehiclesVehicles;
     return id == otherTyped.id && 
     plate == otherTyped.plate && 
+    category == otherTyped.category && 
     model == otherTyped.model;
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, plate.hashCode, model.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, plate.hashCode, category.hashCode, model.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -51,6 +54,9 @@ class GetMyVehiclesVehicles {
     if (plate != null) {
       json['plate'] = nativeToJson<String?>(plate);
     }
+    if (category != null) {
+      json['category'] = nativeToJson<String?>(category);
+    }
     json['model'] = model.toJson();
     return json;
   }
@@ -58,6 +64,7 @@ class GetMyVehiclesVehicles {
   GetMyVehiclesVehicles({
     required this.id,
     this.plate,
+    this.category,
     required this.model,
   });
 }

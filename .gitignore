@@ -53,6 +53,15 @@ app.*.map.json
 # Firebase
 .firebase/
 firebase-export/
+firebase-export-*/
+firebase-export-original*/
+firebase-export-orinal*/
+
+# AI Agent artifacts
+.claude/
+.continue/
+CLAUDE.md
+diff.txt
 
 # Node modules
 node_modules/

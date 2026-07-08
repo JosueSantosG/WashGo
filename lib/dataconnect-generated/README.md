@@ -3347,6 +3347,10 @@ class AddVehicleVariablesBuilder {
    _plate.value = t;
    return this;
   }
+  AddVehicleVariablesBuilder category(String? t) {
+   _category.value = t;
+   return this;
+  }
 
   ...
 }
@@ -3354,6 +3358,7 @@ ExampleConnector.instance.addVehicle(
   modelId: modelId,
 )
 .plate(plate)
+.category(category)
 .execute();
 ```
 
@@ -3451,6 +3456,10 @@ class UpdateVehicleVariablesBuilder {
    _plate.value = t;
    return this;
   }
+  UpdateVehicleVariablesBuilder category(String? t) {
+   _category.value = t;
+   return this;
+  }
 
   ...
 }
@@ -3459,6 +3468,7 @@ ExampleConnector.instance.updateVehicle(
   modelId: modelId,
 )
 .plate(plate)
+.category(category)
 .execute();
 ```
 

@@ -3072,6 +3072,15 @@ extend type Vehicle {
   """
   _count: Int! @fdc_generated(from: "Vehicle.", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `Vehicle` table where the `category` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  category_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Vehicle.category", purpose: QUERY_COUNT)
+  """
   ✨ Count the number of rows in the `Vehicle` table where the `clientId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
   clientId_count(

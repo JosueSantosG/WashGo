@@ -18,4 +18,14 @@ class VehicleItem {
     this.modelId,
     this.brandId,
   });
+
+  String get categoryDisplayName {
+    final t = type.toLowerCase().trim();
+    if (t == 'moto') return '🏍 Moto';
+    if (t == 'pequeño' || t == 'pequeno' || t == 'hatchback') return '🚗 Pequeño';
+    if (t == 'mediano' || t == 'sedan') return '🚙 Mediano';
+    if (t == 'grande' || t == 'suv') return '🚐 Grande';
+    return '🚗 $type';
+  }
 }
+
