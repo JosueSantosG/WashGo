@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:washgo/config/routes/app_routes.dart';
 
@@ -135,9 +136,15 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   }
 
   void _navigateToNextScreen() {
-    // Navigate automatically to authGate route. Route redirects will handle rest.
     if (mounted) {
-      context.go(AppRoutes.authGate);
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        // Logged-in user goes to authGate for role/dashboard routing
+        context.go(AppRoutes.authGate);
+      } else {
+        // Guest goes directly to home (map) — "Sin Login Hasta Reserva"
+        context.go(AppRoutes.home);
+      }
     }
   }
 

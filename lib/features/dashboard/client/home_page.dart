@@ -17,6 +17,7 @@ import 'package:washgo/features/dashboard/client/widgets/tabs/bookings_tab.dart'
 import 'package:washgo/features/dashboard/client/widgets/tabs/profile_tab.dart';
 import 'package:washgo/features/invoices/pages/client_invoice_history_page.dart';
 import 'package:washgo/features/dashboard/client/widgets/vehicles/vehicle_dialogs.dart';
+import 'package:washgo/core/session/booking_intent_manager.dart';
 
 import 'package:washgo/features/auth/models/washgo_user.dart';
 import 'package:washgo/features/auth/repositories/auth_repository.dart';
@@ -78,6 +79,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final bool _filterEcoOnly = false;
   final bool _filterOpenOnly = false;
   final String _sortBy = 'distance'; // distance, price, rating
+
+  // Continue booking banner state
+  bool _showContinueBanner = false;
 
   // Active user vehicles
   List<VehicleItem> _myVehicles = [];
@@ -451,8 +455,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _subscribeToClientOrders();
         _fetchMyVehicles();
       } else {
+        BookingIntentManager.instance.clearIntent();
         if (mounted) {
           setState(() {
+            _showContinueBanner = false;
             _washGoUser = null;
             _userRoles = [];
             _myVehicles = [];
@@ -594,9 +600,96 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _allLaundries = dynamicList;
         _filterLaundries();
       });
+      _checkPendingBookingIntent();
     } catch (e) {
       debugPrint('Error fetching businesses: $e');
     }
+  }
+
+  void _checkPendingBookingIntent() {
+    final intent = BookingIntentManager.instance.getIntent();
+    if (intent == null || !mounted) return;
+
+    // Don't clear here — LaundryBookingPage's _restoreBookingIntentIfNeeded
+    // or _autoSelectVehicleFromIntent will consume and clear it from initState
+
+    // Find the matching laundry in our loaded list
+    final matchingLaundry = _allLaundries.cast<LaundryItem?>().firstWhere(
+      (l) => l!.id == intent.laundryId,
+      orElse: () => null,
+    );
+
+    if (matchingLaundry == null) {
+      // Laundry not found — show banner and dialog
+      setState(() {
+        _showContinueBanner = true;
+      });
+      _showLaundryNotFoundDialog(intent);
+      return;
+    }
+
+    // Auto-navigate to the booking page where _restoreBookingIntentIfNeeded
+    // will have already restored the selection from the intent
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LaundryBookingPage(
+          laundry: matchingLaundry,
+          allLaundries: _allLaundries,
+        ),
+      ),
+    );
+  }
+
+  void _showLaundryNotFoundDialog(BookingIntent intent) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              const Icon(Icons.error_outline, color: AppColors.error),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Lavandería no disponible',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'La lavandería "${intent.laundryName}" de tu reserva pendiente ya no está disponible.',
+            style: const TextStyle(fontSize: 14, color: AppColors.onSurfaceVariant),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                BookingIntentManager.instance.clearIntent();
+                setState(() {
+                  _showContinueBanner = false;
+                });
+                Navigator.pop(dialogContext);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Entendido',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _recalculateDistances() {
@@ -833,6 +926,122 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  Widget _buildContinueBanner() {
+    final intent = BookingIntentManager.instance.getIntent();
+    if (intent == null) return const SizedBox.shrink();
+
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+          child: Material(
+            elevation: 8,
+            borderRadius: BorderRadius.circular(16),
+            shadowColor: Colors.black26,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.restore_rounded,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Reserva pendiente',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: AppColors.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'En ${intent.laundryName}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () {
+                      _fetchSavedBusinesses();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Text(
+                        'Continuar',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _showContinueBanner = false;
+                      });
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.all(6),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 20,
+                        color: AppColors.outline,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -841,6 +1050,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
+          // Continue reservation banner
+          if (_showContinueBanner && BookingIntentManager.instance.hasIntent())
+            _buildContinueBanner(),
+
           // Dynamic screen transitions
           Positioned.fill(
             child: AnimatedSwitcher(

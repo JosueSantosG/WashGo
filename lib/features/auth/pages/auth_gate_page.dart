@@ -7,6 +7,7 @@ import 'package:washgo/core/session/session_manager.dart';
 import 'package:washgo/config/routes/app_routes.dart';
 import 'package:washgo/features/auth/repositories/auth_repository.dart';
 import 'package:washgo/features/auth/repositories/firebase_auth_repository.dart';
+import 'package:washgo/core/session/booking_intent_manager.dart';
 
 class AuthGatePage extends StatefulWidget {
   const AuthGatePage({super.key});
@@ -94,7 +95,7 @@ class _AuthGatePageState extends State<AuthGatePage> {
           }
         } else {
           // El usuario es CLIENTE o SUPER_ADMIN
-          context.go('/');
+          _checkPendingBookingIntentOrGoHome();
         }
       } else {
         // El usuario no existe en la base de datos, necesita seleccionar rol
@@ -106,6 +107,74 @@ class _AuthGatePageState extends State<AuthGatePage> {
         context.go('/role-selection');
       }
     }
+  }
+
+  void _checkPendingBookingIntentOrGoHome() {
+    final intent = BookingIntentManager.instance.getIntent();
+    if (intent == null) {
+      context.go('/');
+      return;
+    }
+
+    // Show a dialog asking if the user wants to continue with the pending booking
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Icon(Icons.restore_rounded, color: AppColors.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Reserva pendiente',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Tienes una reserva pendiente en "${intent.laundryName}". ¿Deseas continuar donde la dejaste?',
+            style: const TextStyle(fontSize: 14, color: AppColors.onSurfaceVariant),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                BookingIntentManager.instance.clearIntent();
+                Navigator.pop(dialogContext);
+                if (mounted) context.go('/');
+              },
+              child: const Text(
+                'Empezar de nuevo',
+                style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                // Navigate to home — HomePage will detect the intent and auto-navigate
+                // to the booking page once laundries are loaded
+                if (mounted) context.go('/');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Continuar',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showStatusScreen(String message, {required bool isRejected}) {

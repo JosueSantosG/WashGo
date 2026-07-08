@@ -9,11 +9,13 @@ import 'package:washgo/app/app.dart';
 import 'package:washgo/config/env/environment.dart';
 import 'package:washgo/config/env/firebase_options.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
+import 'package:washgo/core/session/booking_intent_manager.dart';
 
 export 'package:washgo/app/app.dart' show WashGoApp;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await BookingIntentManager.instance.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Configure Crashlytics

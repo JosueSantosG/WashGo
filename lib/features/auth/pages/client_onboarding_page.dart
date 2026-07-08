@@ -10,6 +10,8 @@ import 'package:washgo/core/session/session_manager.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
 import 'package:washgo/features/auth/repositories/auth_repository.dart';
 import 'package:washgo/features/auth/repositories/firebase_auth_repository.dart';
+import 'package:washgo/core/session/booking_intent_manager.dart';
+import 'package:washgo/config/routes/app_routes.dart';
 
 class ClientOnboardingPage extends StatefulWidget {
   const ClientOnboardingPage({super.key});
@@ -69,7 +71,7 @@ class _ClientOnboardingPageState extends State<ClientOnboardingPage> {
         }
       }
       if (mounted) {
-        context.go('/');
+        _showContinueReservationDialog();
       }
     } catch (e) {
       debugPrint('Error guardando los datos: $e');
@@ -85,6 +87,74 @@ class _ClientOnboardingPageState extends State<ClientOnboardingPage> {
         });
       }
     }
+  }
+
+  void _showContinueReservationDialog() {
+    if (!mounted) return;
+    if (!BookingIntentManager.instance.hasIntent()) {
+      context.go(AppRoutes.home);
+      return;
+    }
+
+    final intent = BookingIntentManager.instance.getIntent();
+    final laundryName = intent?.laundryName ?? '';
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Icon(Icons.restore_rounded, color: AppColors.primary),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Reserva pendiente',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            laundryName.isNotEmpty
+                ? 'Tienes una reserva pendiente en $laundryName. ¿Deseas continuar con ella?'
+                : 'Tienes una reserva pendiente. ¿Deseas continuar con ella?',
+            style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                BookingIntentManager.instance.clearIntent();
+                context.go(AppRoutes.home);
+              },
+              child: const Text(
+                'Ir al mapa',
+                style: TextStyle(color: AppColors.outline, fontWeight: FontWeight.w600),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                context.go(AppRoutes.home);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Continuar',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _confirmSignOut() async {

@@ -62,7 +62,7 @@ query GetPendingEmployeeRequests($businessId: UUID!) @auth(level: USER) {
   }
 }
 
-query GetAllBusinesses @auth(level: USER, insecureReason: "Obtener todos los negocios") {
+query GetAllBusinesses @auth(level: PUBLIC, insecureReason: "Usuarios no autenticados pueden ver los negocios en el mapa") {
   businesses {
     id
     nombre
@@ -192,7 +192,7 @@ query GetActiveEmployees($businessId: UUID!) @auth(level: USER, insecureReason: 
   }
 }
 
-query GetBusinessServices($businessId: UUID!) @auth(level: USER, insecureReason: "Obtener servicios de negocio") {
+query GetBusinessServices($businessId: UUID!) @auth(level: PUBLIC, insecureReason: "Usuarios no autenticados pueden ver servicios y precios") {
   services(where: {businessId: {eq: $businessId}}) {
     id
     nombre
@@ -905,7 +905,7 @@ query GetPrepaidHistoryByOrderId($orderId: String!) @auth(level: USER) {
   }
 }
 
-query GetBusinessReservationConfig($businessId: UUID!) @auth(level: USER, insecureReason: "Cualquier usuario puede ver la configuracion de reservas de un negocio para programar citas") {
+query GetBusinessReservationConfig($businessId: UUID!) @auth(level: PUBLIC, insecureReason: "Usuarios no autenticados pueden ver config de reservas para programar citas") {
   businessReservationConfigs(where: { businessId: { eq: $businessId } }, limit: 1) {
     id
     capacidadSimultanea
@@ -915,7 +915,7 @@ query GetBusinessReservationConfig($businessId: UUID!) @auth(level: USER, insecu
   }
 }
 
-query GetActiveReservations($businessId: UUID!) @auth(level: USER, insecureReason: "Cualquier usuario puede ver las reservas activas para verificar disponibilidad de horario") {
+query GetActiveReservations($businessId: UUID!) @auth(level: PUBLIC, insecureReason: "Usuarios no autenticados pueden ver disponibilidad de horarios") {
   orderReservations(where: { businessId: { eq: $businessId } }) {
     orderId
     businessId

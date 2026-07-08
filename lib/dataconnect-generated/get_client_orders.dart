@@ -6,8 +6,8 @@ class GetClientOrdersVariablesBuilder {
   GetClientOrdersVariablesBuilder(this._dataConnect, );
   Deserializer<GetClientOrdersData> dataDeserializer = (dynamic json)  => GetClientOrdersData.fromJson(jsonDecode(json));
   
-  Future<QueryResult<GetClientOrdersData, void>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetClientOrdersData, void>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetClientOrdersData, void> ref() {

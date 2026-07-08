@@ -66,300 +66,6 @@ const connectorConfig = {
 };
 exports.connectorConfig = connectorConfig;
 
-function getUsers(dcOrOptions, options) {
-  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetUsers', undefined, inputOpts);
-}
-exports.getUsers = getUsers;
-
-function getCurrentUser(dcOrOptions, options) {
-  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetCurrentUser', undefined, inputOpts);
-}
-exports.getCurrentUser = getCurrentUser;
-
-function getBusinessByCode(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetBusinessByCode', inputVars, inputOpts);
-}
-exports.getBusinessByCode = getBusinessByCode;
-
-function getPendingEmployeeRequests(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetPendingEmployeeRequests', inputVars, inputOpts);
-}
-exports.getPendingEmployeeRequests = getPendingEmployeeRequests;
-
-function getAllBusinesses(dcOrOptions, options) {
-  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetAllBusinesses', undefined, inputOpts);
-}
-exports.getAllBusinesses = getAllBusinesses;
-
-function getClientOrders(dcOrOptions, options) {
-  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetClientOrders', undefined, inputOpts);
-}
-exports.getClientOrders = getClientOrders;
-
-function getBusinessOrders(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetBusinessOrders', inputVars, inputOpts);
-}
-exports.getBusinessOrders = getBusinessOrders;
-
-function getActiveEmployees(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetActiveEmployees', inputVars, inputOpts);
-}
-exports.getActiveEmployees = getActiveEmployees;
-
-function getBusinessServices(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetBusinessServices', inputVars, inputOpts);
-}
-exports.getBusinessServices = getBusinessServices;
-
-function getMyVehicles(dcOrOptions, options) {
-  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetMyVehicles', undefined, inputOpts);
-}
-exports.getMyVehicles = getMyVehicles;
-
-function getVehicleBrands(dcOrOptions, options) {
-  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetVehicleBrands', undefined, inputOpts);
-}
-exports.getVehicleBrands = getVehicleBrands;
-
-function getVehicleModelsByBrand(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetVehicleModelsByBrand', inputVars, inputOpts);
-}
-exports.getVehicleModelsByBrand = getVehicleModelsByBrand;
-
-function getActiveBusinessOrders(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetActiveBusinessOrders', inputVars, inputOpts);
-}
-exports.getActiveBusinessOrders = getActiveBusinessOrders;
-
-function getEmployeeAvailability(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetEmployeeAvailability', inputVars, inputOpts);
-}
-exports.getEmployeeAvailability = getEmployeeAvailability;
-
-function getBusinessHours(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetBusinessHours', inputVars, inputOpts);
-}
-exports.getBusinessHours = getBusinessHours;
-
-function superAdminGetBusinesses(dcOrOptions, options) {
-  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('SuperAdminGetBusinesses', undefined, inputOpts);
-}
-exports.superAdminGetBusinesses = superAdminGetBusinesses;
-
-function getMyBusinesses(dcOrOptions, options) {
-  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetMyBusinesses', undefined, inputOpts);
-}
-exports.getMyBusinesses = getMyBusinesses;
-
-function getEmployeeHistoryOrdersPaged(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetEmployeeHistoryOrdersPaged', inputVars, inputOpts);
-}
-exports.getEmployeeHistoryOrdersPaged = getEmployeeHistoryOrdersPaged;
-
-function getClientHistoryOrdersPaged(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetClientHistoryOrdersPaged', inputVars, inputOpts);
-}
-exports.getClientHistoryOrdersPaged = getClientHistoryOrdersPaged;
-
-function findUserByPhone(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('FindUserByPhone', inputVars, inputOpts);
-}
-exports.findUserByPhone = findUserByPhone;
-
-function getClientInvoices(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, false);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetClientInvoices', inputVars, inputOpts);
-}
-exports.getClientInvoices = getClientInvoices;
-
-function getEmployeeInvoices(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, false);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetEmployeeInvoices', inputVars, inputOpts);
-}
-exports.getEmployeeInvoices = getEmployeeInvoices;
-
-function getBusinessInvoices(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetBusinessInvoices', inputVars, inputOpts);
-}
-exports.getBusinessInvoices = getBusinessInvoices;
-
-function getInvoiceById(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetInvoiceById', inputVars, inputOpts);
-}
-exports.getInvoiceById = getInvoiceById;
-
-function getInvoicesByDateRange(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetInvoicesByDateRange', inputVars, inputOpts);
-}
-exports.getInvoicesByDateRange = getInvoicesByDateRange;
-
-function getBusinessDetails(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetBusinessDetails', inputVars, inputOpts);
-}
-exports.getBusinessDetails = getBusinessDetails;
-
-function getUserNotifications(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetUserNotifications', inputVars, inputOpts);
-}
-exports.getUserNotifications = getUserNotifications;
-
-function getPrepaidHistory(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetPrepaidHistory', inputVars, inputOpts);
-}
-exports.getPrepaidHistory = getPrepaidHistory;
-
-function getPrepaidServiceMetrics(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetPrepaidServiceMetrics', inputVars, inputOpts);
-}
-exports.getPrepaidServiceMetrics = getPrepaidServiceMetrics;
-
-function getPrepaidServiceMetricByServiceName(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetPrepaidServiceMetricByServiceName', inputVars, inputOpts);
-}
-exports.getPrepaidServiceMetricByServiceName = getPrepaidServiceMetricByServiceName;
-
-function getOrderById(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetOrderById', inputVars, inputOpts);
-}
-exports.getOrderById = getOrderById;
-
-function getPrepaidHistoryByOrderId(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetPrepaidHistoryByOrderId', inputVars, inputOpts);
-}
-exports.getPrepaidHistoryByOrderId = getPrepaidHistoryByOrderId;
-
-function getBusinessReservationConfig(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetBusinessReservationConfig', inputVars, inputOpts);
-}
-exports.getBusinessReservationConfig = getBusinessReservationConfig;
-
-function getActiveReservations(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetActiveReservations', inputVars, inputOpts);
-}
-exports.getActiveReservations = getActiveReservations;
-
-function getReservationByOrderId(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetReservationByOrderId', inputVars, inputOpts);
-}
-exports.getReservationByOrderId = getReservationByOrderId;
-
-function getBusinessReviews(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetBusinessReviews', inputVars, inputOpts);
-}
-exports.getBusinessReviews = getBusinessReviews;
-
-function getOrderReview(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetOrderReview', inputVars, inputOpts);
-}
-exports.getOrderReview = getOrderReview;
-
-function getGlobalAppRatings(dcOrOptions, options) {
-  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetGlobalAppRatings', undefined, inputOpts);
-}
-exports.getGlobalAppRatings = getGlobalAppRatings;
-
-function getOrderDetailsForPayment(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetOrderDetailsForPayment', inputVars, inputOpts);
-}
-exports.getOrderDetailsForPayment = getOrderDetailsForPayment;
-
-function getInvoiceByOrderId(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetInvoiceByOrderId', inputVars, inputOpts);
-}
-exports.getInvoiceByOrderId = getInvoiceByOrderId;
-
-function getInvoiceDetailsForUrl(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetInvoiceDetailsForUrl', inputVars, inputOpts);
-}
-exports.getInvoiceDetailsForUrl = getInvoiceDetailsForUrl;
-
-function checkBusinessEmployeeAdmin(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('CheckBusinessEmployeeAdmin', inputVars, inputOpts);
-}
-exports.checkBusinessEmployeeAdmin = checkBusinessEmployeeAdmin;
-
 function upsertUser(dcOrVarsOrOptions, varsOrOptions, options) {
   const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
   dcInstance.useGen(true);
@@ -716,4 +422,298 @@ function consumePrepaidAndCreateMetric(dcOrVarsOrOptions, varsOrOptions, options
   return dcInstance.executeMutation('ConsumePrepaidAndCreateMetric', inputVars, inputOpts);
 }
 exports.consumePrepaidAndCreateMetric = consumePrepaidAndCreateMetric;
+
+function getUsers(dcOrOptions, options) {
+  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetUsers', undefined, inputOpts);
+}
+exports.getUsers = getUsers;
+
+function getCurrentUser(dcOrOptions, options) {
+  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetCurrentUser', undefined, inputOpts);
+}
+exports.getCurrentUser = getCurrentUser;
+
+function getBusinessByCode(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetBusinessByCode', inputVars, inputOpts);
+}
+exports.getBusinessByCode = getBusinessByCode;
+
+function getPendingEmployeeRequests(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetPendingEmployeeRequests', inputVars, inputOpts);
+}
+exports.getPendingEmployeeRequests = getPendingEmployeeRequests;
+
+function getAllBusinesses(dcOrOptions, options) {
+  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetAllBusinesses', undefined, inputOpts);
+}
+exports.getAllBusinesses = getAllBusinesses;
+
+function getClientOrders(dcOrOptions, options) {
+  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetClientOrders', undefined, inputOpts);
+}
+exports.getClientOrders = getClientOrders;
+
+function getBusinessOrders(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetBusinessOrders', inputVars, inputOpts);
+}
+exports.getBusinessOrders = getBusinessOrders;
+
+function getActiveEmployees(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetActiveEmployees', inputVars, inputOpts);
+}
+exports.getActiveEmployees = getActiveEmployees;
+
+function getBusinessServices(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetBusinessServices', inputVars, inputOpts);
+}
+exports.getBusinessServices = getBusinessServices;
+
+function getMyVehicles(dcOrOptions, options) {
+  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetMyVehicles', undefined, inputOpts);
+}
+exports.getMyVehicles = getMyVehicles;
+
+function getVehicleBrands(dcOrOptions, options) {
+  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetVehicleBrands', undefined, inputOpts);
+}
+exports.getVehicleBrands = getVehicleBrands;
+
+function getVehicleModelsByBrand(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetVehicleModelsByBrand', inputVars, inputOpts);
+}
+exports.getVehicleModelsByBrand = getVehicleModelsByBrand;
+
+function getActiveBusinessOrders(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetActiveBusinessOrders', inputVars, inputOpts);
+}
+exports.getActiveBusinessOrders = getActiveBusinessOrders;
+
+function getEmployeeAvailability(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetEmployeeAvailability', inputVars, inputOpts);
+}
+exports.getEmployeeAvailability = getEmployeeAvailability;
+
+function getBusinessHours(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetBusinessHours', inputVars, inputOpts);
+}
+exports.getBusinessHours = getBusinessHours;
+
+function superAdminGetBusinesses(dcOrOptions, options) {
+  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('SuperAdminGetBusinesses', undefined, inputOpts);
+}
+exports.superAdminGetBusinesses = superAdminGetBusinesses;
+
+function getMyBusinesses(dcOrOptions, options) {
+  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetMyBusinesses', undefined, inputOpts);
+}
+exports.getMyBusinesses = getMyBusinesses;
+
+function getEmployeeHistoryOrdersPaged(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetEmployeeHistoryOrdersPaged', inputVars, inputOpts);
+}
+exports.getEmployeeHistoryOrdersPaged = getEmployeeHistoryOrdersPaged;
+
+function getClientHistoryOrdersPaged(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetClientHistoryOrdersPaged', inputVars, inputOpts);
+}
+exports.getClientHistoryOrdersPaged = getClientHistoryOrdersPaged;
+
+function findUserByPhone(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('FindUserByPhone', inputVars, inputOpts);
+}
+exports.findUserByPhone = findUserByPhone;
+
+function getClientInvoices(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, false);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetClientInvoices', inputVars, inputOpts);
+}
+exports.getClientInvoices = getClientInvoices;
+
+function getEmployeeInvoices(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, false);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetEmployeeInvoices', inputVars, inputOpts);
+}
+exports.getEmployeeInvoices = getEmployeeInvoices;
+
+function getBusinessInvoices(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetBusinessInvoices', inputVars, inputOpts);
+}
+exports.getBusinessInvoices = getBusinessInvoices;
+
+function getInvoiceById(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetInvoiceById', inputVars, inputOpts);
+}
+exports.getInvoiceById = getInvoiceById;
+
+function getInvoicesByDateRange(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetInvoicesByDateRange', inputVars, inputOpts);
+}
+exports.getInvoicesByDateRange = getInvoicesByDateRange;
+
+function getBusinessDetails(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetBusinessDetails', inputVars, inputOpts);
+}
+exports.getBusinessDetails = getBusinessDetails;
+
+function getUserNotifications(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetUserNotifications', inputVars, inputOpts);
+}
+exports.getUserNotifications = getUserNotifications;
+
+function getPrepaidHistory(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetPrepaidHistory', inputVars, inputOpts);
+}
+exports.getPrepaidHistory = getPrepaidHistory;
+
+function getPrepaidServiceMetrics(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetPrepaidServiceMetrics', inputVars, inputOpts);
+}
+exports.getPrepaidServiceMetrics = getPrepaidServiceMetrics;
+
+function getPrepaidServiceMetricByServiceName(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetPrepaidServiceMetricByServiceName', inputVars, inputOpts);
+}
+exports.getPrepaidServiceMetricByServiceName = getPrepaidServiceMetricByServiceName;
+
+function getOrderById(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetOrderById', inputVars, inputOpts);
+}
+exports.getOrderById = getOrderById;
+
+function getPrepaidHistoryByOrderId(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetPrepaidHistoryByOrderId', inputVars, inputOpts);
+}
+exports.getPrepaidHistoryByOrderId = getPrepaidHistoryByOrderId;
+
+function getBusinessReservationConfig(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetBusinessReservationConfig', inputVars, inputOpts);
+}
+exports.getBusinessReservationConfig = getBusinessReservationConfig;
+
+function getActiveReservations(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetActiveReservations', inputVars, inputOpts);
+}
+exports.getActiveReservations = getActiveReservations;
+
+function getReservationByOrderId(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetReservationByOrderId', inputVars, inputOpts);
+}
+exports.getReservationByOrderId = getReservationByOrderId;
+
+function getBusinessReviews(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetBusinessReviews', inputVars, inputOpts);
+}
+exports.getBusinessReviews = getBusinessReviews;
+
+function getOrderReview(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetOrderReview', inputVars, inputOpts);
+}
+exports.getOrderReview = getOrderReview;
+
+function getGlobalAppRatings(dcOrOptions, options) {
+  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetGlobalAppRatings', undefined, inputOpts);
+}
+exports.getGlobalAppRatings = getGlobalAppRatings;
+
+function getOrderDetailsForPayment(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetOrderDetailsForPayment', inputVars, inputOpts);
+}
+exports.getOrderDetailsForPayment = getOrderDetailsForPayment;
+
+function getInvoiceByOrderId(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetInvoiceByOrderId', inputVars, inputOpts);
+}
+exports.getInvoiceByOrderId = getInvoiceByOrderId;
+
+function getInvoiceDetailsForUrl(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetInvoiceDetailsForUrl', inputVars, inputOpts);
+}
+exports.getInvoiceDetailsForUrl = getInvoiceDetailsForUrl;
+
+function checkBusinessEmployeeAdmin(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('CheckBusinessEmployeeAdmin', inputVars, inputOpts);
+}
+exports.checkBusinessEmployeeAdmin = checkBusinessEmployeeAdmin;
 

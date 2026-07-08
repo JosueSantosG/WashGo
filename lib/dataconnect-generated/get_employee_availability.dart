@@ -8,8 +8,8 @@ class GetEmployeeAvailabilityVariablesBuilder {
   GetEmployeeAvailabilityVariablesBuilder(this._dataConnect, {required  this.businessId,required  this.employeeId,});
   Deserializer<GetEmployeeAvailabilityData> dataDeserializer = (dynamic json)  => GetEmployeeAvailabilityData.fromJson(jsonDecode(json));
   Serializer<GetEmployeeAvailabilityVariables> varsSerializer = (GetEmployeeAvailabilityVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetEmployeeAvailabilityData, GetEmployeeAvailabilityVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetEmployeeAvailabilityData, GetEmployeeAvailabilityVariables>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetEmployeeAvailabilityData, GetEmployeeAvailabilityVariables> ref() {

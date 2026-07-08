@@ -1,42 +1,140 @@
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
 class BookingIntent {
   final String laundryId;
+  final String laundryName;
   final String serviceId;
+  final String serviceName;
   final String vehicleCategory; // 'Moto', 'Pequeño', 'Mediano', 'Grande'
   final String? plate;
   final bool scheduleNow;
   final DateTime selectedDate;
   final DateTime? selectedTimeSlot;
+  final DateTime savedAt;
 
   BookingIntent({
     required this.laundryId,
+    required this.laundryName,
     required this.serviceId,
+    required this.serviceName,
     required this.vehicleCategory,
     this.plate,
     required this.scheduleNow,
     required this.selectedDate,
     this.selectedTimeSlot,
+    required this.savedAt,
   });
+
+  Map<String, dynamic> toJson() => {
+        'laundryId': laundryId,
+        'laundryName': laundryName,
+        'serviceId': serviceId,
+        'serviceName': serviceName,
+        'vehicleCategory': vehicleCategory,
+        'plate': plate,
+        'scheduleNow': scheduleNow,
+        'selectedDate': selectedDate.toIso8601String(),
+        'selectedTimeSlot': selectedTimeSlot?.toIso8601String(),
+        'savedAt': savedAt.toIso8601String(),
+      };
+
+  factory BookingIntent.fromJson(Map<String, dynamic> json) => BookingIntent(
+        laundryId: json['laundryId'] as String,
+        laundryName: json['laundryName'] as String,
+        serviceId: json['serviceId'] as String,
+        serviceName: json['serviceName'] as String,
+        vehicleCategory: json['vehicleCategory'] as String,
+        plate: json['plate'] as String?,
+        scheduleNow: json['scheduleNow'] as bool,
+        selectedDate: DateTime.parse(json['selectedDate'] as String),
+        selectedTimeSlot: json['selectedTimeSlot'] != null
+            ? DateTime.parse(json['selectedTimeSlot'] as String)
+            : null,
+        savedAt: DateTime.parse(json['savedAt'] as String),
+      );
 }
 
 class BookingIntentManager {
   BookingIntentManager._privateConstructor();
   static final BookingIntentManager instance = BookingIntentManager._privateConstructor();
 
+  static const _key = 'booking_intent';
+  static const _maxAge = Duration(hours: 24);
+
+  SharedPreferences? _prefs;
   BookingIntent? _intent;
+
+  Future<void> ensureInitialized() async {
+    _prefs = await SharedPreferences.getInstance();
+    // On init, _intent stays null; getIntent() will lazy-load from prefs.
+  }
 
   void saveIntent(BookingIntent intent) {
     _intent = intent;
+    _persistIntent(intent);
   }
 
   BookingIntent? getIntent() {
+    if (_intent != null) {
+      // Check TTL on in-memory intent
+      if (DateTime.now().difference(_intent!.savedAt) > _maxAge) {
+        clearIntent();
+        return null;
+      }
+      return _intent;
+    }
+
+    // Lazy-load from SharedPreferences
+    _intent = _loadIntent();
+    if (_intent != null) {
+      // Check TTL on loaded intent
+      if (DateTime.now().difference(_intent!.savedAt) > _maxAge) {
+        clearIntent();
+        return null;
+      }
+    }
     return _intent;
+  }
+
+  bool hasIntentForLaundry(String laundryId) {
+    return getIntent()?.laundryId == laundryId;
   }
 
   void clearIntent() {
     _intent = null;
+    _removePersistedIntent();
   }
 
   bool hasIntent() {
-    return _intent != null;
+    return getIntent() != null;
+  }
+
+  /// Resets the singleton to its initial state. Only for testing.
+  static void resetForTesting() {
+    instance._intent = null;
+    instance._prefs = null;
+  }
+
+  // ---- Private persistence helpers ----
+
+  void _persistIntent(BookingIntent intent) {
+    _prefs?.setString(_key, jsonEncode(intent.toJson()));
+  }
+
+  BookingIntent? _loadIntent() {
+    final raw = _prefs?.getString(_key);
+    if (raw == null) return null;
+    try {
+      final json = jsonDecode(raw) as Map<String, dynamic>;
+      return BookingIntent.fromJson(json);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _removePersistedIntent() {
+    _prefs?.remove(_key);
   }
 }

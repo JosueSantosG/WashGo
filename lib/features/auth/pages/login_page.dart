@@ -34,6 +34,10 @@ class _LoginPageState extends State<LoginPage> {
       );
       // El auth state cambiará y nos redirigirá
       _showSuccess('¡Inicio de sesión exitoso!');
+      // Navegación explícita como respaldo por si el redirect de GoRouter
+      // no se completa a tiempo (especialmente con Google Sign-In)
+      if (!mounted) return;
+      context.go(AppRoutes.authGate);
     } on FirebaseAuthException catch (e) {
       _showError(e.message ?? 'Error al iniciar sesión');
     } finally {
@@ -71,6 +75,10 @@ class _LoginPageState extends State<LoginPage> {
 
       // El auth state cambiará y nos redirigirá
       _showSuccess('¡Inicio de sesión con Google exitoso!');
+      // Navegación explícita como respaldo por si el redirect de GoRouter
+      // no se completa a tiempo (especialmente con Google Sign-In)
+      if (!mounted) return;
+      context.go(AppRoutes.authGate);
     } on FirebaseAuthException catch (e) {
       if (e.code == 'popup-closed-by-user') {
         // Ignoramos el error si el usuario simplemente cerró la ventana del popup

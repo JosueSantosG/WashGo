@@ -6,8 +6,8 @@ class GetMyBusinessesVariablesBuilder {
   GetMyBusinessesVariablesBuilder(this._dataConnect, );
   Deserializer<GetMyBusinessesData> dataDeserializer = (dynamic json)  => GetMyBusinessesData.fromJson(jsonDecode(json));
   
-  Future<QueryResult<GetMyBusinessesData, void>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetMyBusinessesData, void>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetMyBusinessesData, void> ref() {
