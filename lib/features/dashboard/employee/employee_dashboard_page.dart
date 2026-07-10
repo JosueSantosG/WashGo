@@ -1266,6 +1266,8 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
         return 'PayPal';
       case PaymentMethod.CASH:
         return 'Efectivo';
+      case PaymentMethod.TRANSFERENCIA_BANCARIA:
+        return 'Transferencia';
     }
   }
 

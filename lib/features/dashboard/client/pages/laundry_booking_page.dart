@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
-import 'package:washgo/config/routes/app_routes.dart';
 import 'package:washgo/config/theme/app_colors.dart';
 import 'package:washgo/features/dashboard/client/models/laundry_item.dart';
 import 'package:washgo/features/dashboard/client/models/vehicle_item.dart';
@@ -1959,6 +1958,23 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
               }
             }
 
+            final orderId = result;
+
+            // Save PendingPaymentIntent for bank transfer before any Navigator pops
+            if (paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA) {
+              BookingIntentManager.instance.savePendingPaymentIntent(
+                PendingPaymentIntent(
+                  orderId: orderId,
+                  paymentMethod: 'TRANSFERENCIA_BANCARIA',
+                  amount: currentPrice,
+                  serviceName: currentName,
+                  businessName: widget.laundry.name,
+                  businessId: businessId,
+                  createdAt: DateTime.now(),
+                ),
+              );
+            }
+
             if (!routeContext.mounted) return;
 
             Navigator.pop(routeContext);
@@ -1968,38 +1984,21 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
             }
 
             if (paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA) {
-              final orderId = result;
-              final currentServiceName = currentName;
-              final currentServicePrice = currentPrice;
-              if (!context.mounted) return;
-
-              // Save PendingPaymentIntent for return flow
-              BookingIntentManager.instance.savePendingPaymentIntent(
-                PendingPaymentIntent(
-                  orderId: orderId,
-                  paymentMethod: 'TRANSFERENCIA_BANCARIA',
-                  amount: currentServicePrice,
-                  serviceName: currentServiceName,
-                  businessName: widget.laundry.name,
-                  businessId: widget.laundry.id,
-                  createdAt: DateTime.now(),
-                ),
-              );
-
-              context.push(
-                AppRoutes.bankTransferInstructions,
-                extra: {
-                  'orderId': orderId,
-                  'amount': currentServicePrice,
-                  'serviceName': currentServiceName,
-                  'businessName': widget.laundry.name,
-                },
-              );
-              return;
+              if (mounted) {
+                context.push(
+                  AppRoutes.bankTransferInstructions,
+                  extra: {
+                    'orderId': orderId,
+                    'amount': currentPrice,
+                    'serviceName': currentName,
+                    'businessName': widget.laundry.name,
+                    'businessId': businessId,
+                  },
+                );
+              }
+            } else {
+              _showOrderCreatedSuccess(orderId);
             }
-
-            final orderId = result;
-            _showOrderCreatedSuccess(orderId);
           },
         ),
       ),

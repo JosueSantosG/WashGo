@@ -250,53 +250,47 @@ GoRouter _createAppRouter() {
       path: AppRoutes.paypalCancelScheme,
       builder: (context, state) => const PaypalCancelPage(),
     ),
-
-    // --- Bank Transfer Routes ---
     GoRoute(
       path: AppRoutes.bankTransferInstructions,
       builder: (context, state) {
-        final extra = state.extra as Map<String, dynamic>? ?? {};
+        final args = (state.extra as Map<String, dynamic>?) ?? {};
         return BankTransferInstructionsPage(
-          orderId: (extra['orderId'] ?? '') as String,
-          amount: ((extra['amount'] as num?)?.toDouble() ?? 0.0),
-          serviceName: (extra['serviceName'] ?? '') as String,
-          businessName: (extra['businessName'] ?? '') as String,
+          orderId: (args['orderId'] as String?) ?? '',
+          amount: (args['amount'] as num?)?.toDouble() ?? 0.0,
+          serviceName: (args['serviceName'] as String?) ?? '',
+          businessName: (args['businessName'] as String?) ?? '',
+          businessId: args['businessId'] as String?,
         );
       },
     ),
     GoRoute(
       path: AppRoutes.proofUpload,
       builder: (context, state) {
-        final extra = state.extra as Map<String, dynamic>? ?? {};
+        final args = (state.extra as Map<String, dynamic>?) ?? {};
         return ProofUploadPage(
-          orderId: (extra['orderId'] ?? '') as String,
-          amount: ((extra['amount'] as num?)?.toDouble() ?? 0.0),
-          serviceName: (extra['serviceName'] ?? '') as String,
-          businessName: (extra['businessName'] ?? '') as String,
-          paymentAccountType: (extra['paymentAccountType'] ?? 'GUAYAQUIL') as String,
+          orderId: (args['orderId'] as String?) ?? '',
+          amount: (args['amount'] as num?)?.toDouble() ?? 0.0,
+          serviceName: (args['serviceName'] as String?) ?? '',
+          businessName: (args['businessName'] as String?) ?? '',
         );
       },
     ),
     GoRoute(
       path: AppRoutes.proofStatus,
       builder: (context, state) {
-        final extra = state.extra as Map<String, dynamic>? ?? {};
+        final args = (state.extra as Map<String, dynamic>?) ?? {};
         return ProofStatusPage(
-          orderId: (extra['orderId'] ?? '') as String,
-          serviceName: (extra['serviceName'] ?? '') as String,
-          businessName: (extra['businessName'] ?? '') as String,
+          orderId: (args['orderId'] as String?) ?? '',
+          proofStatus: (args['proofStatus'] as String?) ?? 'PENDING',
+          amount: (args['amount'] as num?)?.toDouble() ?? 0.0,
+          serviceName: (args['serviceName'] as String?) ?? '',
+          businessName: (args['businessName'] as String?) ?? '',
         );
       },
     ),
     GoRoute(
       path: AppRoutes.adminPaymentReview,
-      builder: (context, state) {
-        final extra = state.extra as Map<String, dynamic>? ?? {};
-        return AdminPaymentReviewPage(
-          businessId: (extra['businessId'] ?? '') as String,
-          businessName: (extra['businessName'] ?? '') as String,
-        );
-      },
+      builder: (context, state) => const AdminPaymentReviewPage(),
     ),
   ];
 

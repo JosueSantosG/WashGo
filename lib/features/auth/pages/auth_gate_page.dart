@@ -8,6 +8,7 @@ import 'package:washgo/config/routes/app_routes.dart';
 import 'package:washgo/features/auth/repositories/auth_repository.dart';
 import 'package:washgo/features/auth/repositories/firebase_auth_repository.dart';
 import 'package:washgo/core/session/booking_intent_manager.dart';
+import 'package:washgo/features/payments/pages/proof_status_page.dart';
 
 class AuthGatePage extends StatefulWidget {
   const AuthGatePage({super.key});
@@ -110,77 +111,13 @@ class _AuthGatePageState extends State<AuthGatePage> {
   }
 
   void _checkPendingBookingIntentOrGoHome() {
-    // First check for pending payment intent (higher priority — money involved)
-    final paymentIntent = BookingIntentManager.instance.getPendingPaymentIntent();
-    if (paymentIntent != null) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogContext) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Row(
-              children: [
-                Icon(Icons.payment_rounded, color: AppColors.primary),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Pago pendiente',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                  ),
-                ),
-              ],
-            ),
-            content: Text(
-              'Tienes un pago por transferencia bancaria pendiente para '
-              '"${paymentIntent.serviceName}" en ${paymentIntent.businessName}.\n\n'
-              '¿Deseas continuar con el proceso de pago?',
-              style: const TextStyle(fontSize: 14, color: AppColors.onSurfaceVariant),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  BookingIntentManager.instance.clearPendingPaymentIntent();
-                  Navigator.pop(dialogContext);
-                  if (mounted) context.go('/');
-                },
-                child: const Text(
-                  'Descartar',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textSecondary),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(dialogContext);
-                  if (mounted) {
-                    context.push(
-                      AppRoutes.proofStatus,
-                      extra: {
-                        'orderId': paymentIntent.orderId,
-                        'serviceName': paymentIntent.serviceName,
-                        'businessName': paymentIntent.businessName,
-                      },
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Continuar pago',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          );
-        },
-      );
-      return;
+    // Check for a pending payment intent (bank transfer) first
+    if (BookingIntentManager.instance.hasPendingPaymentIntent()) {
+      final paymentIntent = BookingIntentManager.instance.getPendingPaymentIntent();
+      if (paymentIntent != null) {
+        _showPendingPaymentDialog(paymentIntent);
+        return;
+      }
     }
 
     final intent = BookingIntentManager.instance.getIntent();
@@ -241,6 +178,78 @@ class _AuthGatePageState extends State<AuthGatePage> {
               ),
               child: const Text(
                 'Continuar',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showPendingPaymentDialog(PendingPaymentIntent intent) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Icon(Icons.payment_rounded, color: AppColors.primary),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Pago pendiente',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Tienes un pago por transferencia bancaria pendiente en "${intent.businessName}" por \$${intent.amount.toStringAsFixed(2)}. ¿Deseas revisar el estado?',
+            style: const TextStyle(fontSize: 14, color: AppColors.onSurfaceVariant),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                BookingIntentManager.instance.clearPendingPaymentIntent();
+                Navigator.pop(dialogContext);
+                if (mounted) context.go('/');
+              },
+              child: const Text(
+                'Descartar',
+                style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                if (mounted) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ProofStatusPage(
+                        orderId: intent.orderId,
+                        proofStatus: 'PENDING',
+                        amount: intent.amount,
+                        serviceName: intent.serviceName,
+                        businessName: intent.businessName,
+                      ),
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Revisar',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),

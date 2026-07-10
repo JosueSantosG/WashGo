@@ -6,11 +6,11 @@ service firebase.storage {
       allow read, write: if false;
     }
 
-    // Proof images: authenticated users can upload/read
+    // Proof images: authenticated users can upload/read, public signed URL via cloud function
     match /proofs/{orderId}/{fileName} {
       allow read: if request.auth != null;
       allow write: if request.auth != null
-                    && request.resource.size < 10 * 1024 * 1024; // 10MB limit
+                    && request.resource.size < 10 * 1024 * 1024;
     }
 
     // Everything else locked

@@ -55,7 +55,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
         cashTotal += inv.total;
       } else if (paymentUpper == 'PAYPAL') {
         paypalTotal += inv.total;
-      } else if (paymentUpper == 'TRANSFERENCIA_BANCARIA') {
+      } else if (paymentUpper.contains('TRANSFERENCIA')) {
         bankTransferTotal += inv.total;
       }
     }
@@ -461,10 +461,6 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
                 const SizedBox(height: 12),
                 _buildAdvancedFiltersPanel(),
               ],
-              const SizedBox(height: 24),
-
-              // Bank transfer payment review CTA
-              _buildBankTransferReviewButton(),
               const SizedBox(height: 24),
 
               // Metrics Grid Section
@@ -877,97 +873,6 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildBankTransferReviewButton() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary.withValues(alpha: 0.08),
-            AppColors.primary.withValues(alpha: 0.02),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.account_balance_rounded,
-              color: AppColors.primary,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Pagos por transferencia',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1E293B),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Revisa y aprueba comprobantes de pago',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: const Color(0xFF64748B),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            height: 38,
-            child: ElevatedButton(
-              onPressed: () {
-                context.push(
-                  AppRoutes.adminPaymentReview,
-                  extra: {
-                    'businessId': widget.businessId,
-                    'businessName': '', // Could pass from parent if stored
-                  },
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-              ),
-              child: Text(
-                'Revisar',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1390,21 +1295,23 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
                               decoration: BoxDecoration(
                                 color: (invoice.paymentMethod.toUpperCase() == 'PAYPAL')
                                     ? Colors.blue.withValues(alpha: 0.1)
-                                    : (invoice.paymentMethod.toUpperCase() == 'TRANSFERENCIA_BANCARIA')
+                                    : invoice.paymentMethod.toUpperCase().contains('TRANSFERENCIA')
                                         ? Colors.purple.withValues(alpha: 0.1)
                                         : Colors.green.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                invoice.paymentMethod.toUpperCase() == 'PAYPAL' ? 'PayPal'
-                                    : invoice.paymentMethod.toUpperCase() == 'TRANSFERENCIA_BANCARIA' ? 'Transferencia'
-                                    : 'Efectivo',
+                                invoice.paymentMethod.toUpperCase() == 'PAYPAL'
+                                    ? 'PayPal'
+                                    : invoice.paymentMethod.toUpperCase().contains('TRANSFERENCIA')
+                                        ? 'Transferencia'
+                                        : 'Efectivo',
                                 style: GoogleFonts.inter(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                   color: (invoice.paymentMethod.toUpperCase() == 'PAYPAL')
                                       ? Colors.blue[700]
-                                      : (invoice.paymentMethod.toUpperCase() == 'TRANSFERENCIA_BANCARIA')
+                                      : invoice.paymentMethod.toUpperCase().contains('TRANSFERENCIA')
                                           ? Colors.purple[700]
                                           : Colors.green[700],
                                 ),

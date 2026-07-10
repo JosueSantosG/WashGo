@@ -56,11 +56,9 @@ class BookingIntent {
       );
 }
 
-/// Tracks an order created via bank transfer that is pending payment proof upload.
-/// Allows the app to re-navigate to the proof flow if the user leaves the app.
 class PendingPaymentIntent {
   final String orderId;
-  final String paymentMethod; // TRANSFERENCIA_BANCARIA
+  final String paymentMethod;
   final double amount;
   final String serviceName;
   final String businessName;
@@ -97,9 +95,6 @@ class PendingPaymentIntent {
         businessId: json['businessId'] as String?,
         createdAt: DateTime.parse(json['createdAt'] as String),
       );
-
-  bool get isExpired =>
-      DateTime.now().difference(createdAt) > const Duration(hours: 24);
 }
 
 class BookingIntentManager {
@@ -154,6 +149,31 @@ class BookingIntentManager {
     _removePersistedIntent();
   }
 
+  // ---- Pending Payment Intent ----
+
+  void savePendingPaymentIntent(PendingPaymentIntent intent) {
+    _persistPendingPaymentIntent(intent);
+  }
+
+  PendingPaymentIntent? getPendingPaymentIntent() {
+    return _loadPendingPaymentIntent();
+  }
+
+  bool hasPendingPaymentIntent() {
+    final intent = getPendingPaymentIntent();
+    if (intent == null) return false;
+    final age = DateTime.now().difference(intent.createdAt);
+    if (age > _maxAge) {
+      clearPendingPaymentIntent();
+      return false;
+    }
+    return true;
+  }
+
+  void clearPendingPaymentIntent() {
+    _removePersistedPendingPaymentIntent();
+  }
+
   bool hasIntent() {
     return getIntent() != null;
   }
@@ -162,44 +182,6 @@ class BookingIntentManager {
   static void resetForTesting() {
     instance._intent = null;
     instance._prefs = null;
-  }
-
-  // ---- PendingPaymentIntent methods ----
-
-  /// Persists a PendingPaymentIntent so the user can resume the proof flow
-  /// after leaving the app.
-  void savePendingPaymentIntent(PendingPaymentIntent intent) {
-    _prefs?.setString(_pendingPaymentKey, jsonEncode(intent.toJson()));
-  }
-
-  /// Returns the stored PendingPaymentIntent (lazy-loaded with TTL check),
-  /// or null if expired or not found.
-  PendingPaymentIntent? getPendingPaymentIntent() {
-    final raw = _prefs?.getString(_pendingPaymentKey);
-    if (raw == null) return null;
-
-    try {
-      final json = jsonDecode(raw) as Map<String, dynamic>;
-      final intent = PendingPaymentIntent.fromJson(json);
-      if (intent.isExpired) {
-        clearPendingPaymentIntent();
-        return null;
-      }
-      return intent;
-    } catch (_) {
-      clearPendingPaymentIntent();
-      return null;
-    }
-  }
-
-  /// Convenience check for a valid pending payment intent.
-  bool hasPendingPaymentIntent() {
-    return getPendingPaymentIntent() != null;
-  }
-
-  /// Removes the stored PendingPaymentIntent.
-  void clearPendingPaymentIntent() {
-    _prefs?.remove(_pendingPaymentKey);
   }
 
   // ---- Private persistence helpers ----
@@ -221,5 +203,24 @@ class BookingIntentManager {
 
   void _removePersistedIntent() {
     _prefs?.remove(_key);
+  }
+
+  void _persistPendingPaymentIntent(PendingPaymentIntent intent) {
+    _prefs?.setString(_pendingPaymentKey, jsonEncode(intent.toJson()));
+  }
+
+  PendingPaymentIntent? _loadPendingPaymentIntent() {
+    final raw = _prefs?.getString(_pendingPaymentKey);
+    if (raw == null) return null;
+    try {
+      final json = jsonDecode(raw) as Map<String, dynamic>;
+      return PendingPaymentIntent.fromJson(json);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _removePersistedPendingPaymentIntent() {
+    _prefs?.remove(_pendingPaymentKey);
   }
 }

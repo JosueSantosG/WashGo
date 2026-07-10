@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:washgo/config/theme/app_colors.dart';
@@ -45,11 +46,23 @@ class _BankAccount {
 ///
 /// After making the transfer, the user taps "Ya hice el depósito" to proceed
 /// to upload the proof of payment.
+=======
+import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
+import 'package:washgo/config/theme/app_colors.dart';
+import 'package:washgo/config/routes/app_routes.dart';
+import 'package:washgo/features/payments/repositories/bank_transfer_repository.dart';
+
+>>>>>>> worktree-fix-flutter-analyze-errors
 class BankTransferInstructionsPage extends StatefulWidget {
   final String orderId;
   final double amount;
   final String serviceName;
   final String businessName;
+<<<<<<< HEAD
+=======
+  final String? businessId;
+>>>>>>> worktree-fix-flutter-analyze-errors
 
   const BankTransferInstructionsPage({
     super.key,
@@ -57,6 +70,10 @@ class BankTransferInstructionsPage extends StatefulWidget {
     required this.amount,
     required this.serviceName,
     required this.businessName,
+<<<<<<< HEAD
+=======
+    this.businessId,
+>>>>>>> worktree-fix-flutter-analyze-errors
   });
 
   @override
@@ -66,8 +83,39 @@ class BankTransferInstructionsPage extends StatefulWidget {
 
 class _BankTransferInstructionsPageState
     extends State<BankTransferInstructionsPage> {
+<<<<<<< HEAD
   String? _selectedAccount;
   bool _hasCopied = false;
+=======
+  final BankTransferRepository _repository = BankTransferRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkExistingProof();
+  }
+
+  Future<void> _checkExistingProof() async {
+    try {
+      final proof = await _repository.getProofStatus(widget.orderId);
+      if (mounted && proof != null) {
+        // Navigate to proof status page if proof already exists
+        context.pushReplacementNamed(
+          AppRoutes.proofStatus,
+          extra: {
+            'orderId': widget.orderId,
+            'proofStatus': proof.status.name,
+            'amount': widget.amount,
+            'serviceName': widget.serviceName,
+            'businessName': widget.businessName,
+          },
+        );
+      }
+    } catch (_) {
+      // No existing proof, continue showing instructions
+    }
+  }
+>>>>>>> worktree-fix-flutter-analyze-errors
 
   @override
   Widget build(BuildContext context) {
@@ -100,6 +148,7 @@ class _BankTransferInstructionsPageState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+<<<<<<< HEAD
                     // Header
                     _buildHeaderSection(),
                     const SizedBox(height: 24),
@@ -129,10 +178,36 @@ class _BankTransferInstructionsPageState
 
                     // Important notes
                     _buildImportantNotes(),
+=======
+                    _buildHeader(),
+                    const SizedBox(height: 24),
+                    _buildBankAccountCard(
+                      'Banco Guayaquil',
+                      'Tipo: Ahorros',
+                      'No. Cuenta: 1234567890',
+                      'Titular: WashGo S.A.',
+                      'RUC: 0999999999001',
+                      const Color(0xFF1A3A5C),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildBankAccountCard(
+                      'Banco Pichincha',
+                      'Tipo: Corriente',
+                      'No. Cuenta: 0987654321',
+                      'Titular: WashGo S.A.',
+                      'RUC: 0999999999001',
+                      const Color(0xFFD32F2F),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildInstructions(),
+                    const SizedBox(height: 24),
+                    _buildAmountCard(),
+>>>>>>> worktree-fix-flutter-analyze-errors
                   ],
                 ),
               ),
             ),
+<<<<<<< HEAD
 
             // Bottom Button
             Container(
@@ -185,13 +260,20 @@ class _BankTransferInstructionsPageState
                 ),
               ),
             ),
+=======
+            _buildBottomButton(),
+>>>>>>> worktree-fix-flutter-analyze-errors
           ],
         ),
       ),
     );
   }
 
+<<<<<<< HEAD
   Widget _buildHeaderSection() {
+=======
+  Widget _buildHeader() {
+>>>>>>> worktree-fix-flutter-analyze-errors
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -203,6 +285,7 @@ class _BankTransferInstructionsPageState
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
+<<<<<<< HEAD
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -241,6 +324,27 @@ class _BankTransferInstructionsPageState
               fontSize: 13,
               color: Colors.white.withValues(alpha: 0.9),
               height: 1.5,
+=======
+        children: [
+          const Icon(Icons.account_balance_rounded, color: Colors.white, size: 48),
+          const SizedBox(height: 12),
+          Text(
+            'Realiza tu Transferencia',
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Sigue las instrucciones y luego sube tu comprobante para validar el pago.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: Colors.white.withValues(alpha: 0.9),
+              height: 1.4,
+>>>>>>> worktree-fix-flutter-analyze-errors
             ),
           ),
         ],
@@ -248,7 +352,18 @@ class _BankTransferInstructionsPageState
     );
   }
 
+<<<<<<< HEAD
   Widget _buildOrderSummary() {
+=======
+  Widget _buildBankAccountCard(
+    String bankName,
+    String accountType,
+    String accountNumber,
+    String holder,
+    String ruc,
+    Color bankColor,
+  ) {
+>>>>>>> worktree-fix-flutter-analyze-errors
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -260,16 +375,35 @@ class _BankTransferInstructionsPageState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+<<<<<<< HEAD
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Resumen',
                 style: GoogleFonts.inter(
                   fontSize: 14,
+=======
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: bankColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.account_balance, color: bankColor, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                bankName,
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+>>>>>>> worktree-fix-flutter-analyze-errors
                   fontWeight: FontWeight.bold,
                   color: const Color(0xFF1E293B),
                 ),
               ),
+<<<<<<< HEAD
               Text(
                 '\$${widget.amount.toStringAsFixed(2)}',
                 style: GoogleFonts.inter(
@@ -302,11 +436,43 @@ class _BankTransferInstructionsPageState
               ),
             ],
           ),
+=======
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildInfoRow(accountType, Icons.account_balance_wallet_rounded),
+          _buildInfoRow(accountNumber, Icons.pin_rounded),
+          _buildInfoRow(holder, Icons.person_rounded),
+          _buildInfoRow(ruc, Icons.badge_rounded),
         ],
       ),
     );
   }
 
+  Widget _buildInfoRow(String text, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: const Color(0xFF64748B)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: const Color(0xFF475569),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+>>>>>>> worktree-fix-flutter-analyze-errors
+        ],
+      ),
+    );
+  }
+
+<<<<<<< HEAD
   Widget _buildBankAccountCard(_BankAccount account) {
     final isSelected = _selectedAccount == account.accountKey;
 
@@ -452,19 +618,99 @@ class _BankTransferInstructionsPageState
           value,
           style: GoogleFonts.inter(
             fontSize: 12,
+=======
+  Widget _buildInstructions() {
+    final steps = [
+      'Abre tu aplicación bancaria.',
+      'Selecciona la opción de transferencia.',
+      'Ingresa el monto exacto de \$${widget.amount.toStringAsFixed(2)}.',
+      'Usa como referencia tu número de orden: ${widget.orderId.substring(0, 8)}...',
+      'Confirma la transferencia.',
+      'Toma una captura de pantalla del comprobante.',
+      'Toca "Ya hice la transferencia" y sube la imagen.',
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Pasos a seguir',
+          style: GoogleFonts.inter(
+            fontSize: 16,
+>>>>>>> worktree-fix-flutter-analyze-errors
             fontWeight: FontWeight.bold,
             color: const Color(0xFF1E293B),
           ),
         ),
+<<<<<<< HEAD
+=======
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            children: List.generate(steps.length, (i) {
+              return Padding(
+                padding: EdgeInsets.only(top: i > 0 ? 12 : 0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${i + 1}',
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        steps[i],
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: i < 5
+                              ? const Color(0xFF475569)
+                              : AppColors.primary,
+                          fontWeight: i >= 5 ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ),
+        ),
+>>>>>>> worktree-fix-flutter-analyze-errors
       ],
     );
   }
 
+<<<<<<< HEAD
   Widget _buildImportantNotes() {
+=======
+  Widget _buildAmountCard() {
+>>>>>>> worktree-fix-flutter-analyze-errors
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFFFEF3C7),
+<<<<<<< HEAD
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFFCD34D)),
       ),
@@ -496,10 +742,102 @@ class _BankTransferInstructionsPageState
               fontSize: 12,
               height: 1.6,
               color: const Color(0xFF92400E),
+=======
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFCD34D)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline_rounded,
+              color: Color(0xFFD97706), size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Monto a transferir',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: const Color(0xFF92400E),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '\$${widget.amount.toStringAsFixed(2)} USD',
+                  style: GoogleFonts.inter(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF92400E),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Servicio: ${widget.serviceName}',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: const Color(0xFF92400E),
+                  ),
+                ),
+              ],
+>>>>>>> worktree-fix-flutter-analyze-errors
             ),
           ),
         ],
       ),
     );
   }
+<<<<<<< HEAD
+=======
+
+  Widget _buildBottomButton() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: ElevatedButton.icon(
+          onPressed: () {
+            context.pushNamed(
+              AppRoutes.proofUpload,
+              extra: {
+                'orderId': widget.orderId,
+                'amount': widget.amount,
+                'serviceName': widget.serviceName,
+                'businessName': widget.businessName,
+              },
+            );
+          },
+          icon: const Icon(Icons.file_upload_rounded, size: 20),
+          label: Text(
+            'Ya hice la transferencia',
+            style: GoogleFonts.inter(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 0,
+          ),
+        ),
+      ),
+    );
+  }
+>>>>>>> worktree-fix-flutter-analyze-errors
 }
