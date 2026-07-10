@@ -30,6 +30,7 @@ enum OrderType {
 enum PaymentMethod {
   PAYPAL
   CASH
+  TRANSFERENCIA_BANCARIA
 }
 
 enum ServiceType {

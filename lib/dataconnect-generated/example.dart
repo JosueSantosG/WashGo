@@ -368,25 +368,30 @@ part 'check_business_employee_admin.dart';
   
 
   enum PaymentMethod {
-    
+
       PAYPAL,
-    
+
       CASH,
-    
+
+      TRANSFERENCIA_BANCARIA,
+
   }
-  
+
   String paymentMethodSerializer(EnumValue<PaymentMethod> e) {
     return e.stringValue;
   }
   EnumValue<PaymentMethod> paymentMethodDeserializer(dynamic data) {
     switch (data) {
-      
+
       case 'PAYPAL':
         return const Known(PaymentMethod.PAYPAL);
-      
+
       case 'CASH':
         return const Known(PaymentMethod.CASH);
-      
+
+      case 'TRANSFERENCIA_BANCARIA':
+        return const Known(PaymentMethod.TRANSFERENCIA_BANCARIA);
+
       default:
         return Unknown(data);
     }

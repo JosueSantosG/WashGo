@@ -281,6 +281,23 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                         });
                       },
                     ),
+                    const SizedBox(height: 12),
+
+                    // Bank Transfer Option Card
+                    _buildPaymentOptionCard(
+                      isSelected: _selectedMethod == PaymentMethod.TRANSFERENCIA_BANCARIA,
+                      title: 'Transferencia Bancaria',
+                      subtitle: 'Paga desde tu banco (GUAYAQUIL o PICHINCHA)',
+                      icon: Icons.account_balance_rounded,
+                      iconColor: AppColors.primary,
+                      bgColor: AppColors.primary.withValues(alpha: 0.08),
+                      onTap: () {
+                        setState(() {
+                          _selectedMethod = PaymentMethod.TRANSFERENCIA_BANCARIA;
+                          _preferPaypalCard = false;
+                        });
+                      },
+                    ),
                     const SizedBox(height: 24),
 
                     // Disclaimer text
@@ -374,7 +391,9 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _selectedMethod == PaymentMethod.PAYPAL
                         ? const Color(0xFF0070BA)
-                        : AppColors.primary,
+                        : _selectedMethod == PaymentMethod.TRANSFERENCIA_BANCARIA
+                            ? AppColors.primary
+                            : AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -393,7 +412,9 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                       : Text(
                           _selectedMethod == PaymentMethod.PAYPAL
                               ? (_preferPaypalCard ? 'Pagar con Tarjeta' : 'Pagar con PayPal')
-                              : 'Confirmar Reserva',
+                              : _selectedMethod == PaymentMethod.TRANSFERENCIA_BANCARIA
+                                  ? 'Pagar con Transferencia Bancaria'
+                                  : 'Confirmar Reserva',
                           style: GoogleFonts.inter(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
