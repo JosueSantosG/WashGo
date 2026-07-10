@@ -34,6 +34,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
   int _completedCount = 0;
   double _cashTotal = 0.0;
   double _paypalTotal = 0.0;
+  double _bankTransferTotal = 0.0;
   double _averageTicket = 0.0;
   List<_EmployeeStat> _sortedStats = [];
 
@@ -42,6 +43,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
     int completedCount = 0;
     double cashTotal = 0.0;
     double paypalTotal = 0.0;
+    double bankTransferTotal = 0.0;
 
     for (final inv in _filteredInvoices) {
       totalBilled += inv.total;
@@ -53,6 +55,8 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
         cashTotal += inv.total;
       } else if (paymentUpper == 'PAYPAL') {
         paypalTotal += inv.total;
+      } else if (paymentUpper == 'TRANSFERENCIA_BANCARIA') {
+        bankTransferTotal += inv.total;
       }
     }
 
@@ -75,6 +79,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
     _completedCount = completedCount;
     _cashTotal = cashTotal;
     _paypalTotal = paypalTotal;
+    _bankTransferTotal = bankTransferTotal;
     _averageTicket = averageTicket;
     _sortedStats = sortedStats;
   }
@@ -94,7 +99,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
   String _selectedDateFilter = 'Todas'; // 'Todas', '7dias', '30dias', 'rango'
   DateTimeRange? _selectedDateRange;
   String? _selectedEmployeeName = 'all'; // 'all' or actual employee name
-  String _selectedPaymentMethod = 'Todos'; // 'Todos', 'Efectivo', 'PayPal'
+  String _selectedPaymentMethod = 'Todos'; // 'Todos', 'Efectivo', 'PayPal', 'Transferencia'
   String _selectedStatus = 'Todos'; // 'Todos', 'Emitida', 'Pendiente', 'Fallo'
 
   final TextEditingController _searchController = TextEditingController();
@@ -170,7 +175,13 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
       // 3. Map payment method
       PaymentMethod? paymentMethod;
       if (_selectedPaymentMethod != 'Todos') {
-        paymentMethod = _selectedPaymentMethod == 'Efectivo' ? PaymentMethod.CASH : PaymentMethod.PAYPAL;
+        if (_selectedPaymentMethod == 'Efectivo') {
+          paymentMethod = PaymentMethod.CASH;
+        } else if (_selectedPaymentMethod == 'Transferencia') {
+          paymentMethod = PaymentMethod.TRANSFERENCIA_BANCARIA;
+        } else {
+          paymentMethod = PaymentMethod.PAYPAL;
+        }
       }
 
       // 4. Map status
@@ -328,7 +339,13 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
 
       PaymentMethod? paymentMethod;
       if (_selectedPaymentMethod != 'Todos') {
-        paymentMethod = _selectedPaymentMethod == 'Efectivo' ? PaymentMethod.CASH : PaymentMethod.PAYPAL;
+        if (_selectedPaymentMethod == 'Efectivo') {
+          paymentMethod = PaymentMethod.CASH;
+        } else if (_selectedPaymentMethod == 'Transferencia') {
+          paymentMethod = PaymentMethod.TRANSFERENCIA_BANCARIA;
+        } else {
+          paymentMethod = PaymentMethod.PAYPAL;
+        }
       }
 
       InvoiceStatus? status;
@@ -446,6 +463,10 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
               ],
               const SizedBox(height: 24),
 
+              // Bank transfer payment review CTA
+              _buildBankTransferReviewButton(),
+              const SizedBox(height: 24),
+
               // Metrics Grid Section
               _buildMetricsGrid(
                 totalBilled: _totalBilled,
@@ -454,6 +475,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
                 averageTicket: _averageTicket,
                 cashTotal: _cashTotal,
                 paypalTotal: _paypalTotal,
+                bankTransferTotal: _bankTransferTotal,
               ),
               const SizedBox(height: 28),
 
@@ -782,7 +804,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
             ),
             const SizedBox(height: 8),
             Row(
-              children: ['Todos', 'Efectivo', 'PayPal'].map((method) {
+              children: ['Todos', 'Efectivo', 'PayPal', 'Transferencia'].map((method) {
                 final isSelected = _selectedPaymentMethod == method;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8.0),
@@ -859,6 +881,97 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
     );
   }
 
+  Widget _buildBankTransferReviewButton() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary.withValues(alpha: 0.08),
+            AppColors.primary.withValues(alpha: 0.02),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.account_balance_rounded,
+              color: AppColors.primary,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Pagos por transferencia',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Revisa y aprueba comprobantes de pago',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            height: 38,
+            child: ElevatedButton(
+              onPressed: () {
+                context.push(
+                  AppRoutes.adminPaymentReview,
+                  extra: {
+                    'businessId': widget.businessId,
+                    'businessName': '', // Could pass from parent if stored
+                  },
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+              child: Text(
+                'Revisar',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMetricsGrid({
     required double totalBilled,
     required int invoiceCount,
@@ -866,6 +979,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
     required double averageTicket,
     required double cashTotal,
     required double paypalTotal,
+    required double bankTransferTotal,
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -929,7 +1043,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
             _buildMetricCard(
               title: 'Métodos de Pago',
               value: 'Efe: \$${cashTotal.toStringAsFixed(0)}',
-              subtitle: 'PP: \$${paypalTotal.toStringAsFixed(0)}',
+              subtitle: 'PP: \$${paypalTotal.toStringAsFixed(0)} • Transf: \$${bankTransferTotal.toStringAsFixed(0)}',
               icon: Icons.account_balance_wallet_rounded,
               gradient: const LinearGradient(
                 colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
@@ -1276,17 +1390,23 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
                               decoration: BoxDecoration(
                                 color: (invoice.paymentMethod.toUpperCase() == 'PAYPAL')
                                     ? Colors.blue.withValues(alpha: 0.1)
-                                    : Colors.green.withValues(alpha: 0.1),
+                                    : (invoice.paymentMethod.toUpperCase() == 'TRANSFERENCIA_BANCARIA')
+                                        ? Colors.purple.withValues(alpha: 0.1)
+                                        : Colors.green.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                invoice.paymentMethod.toUpperCase() == 'PAYPAL' ? 'PayPal' : 'Efectivo',
+                                invoice.paymentMethod.toUpperCase() == 'PAYPAL' ? 'PayPal'
+                                    : invoice.paymentMethod.toUpperCase() == 'TRANSFERENCIA_BANCARIA' ? 'Transferencia'
+                                    : 'Efectivo',
                                 style: GoogleFonts.inter(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                   color: (invoice.paymentMethod.toUpperCase() == 'PAYPAL')
                                       ? Colors.blue[700]
-                                      : Colors.green[700],
+                                      : (invoice.paymentMethod.toUpperCase() == 'TRANSFERENCIA_BANCARIA')
+                                          ? Colors.purple[700]
+                                          : Colors.green[700],
                                 ),
                               ),
                             ),

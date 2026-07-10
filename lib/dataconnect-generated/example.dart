@@ -106,6 +106,18 @@ part 'consume_prepaid_and_update_metric.dart';
 
 part 'consume_prepaid_and_create_metric.dart';
 
+part 'server_create_order_with_pending_payment.dart';
+
+part 'create_payment_proof.dart';
+
+part 'server_update_payment_proof_status.dart';
+
+part 'server_update_order_status.dart';
+
+part 'create_system_notification.dart';
+
+part 'complete_order_with_transfer_and_invoice.dart';
+
 part 'get_users.dart';
 
 part 'get_current_user.dart';
@@ -189,6 +201,14 @@ part 'get_invoice_by_order_id.dart';
 part 'get_invoice_details_for_url.dart';
 
 part 'check_business_employee_admin.dart';
+
+part 'get_payment_proof.dart';
+
+part 'get_pending_transfer_orders.dart';
+
+part 'get_transfer_payment_stats.dart';
+
+part 'get_expired_pending_transfer_orders.dart';
 
 
 
@@ -367,31 +387,88 @@ part 'check_business_employee_admin.dart';
   }
   
 
-  enum PaymentMethod {
-
-      PAYPAL,
-
-      CASH,
-
-      TRANSFERENCIA_BANCARIA,
-
+  enum PaymentAccountType {
+    
+      GUAYAQUIL,
+    
+      PICHINCHA,
+    
   }
+  
+  String paymentAccountTypeSerializer(EnumValue<PaymentAccountType> e) {
+    return e.stringValue;
+  }
+  EnumValue<PaymentAccountType> paymentAccountTypeDeserializer(dynamic data) {
+    switch (data) {
+      
+      case 'GUAYAQUIL':
+        return const Known(PaymentAccountType.GUAYAQUIL);
+      
+      case 'PICHINCHA':
+        return const Known(PaymentAccountType.PICHINCHA);
+      
+      default:
+        return Unknown(data);
+    }
+  }
+  
 
+  enum PaymentMethod {
+    
+      PAYPAL,
+    
+      CASH,
+    
+      TRANSFERENCIA_BANCARIA,
+    
+  }
+  
   String paymentMethodSerializer(EnumValue<PaymentMethod> e) {
     return e.stringValue;
   }
   EnumValue<PaymentMethod> paymentMethodDeserializer(dynamic data) {
     switch (data) {
-
+      
       case 'PAYPAL':
         return const Known(PaymentMethod.PAYPAL);
-
+      
       case 'CASH':
         return const Known(PaymentMethod.CASH);
-
+      
       case 'TRANSFERENCIA_BANCARIA':
         return const Known(PaymentMethod.TRANSFERENCIA_BANCARIA);
+      
+      default:
+        return Unknown(data);
+    }
+  }
+  
 
+  enum PaymentProofStatus {
+    
+      PENDING,
+    
+      APPROVED,
+    
+      REJECTED,
+    
+  }
+  
+  String paymentProofStatusSerializer(EnumValue<PaymentProofStatus> e) {
+    return e.stringValue;
+  }
+  EnumValue<PaymentProofStatus> paymentProofStatusDeserializer(dynamic data) {
+    switch (data) {
+      
+      case 'PENDING':
+        return const Known(PaymentProofStatus.PENDING);
+      
+      case 'APPROVED':
+        return const Known(PaymentProofStatus.APPROVED);
+      
+      case 'REJECTED':
+        return const Known(PaymentProofStatus.REJECTED);
+      
       default:
         return Unknown(data);
     }
@@ -769,6 +846,36 @@ class ExampleConnector {
   }
   
   
+  ServerCreateOrderWithPendingPaymentVariablesBuilder serverCreateOrderWithPendingPayment ({required String businessId, required String clientId, required double price, required double costo, required String serviceName, required OrderType type, required PaymentMethod paymentMethod, }) {
+    return ServerCreateOrderWithPendingPaymentVariablesBuilder(dataConnect, businessId: businessId,clientId: clientId,price: price,costo: costo,serviceName: serviceName,type: type,paymentMethod: paymentMethod,);
+  }
+  
+  
+  CreatePaymentProofVariablesBuilder createPaymentProof ({required String orderId, required String imageUrl, required double declaredAmount, required PaymentAccountType paymentAccountType, }) {
+    return CreatePaymentProofVariablesBuilder(dataConnect, orderId: orderId,imageUrl: imageUrl,declaredAmount: declaredAmount,paymentAccountType: paymentAccountType,);
+  }
+  
+  
+  ServerUpdatePaymentProofStatusVariablesBuilder serverUpdatePaymentProofStatus ({required String id, required PaymentProofStatus status, required String reviewedBy, }) {
+    return ServerUpdatePaymentProofStatusVariablesBuilder(dataConnect, id: id,status: status,reviewedBy: reviewedBy,);
+  }
+  
+  
+  ServerUpdateOrderStatusVariablesBuilder serverUpdateOrderStatus ({required String orderId, required OrderStatus status, }) {
+    return ServerUpdateOrderStatusVariablesBuilder(dataConnect, orderId: orderId,status: status,);
+  }
+  
+  
+  CreateSystemNotificationVariablesBuilder createSystemNotification ({required String userId, required String titulo, required String mensaje, }) {
+    return CreateSystemNotificationVariablesBuilder(dataConnect, userId: userId,titulo: titulo,mensaje: mensaje,);
+  }
+  
+  
+  CompleteOrderWithTransferAndInvoiceVariablesBuilder completeOrderWithTransferAndInvoice ({required String orderId, required String invoiceId, required String numeroUnico, required double subtotal, required double discount, required double tax, required double total, required PaymentMethod paymentMethod, required InvoiceStatus invoiceStatus, }) {
+    return CompleteOrderWithTransferAndInvoiceVariablesBuilder(dataConnect, orderId: orderId,invoiceId: invoiceId,numeroUnico: numeroUnico,subtotal: subtotal,discount: discount,tax: tax,total: total,paymentMethod: paymentMethod,invoiceStatus: invoiceStatus,);
+  }
+  
+  
   GetUsersVariablesBuilder getUsers () {
     return GetUsersVariablesBuilder(dataConnect, );
   }
@@ -978,6 +1085,26 @@ class ExampleConnector {
     return CheckBusinessEmployeeAdminVariablesBuilder(dataConnect, businessId: businessId,employeeId: employeeId,);
   }
   
+  
+  GetPaymentProofVariablesBuilder getPaymentProof ({required String orderId, }) {
+    return GetPaymentProofVariablesBuilder(dataConnect, orderId: orderId,);
+  }
+  
+  
+  GetPendingTransferOrdersVariablesBuilder getPendingTransferOrders ({required String businessId, }) {
+    return GetPendingTransferOrdersVariablesBuilder(dataConnect, businessId: businessId,);
+  }
+  
+  
+  GetTransferPaymentStatsVariablesBuilder getTransferPaymentStats ({required String businessId, }) {
+    return GetTransferPaymentStatsVariablesBuilder(dataConnect, businessId: businessId,);
+  }
+  
+  
+  GetExpiredPendingTransferOrdersVariablesBuilder getExpiredPendingTransferOrders () {
+    return GetExpiredPendingTransferOrdersVariablesBuilder(dataConnect, );
+  }
+  
 
   static ConnectorConfig connectorConfig = ConnectorConfig(
     'us-central1',
@@ -987,9 +1114,18 @@ class ExampleConnector {
 
   ExampleConnector({required this.dataConnect});
   static ExampleConnector get instance {
+    
+    CacheSettings cacheSettings = CacheSettings(
+      maxAge: Duration(milliseconds:5000),
+      storage: CacheStorage.memory,
+    );
+    
     return ExampleConnector(
         dataConnect: FirebaseDataConnect.instanceFor(
             connectorConfig: connectorConfig,
+            
+            cacheSettings: cacheSettings,
+            
             sdkType: CallerSDKType.generated));
   }
 

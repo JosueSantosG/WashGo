@@ -1193,14 +1193,14 @@ mutation ConsumePrepaidAndCreateMetric(
   $businessId: UUID!,
   $saldoPrepagoInicial: Float!,
   $saldoPrepagoConsumido: Float!,
-  
+
   # Prepaid History
   $historyId: UUID!,
   $orderId: String!,
   $serviceName: String!,
   $costoConsumido: Float!,
   $saldoResultante: Float!,
-  
+
   # Prepaid Service Metric creation
   $metricId: UUID!,
   $metricCostoUnitario: Float!
@@ -1219,12 +1219,12 @@ mutation ConsumePrepaidAndCreateMetric(
       id
     }
   }
-  
+
   business_update(key: { id: $businessId }, data: {
     saldoPrepagoInicial: $saldoPrepagoInicial,
     saldoPrepagoConsumido: $saldoPrepagoConsumido
   })
-  
+
   prepaidHistory_insert(data: {
     id: $historyId,
     businessId: $businessId,
@@ -1233,7 +1233,7 @@ mutation ConsumePrepaidAndCreateMetric(
     costoConsumido: $costoConsumido,
     saldoResultante: $saldoResultante
   })
-  
+
   prepaidServiceMetric_insert(data: {
     id: $metricId,
     businessId: $businessId,
@@ -1241,6 +1241,131 @@ mutation ConsumePrepaidAndCreateMetric(
     costoUnitario: $metricCostoUnitario,
     cantidad: 1,
     totalConsumido: $costoConsumido
+  })
+}
+
+# ─────────────────────────────────────────────
+# Bank Transfer Payment Mutations
+# All @auth(level: NO_ACCESS) — called only from Cloud Functions
+# ─────────────────────────────────────────────
+
+# 1. Create an order with PENDIENTE_PAGO status (for bank transfer flow)
+mutation ServerCreateOrderWithPendingPayment(
+  $businessId: UUID!,
+  $clientId: String!,
+  $price: Float!,
+  $costo: Float!,
+  $serviceName: String!,
+  $type: OrderType!,
+  $paymentMethod: PaymentMethod!,
+  $observations: String
+) @auth(level: NO_ACCESS) {
+  order_insert(data: {
+    businessId: $businessId,
+    clientId: $clientId,
+    price: $price,
+    costo: $costo,
+    serviceName: $serviceName,
+    type: $type,
+    paymentMethod: $paymentMethod,
+    status: PENDIENTE_PAGO,
+    observations: $observations
+  })
+}
+
+# 2. Create a payment proof record
+mutation CreatePaymentProof(
+  $orderId: UUID!,
+  $imageUrl: String!,
+  $declaredAmount: Float!,
+  $paymentAccountType: PaymentAccountType!,
+  $referenceNumber: String,
+  $observations: String
+) @auth(level: NO_ACCESS) {
+  paymentProof_insert(data: {
+    orderId: $orderId,
+    imageUrl: $imageUrl,
+    declaredAmount: $declaredAmount,
+    paymentAccountType: $paymentAccountType,
+    referenceNumber: $referenceNumber,
+    observations: $observations,
+    status: PENDING,
+    updatedAt_expr: "request.time"
+  })
+}
+
+# 3. Update payment proof status (approve/reject)
+# Note: $id is the PaymentProof's own id, looked up via getPaymentProof by orderId first
+mutation ServerUpdatePaymentProofStatus(
+  $id: UUID!,
+  $status: PaymentProofStatus!,
+  $reviewedBy: String!,
+  $reviewedAt: Timestamp,
+  $observations: String
+) @auth(level: NO_ACCESS) {
+  paymentProof_update(key: { id: $id }, data: {
+    status: $status,
+    reviewedBy: $reviewedBy,
+    reviewedAt: $reviewedAt,
+    observations: $observations,
+    updatedAt_expr: "request.time"
+  })
+}
+
+# 4. Update order status from server side (NO_ACCESS level)
+mutation ServerUpdateOrderStatus(
+  $orderId: UUID!,
+  $status: OrderStatus!
+) @auth(level: NO_ACCESS) {
+  order_update(key: { id: $orderId }, data: {
+    status: $status
+  })
+}
+
+# 5. Create a notification from the server
+mutation CreateSystemNotification(
+  $userId: String!,
+  $titulo: String!,
+  $mensaje: String!
+) @auth(level: NO_ACCESS) {
+  notification_insert(data: {
+    userId: $userId,
+    titulo: $titulo,
+    mensaje: $mensaje,
+    leida: false
+  })
+}
+
+# 6. Complete order with invoice (for approved transfer payments)
+mutation CompleteOrderWithTransferAndInvoice(
+  $orderId: UUID!,
+  $observations: String,
+  $invoiceUrl: String,
+  $invoiceId: UUID!,
+  $numeroUnico: String!,
+  $subtotal: Float!,
+  $discount: Float!,
+  $tax: Float!,
+  $total: Float!,
+  $paymentMethod: PaymentMethod!,
+  $invoiceStatus: InvoiceStatus!
+) @auth(level: NO_ACCESS) @transaction {
+  order_update(key: { id: $orderId }, data: {
+    status: COMPLETADO,
+    observations: $observations,
+    invoiceUrl: $invoiceUrl
+  })
+  invoice_insert(data: {
+    id: $invoiceId,
+    orderId: $orderId,
+    numeroUnico: $numeroUnico,
+    subtotal: $subtotal,
+    discount: $discount,
+    tax: $tax,
+    total: $total,
+    paymentMethod: $paymentMethod,
+    invoiceStatus: $invoiceStatus,
+    pdfUrl: $invoiceUrl
   })
 }
 

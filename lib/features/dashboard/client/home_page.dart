@@ -18,6 +18,7 @@ import 'package:washgo/features/dashboard/client/widgets/tabs/profile_tab.dart';
 import 'package:washgo/features/invoices/pages/client_invoice_history_page.dart';
 import 'package:washgo/features/dashboard/client/widgets/vehicles/vehicle_dialogs.dart';
 import 'package:washgo/core/session/booking_intent_manager.dart';
+import 'package:washgo/config/routes/app_routes.dart';
 
 import 'package:washgo/features/auth/models/washgo_user.dart';
 import 'package:washgo/features/auth/repositories/auth_repository.dart';
@@ -456,6 +457,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _fetchMyVehicles();
       } else {
         BookingIntentManager.instance.clearIntent();
+        BookingIntentManager.instance.clearPendingPaymentIntent();
         if (mounted) {
           setState(() {
             _showContinueBanner = false;
@@ -607,6 +609,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _checkPendingBookingIntent() {
+    // First check for PendingPaymentIntent (bank transfer return flow)
+    _checkPendingPaymentIntent();
+
     final intent = BookingIntentManager.instance.getIntent();
     if (intent == null || !mounted) return;
 
@@ -638,6 +643,51 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           allLaundries: _allLaundries,
         ),
       ),
+    );
+  }
+
+  void _checkPendingPaymentIntent() {
+    final paymentIntent = BookingIntentManager.instance.getPendingPaymentIntent();
+    if (paymentIntent == null || !mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Pago pendiente'),
+        content: Text(
+          'Tienes un pago por transferencia bancaria pendiente para '
+          '"${paymentIntent.serviceName}" en ${paymentIntent.businessName}.\n\n'
+          '¿Deseas continuar con el proceso de pago?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              BookingIntentManager.instance.clearPendingPaymentIntent();
+              Navigator.pop(dialogContext);
+            },
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              _navigateToProofFlow(paymentIntent);
+            },
+            child: const Text('Continuar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToProofFlow(PendingPaymentIntent paymentIntent) {
+    context.push(
+      AppRoutes.proofStatus,
+      extra: {
+        'orderId': paymentIntent.orderId,
+        'serviceName': paymentIntent.serviceName,
+        'businessName': paymentIntent.businessName,
+      },
     );
   }
 

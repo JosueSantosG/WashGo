@@ -42,6 +42,7 @@ exports.OrderType = OrderType;
 const PaymentMethod = {
   PAYPAL: "PAYPAL",
   CASH: "CASH",
+  TRANSFERENCIA_BANCARIA: "TRANSFERENCIA_BANCARIA",
 }
 exports.PaymentMethod = PaymentMethod;
 

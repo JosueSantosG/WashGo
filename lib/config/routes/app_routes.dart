@@ -23,5 +23,11 @@ class AppRoutes {
   static const String paypalCancel = '/paypal-callback/cancel';
   static const String paypalSuccessScheme = '/success';
   static const String paypalCancelScheme = '/cancel';
+
+  // Bank Transfer routes
+  static const String bankTransferInstructions = '/bank-transfer/instructions';
+  static const String proofUpload = '/bank-transfer/upload-proof';
+  static const String proofStatus = '/bank-transfer/proof-status';
+  static const String adminPaymentReview = '/owner-dashboard/payments/review';
 }
 

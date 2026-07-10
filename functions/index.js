@@ -5,7 +5,8 @@ const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
 const crypto = require("crypto");
-const { getOrderById, completeOrderWithInvoiceOnly, getInvoiceById } = require("@washgo/db-admin");
+const { getOrderById, completeOrderWithInvoiceOnly, getInvoiceById, getPaymentProof, getExpiredPendingTransferOrders, createPaymentProof, serverUpdatePaymentProofStatus, serverUpdateOrderStatus, createSystemNotification, completeOrderWithTransferAndInvoice } = require("@washgo/db-admin");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 
 // Initialize Firebase Admin SDK
 if (admin.apps.length === 0) {
@@ -363,7 +364,321 @@ app.get("/invoices/:invoiceId/url", authenticate, async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────
+// Bank Transfer Endpoints
+// ─────────────────────────────────────────────
+
+// 5. Upload transfer payment proof
+app.post("/payments/upload-proof", authenticate, async (req, res) => {
+  const { orderId, imageBase64, imageExt, declaredAmount, paymentAccountType, referenceNumber, observations } = req.body;
+  if (!orderId || !imageBase64 || !imageExt || !declaredAmount || !paymentAccountType) {
+    return res.status(400).json({ error: "Missing required fields: orderId, imageBase64, imageExt, declaredAmount, paymentAccountType" });
+  }
+
+  try {
+    // Fetch order
+    const orderResult = await getOrderById({ id: orderId });
+    const order = orderResult.data.order;
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    // Verify the client owns this order
+    if (order.clientId !== req.user.uid) {
+      return res.status(403).json({ error: "Forbidden: You do not own this order" });
+    }
+
+    // Verify order is pending payment and uses bank transfer
+    if (order.status !== "PENDIENTE_PAGO") {
+      return res.status(400).json({ error: `Order is not pending payment. Current status: ${order.status}` });
+    }
+    if (order.paymentMethod !== "TRANSFERENCIA_BANCARIA") {
+      return res.status(400).json({ error: "Order does not use bank transfer payment method" });
+    }
+
+    // Check if a proof was already submitted
+    const existingProof = await getPaymentProof({ orderId });
+    if (existingProof.data.paymentProofs && existingProof.data.paymentProofs.length > 0) {
+      const currentStatus = existingProof.data.paymentProofs[0].status;
+      if (currentStatus === "PENDING") {
+        return res.status(409).json({ error: "A payment proof is already pending review. Please wait for the business to review it." });
+      }
+      if (currentStatus === "APPROVED") {
+        return res.status(409).json({ error: "Payment proof was already approved for this order." });
+      }
+      // If REJECTED, allow re-upload
+    }
+
+    // Validate image extension
+    const validExts = ["jpg", "jpeg", "png", "webp", "heic", "heif"];
+    const ext = imageExt.toLowerCase().replace(/^\./, "");
+    if (!validExts.includes(ext)) {
+      return res.status(400).json({ error: `Invalid image extension. Allowed: ${validExts.join(", ")}` });
+    }
+
+    // Upload image to Storage
+    const bucket = admin.storage().bucket();
+    const fileName = `transfers/${orderId}.${ext}`;
+    const file = bucket.file(fileName);
+    const buffer = Buffer.from(imageBase64, "base64");
+    await file.save(buffer, {
+      metadata: { contentType: `image/${ext === "jpg" ? "jpeg" : ext}` },
+    });
+
+    // Generate signed URL (valid for 5 years to match invoice pattern)
+    const [imageUrl] = await file.getSignedUrl({
+      action: "read",
+      expires: Date.now() + 1000 * 60 * 60 * 24 * 365 * 5,
+    });
+
+    // Create payment proof record
+    await createPaymentProof({
+      orderId,
+      imageUrl,
+      declaredAmount: parseFloat(declaredAmount),
+      paymentAccountType,
+      referenceNumber: referenceNumber || null,
+      observations: observations || null,
+    });
+
+    return res.json({
+      success: true,
+      message: "Payment proof uploaded successfully. Waiting for business review.",
+    });
+  } catch (error) {
+    console.error("Upload Proof Error:", error.message);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// 6. Review (approve/reject) payment proof
+app.post("/payments/review-proof", authenticate, async (req, res) => {
+  const { orderId, status, observations } = req.body;
+  if (!orderId || !status) {
+    return res.status(400).json({ error: "Missing required fields: orderId, status" });
+  }
+  if (status !== "APPROVED" && status !== "REJECTED") {
+    return res.status(400).json({ error: "Status must be APPROVED or REJECTED" });
+  }
+
+  try {
+    // Fetch order with auth context to verify permissions
+    const orderResult = await getOrderById({ id: orderId }, { auth: req.user });
+    const order = orderResult.data.order;
+    if (!order) {
+      return res.status(404).json({ error: "Order not found or unauthorized" });
+    }
+
+    // Verify caller is business owner or SUPER_ADMIN
+    const isOwner = order.business?.owner?.id === req.user.uid;
+    const isSuperAdmin = req.user.token?.roles?.includes("SUPER_ADMIN");
+    if (!isOwner && !isSuperAdmin) {
+      return res.status(403).json({ error: "Forbidden: Only the business owner can review payment proofs" });
+    }
+
+    if (order.paymentMethod !== "TRANSFERENCIA_BANCARIA") {
+      return res.status(400).json({ error: "Order does not use bank transfer payment method" });
+    }
+
+    if (order.status !== "PENDIENTE_PAGO") {
+      return res.status(400).json({ error: `Order is not pending payment. Current status: ${order.status}` });
+    }
+
+    // Fetch payment proof to get its id
+    const proofResult = await getPaymentProof({ orderId }, { auth: { uid: req.user.uid, token: req.user.token } });
+    const proof = proofResult.data?.paymentProofs?.[0];
+    if (!proof) {
+      return res.status(404).json({ error: "Payment proof not found for this order" });
+    }
+
+    // Update payment proof status (using the proof's own id)
+    await serverUpdatePaymentProofStatus({
+      id: proof.id,
+      status,
+      reviewedBy: req.user.uid,
+      reviewedAt_expr: "request.time",
+      observations: observations || null,
+    });
+
+    if (status === "APPROVED") {
+      // Update order to EN_COLA
+      await serverUpdateOrderStatus({ orderId, status: "EN_COLA" });
+
+      // Notify client
+      await createSystemNotification({
+        userId: order.clientId,
+        titulo: "Pago por transferencia aprobado",
+        mensaje: `Tu pago por transferencia para "${order.serviceName || "el servicio"}" ha sido aprobado. Tu orden está ahora en cola.`,
+      });
+
+      return res.json({
+        success: true,
+        message: "Payment proof approved. Order moved to queue.",
+        orderStatus: "EN_COLA",
+      });
+    } else {
+      // REJECTED — keep order at PENDIENTE_PAGO so client can re-upload
+      // Notify client
+      await createSystemNotification({
+        userId: order.clientId,
+        titulo: "Pago por transferencia rechazado",
+        mensaje: `Tu pago por transferencia para "${order.serviceName || "el servicio"}" ha sido rechazado. Motivo: ${observations || "No especificado"}. Puedes subir un nuevo comprobante.`,
+      });
+
+      return res.json({
+        success: true,
+        message: "Payment proof rejected. Client can re-upload.",
+        orderStatus: "PENDIENTE_PAGO",
+      });
+    }
+  } catch (error) {
+    console.error("Review Proof Error:", error.message);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// 7. Get proof image signed URL (no auth — for status page)
+app.get("/payments/proof-image/:orderId", async (req, res) => {
+  const { orderId } = req.params;
+  if (!orderId) {
+    return res.status(400).json({ error: "Missing orderId" });
+  }
+
+  try {
+    const proofResult = await getPaymentProof({ orderId });
+    const proofs = proofResult.data.paymentProofs;
+    if (!proofs || proofs.length === 0) {
+      return res.status(404).json({ error: "No payment proof found for this order" });
+    }
+
+    // Extract the stored imageUrl (it's a signed URL, but it may have expired)
+    // Regenerate a fresh signed URL from the stored bucket path
+    const proof = proofs[0];
+    const bucket = admin.storage().bucket();
+
+    // Try to find the image by listing files in the transfers/ folder matching the orderId
+    const [files] = await bucket.getFiles({ prefix: `transfers/${orderId}.` });
+    if (!files || files.length === 0) {
+      // Fallback: return the stored imageUrl — it may still be valid
+      if (proof.imageUrl) {
+        return res.json({ imageUrl: proof.imageUrl });
+      }
+      return res.status(404).json({ error: "Proof image file not found in storage" });
+    }
+
+    const [signedUrl] = await files[0].getSignedUrl({
+      action: "read",
+      expires: Date.now() + 1000 * 60 * 60 * 2, // 2 hours
+    });
+
+    return res.json({ imageUrl: signedUrl });
+  } catch (error) {
+    console.error("Get Proof Image Error:", error.message);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// 8. Get payment proof status (no auth — for guest booking flow)
+app.get("/payments/proof-status/:orderId", async (req, res) => {
+  const { orderId } = req.params;
+  if (!orderId) {
+    return res.status(400).json({ error: "Missing orderId" });
+  }
+
+  try {
+    const orderResult = await getOrderById({ id: orderId });
+    const order = orderResult.data.order;
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    let proofStatus = null;
+    try {
+      const proofResult = await getPaymentProof({ orderId });
+      const proofs = proofResult.data.paymentProofs;
+      if (proofs && proofs.length > 0) {
+        proofStatus = {
+          id: proofs[0].id,
+          status: proofs[0].status,
+          declaredAmount: proofs[0].declaredAmount,
+          paymentAccountType: proofs[0].paymentAccountType,
+          referenceNumber: proofs[0].referenceNumber,
+          observations: proofs[0].observations,
+          createdAt: proofs[0].createdAt,
+          reviewedAt: proofs[0].reviewedAt,
+          reviewedBy: proofs[0].reviewedBy,
+        };
+      }
+    } catch (_) {
+      // Payment proof may not exist yet — that's OK
+    }
+
+    return res.json({
+      orderId: order.id,
+      status: order.status,
+      paymentMethod: order.paymentMethod,
+      serviceName: order.serviceName,
+      price: order.price,
+      client: {
+        nombreCompleto: order.client?.nombreCompleto,
+        telefono: order.client?.telefono,
+      },
+      proof: proofStatus,
+    });
+  } catch (error) {
+    console.error("Get Proof Status Error:", error.message);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 // Export Express app as a Cloud Function v2
 exports.api = onRequest({
   secrets: [paypalClientIdSecret, paypalClientSecretSecret],
 }, app);
+
+// Scheduled cleanup: every 6 hours, cancel pending bank transfer orders older than 24h
+exports.cleanupPendingTransfers = onSchedule({
+  schedule: "0 */6 * * *",
+  timeZone: "America/Guayaquil",
+  retryCount: 2,
+  maxRetrySeconds: 120,
+}, async () => {
+  console.log("[Cleanup] Starting pending transfer cleanup...");
+  try {
+    const result = await getExpiredPendingTransferOrders();
+    const orders = result.data.orders || [];
+    console.log(`[Cleanup] Found ${orders.length} pending transfer orders`);
+
+    const now = Date.now();
+    const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+    let cancelledCount = 0;
+
+    for (const order of orders) {
+      const createdAt = new Date(order._createdAt).getTime();
+      if (now - createdAt < TWENTY_FOUR_HOURS_MS) {
+        continue; // Skip orders younger than 24h
+      }
+
+      try {
+        // Cancel the order
+        await serverUpdateOrderStatus({ orderId: order.id, status: "CANCELADO" });
+
+        // Notify the client
+        await createSystemNotification({
+          userId: order.clientId,
+          titulo: "Pago por transferencia cancelado",
+          mensaje: `Tu orden de "${order.serviceName}" con pago por transferencia ha sido cancelada automáticamente por exceder las 24 horas de espera. Si deseas continuar, puedes realizar una nueva orden.`,
+        });
+
+        cancelledCount++;
+        console.log(`[Cleanup] Cancelled order ${order.id}`);
+      } catch (err) {
+        console.error(`[Cleanup] Failed to cancel order ${order.id}:`, err.message);
+      }
+    }
+
+    console.log(`[Cleanup] Cleanup complete. Cancelled ${cancelledCount} of ${orders.length} eligible orders.`);
+  } catch (error) {
+    console.error("[Cleanup] Error:", error.message);
+  }
+});

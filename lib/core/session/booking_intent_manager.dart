@@ -56,11 +56,58 @@ class BookingIntent {
       );
 }
 
+/// Tracks an order created via bank transfer that is pending payment proof upload.
+/// Allows the app to re-navigate to the proof flow if the user leaves the app.
+class PendingPaymentIntent {
+  final String orderId;
+  final String paymentMethod; // TRANSFERENCIA_BANCARIA
+  final double amount;
+  final String serviceName;
+  final String businessName;
+  final String? businessId;
+  final DateTime createdAt;
+
+  PendingPaymentIntent({
+    required this.orderId,
+    required this.paymentMethod,
+    required this.amount,
+    required this.serviceName,
+    required this.businessName,
+    this.businessId,
+    required this.createdAt,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'orderId': orderId,
+        'paymentMethod': paymentMethod,
+        'amount': amount,
+        'serviceName': serviceName,
+        'businessName': businessName,
+        'businessId': businessId,
+        'createdAt': createdAt.toIso8601String(),
+      };
+
+  factory PendingPaymentIntent.fromJson(Map<String, dynamic> json) =>
+      PendingPaymentIntent(
+        orderId: json['orderId'] as String,
+        paymentMethod: json['paymentMethod'] as String,
+        amount: (json['amount'] as num).toDouble(),
+        serviceName: json['serviceName'] as String,
+        businessName: json['businessName'] as String,
+        businessId: json['businessId'] as String?,
+        createdAt: DateTime.parse(json['createdAt'] as String),
+      );
+
+  bool get isExpired =>
+      DateTime.now().difference(createdAt) > const Duration(hours: 24);
+}
+
 class BookingIntentManager {
   BookingIntentManager._privateConstructor();
   static final BookingIntentManager instance = BookingIntentManager._privateConstructor();
 
   static const _key = 'booking_intent';
+  static const _pendingPaymentKey = 'pending_payment_intent';
   static const _maxAge = Duration(hours: 24);
 
   SharedPreferences? _prefs;
@@ -115,6 +162,44 @@ class BookingIntentManager {
   static void resetForTesting() {
     instance._intent = null;
     instance._prefs = null;
+  }
+
+  // ---- PendingPaymentIntent methods ----
+
+  /// Persists a PendingPaymentIntent so the user can resume the proof flow
+  /// after leaving the app.
+  void savePendingPaymentIntent(PendingPaymentIntent intent) {
+    _prefs?.setString(_pendingPaymentKey, jsonEncode(intent.toJson()));
+  }
+
+  /// Returns the stored PendingPaymentIntent (lazy-loaded with TTL check),
+  /// or null if expired or not found.
+  PendingPaymentIntent? getPendingPaymentIntent() {
+    final raw = _prefs?.getString(_pendingPaymentKey);
+    if (raw == null) return null;
+
+    try {
+      final json = jsonDecode(raw) as Map<String, dynamic>;
+      final intent = PendingPaymentIntent.fromJson(json);
+      if (intent.isExpired) {
+        clearPendingPaymentIntent();
+        return null;
+      }
+      return intent;
+    } catch (_) {
+      clearPendingPaymentIntent();
+      return null;
+    }
+  }
+
+  /// Convenience check for a valid pending payment intent.
+  bool hasPendingPaymentIntent() {
+    return getPendingPaymentIntent() != null;
+  }
+
+  /// Removes the stored PendingPaymentIntent.
+  void clearPendingPaymentIntent() {
+    _prefs?.remove(_pendingPaymentKey);
   }
 
   // ---- Private persistence helpers ----

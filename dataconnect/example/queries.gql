@@ -129,6 +129,15 @@ query GetClientOrders @auth(level: USER) {
       calificacion
       comentario
     }
+    paymentProof_on_order {
+      id
+      imageUrl
+      declaredAmount
+      paymentAccountType
+      referenceNumber
+      observations
+      status
+    }
   }
 }
 
@@ -173,6 +182,15 @@ query GetBusinessOrders($businessId: UUID!) @auth(level: USER) {
       nombreCompleto
       fotoPerfil
       telefono
+    }
+    paymentProof_on_order {
+      id
+      imageUrl
+      declaredAmount
+      paymentAccountType
+      referenceNumber
+      observations
+      status
     }
   }
 }
@@ -1033,5 +1051,134 @@ query CheckBusinessEmployeeAdmin($businessId: UUID!, $employeeId: String!) @auth
   }
   user(key: { id: $employeeId }) {
     roles
+  }
+}
+
+# ─────────────────────────────────────────────
+# Bank Transfer Payment Queries
+# ─────────────────────────────────────────────
+
+# Get payment proof by order ID (NO_ACCESS — called from Cloud Functions)
+query GetPaymentProof($orderId: UUID!) @auth(level: NO_ACCESS) {
+  paymentProofs(where: { orderId: { eq: $orderId } }, limit: 1) {
+    id
+    imageUrl
+    declaredAmount
+    paymentAccountType
+    referenceNumber
+    observations
+    status
+    createdAt
+    updatedAt
+    reviewedBy
+    reviewedAt
+    order {
+      id
+      clientId
+      status
+      price
+      paymentMethod
+      serviceName
+      business {
+        id
+        nombre
+        owner {
+          id
+        }
+      }
+    }
+  }
+}
+
+# Get pending transfer orders for a business (for owner review)
+query GetPendingTransferOrders($businessId: UUID!) @auth(level: USER) {
+  business(key: { id: $businessId }) @redact {
+    owner {
+      id
+    }
+  }
+  user(key: { id_expr: "auth.uid" }) @redact @check(expr: "'SUPER_ADMIN' in this.roles || (response.business != null && response.business.owner != null && response.business.owner.id == auth.uid)", message: "No tienes permiso para ver los pagos por transferencia") {
+    id
+    roles
+  }
+  orders(
+    where: {
+      businessId: { eq: $businessId }
+      paymentMethod: { eq: TRANSFERENCIA_BANCARIA }
+      status: { in: [PENDIENTE_PAGO] }
+    }
+    orderBy: [{ id: DESC }]
+  ) {
+    id
+    price
+    serviceName
+    status
+    observations
+    createdAt
+    client {
+      id
+      nombreCompleto
+      telefono
+    }
+    paymentProof_on_order {
+      id
+      imageUrl
+      declaredAmount
+      paymentAccountType
+      referenceNumber
+      observations
+      status
+      createdAt
+      updatedAt
+    }
+  }
+}
+
+# Get transfer payment statistics for a business
+query GetTransferPaymentStats($businessId: UUID!) @auth(level: USER) {
+  business(key: { id: $businessId }) @redact {
+    owner {
+      id
+    }
+  }
+  user(key: { id_expr: "auth.uid" }) @redact @check(expr: "'SUPER_ADMIN' in this.roles || (response.business != null && response.business.owner != null && response.business.owner.id == auth.uid)", message: "No tienes permiso para ver las estadísticas de pago") {
+    id
+    roles
+  }
+  orders(
+    where: {
+      businessId: { eq: $businessId }
+      paymentMethod: { eq: TRANSFERENCIA_BANCARIA }
+      status: { in: [PENDIENTE_PAGO] }
+    }
+  ) {
+    id
+    price
+    paymentProof_on_order {
+      status
+    }
+  }
+}
+
+# Get all pending transfer orders across all businesses (NO_ACCESS — for scheduled cleanup function)
+query GetExpiredPendingTransferOrders @auth(level: NO_ACCESS) {
+  orders(
+    where: {
+      paymentMethod: { eq: TRANSFERENCIA_BANCARIA }
+      status: { eq: PENDIENTE_PAGO }
+    }
+    orderBy: [{ id: DESC }]
+    limit: 100
+  ) {
+    id
+    clientId
+    price
+    serviceName
+    businessId
+    createdAt
+    paymentProof_on_order {
+      id
+      status
+    }
   }
 }

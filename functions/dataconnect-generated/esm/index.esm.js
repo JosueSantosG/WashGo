@@ -37,6 +37,7 @@ export const OrderType = {
 export const PaymentMethod = {
   PAYPAL: "PAYPAL",
   CASH: "CASH",
+  TRANSFERENCIA_BANCARIA: "TRANSFERENCIA_BANCARIA",
 }
 
 export const ServiceType = {

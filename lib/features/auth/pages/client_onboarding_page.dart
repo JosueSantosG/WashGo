@@ -91,6 +91,80 @@ class _ClientOnboardingPageState extends State<ClientOnboardingPage> {
 
   void _showContinueReservationDialog() {
     if (!mounted) return;
+
+    // First check for pending payment intent (higher priority — money involved)
+    final paymentIntent = BookingIntentManager.instance.getPendingPaymentIntent();
+    if (paymentIntent != null) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Row(
+              children: [
+                Icon(Icons.payment_rounded, color: AppColors.primary),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Pago pendiente',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              'Tienes un pago por transferencia bancaria pendiente para '
+              '"${paymentIntent.serviceName}" en ${paymentIntent.businessName}.\n\n'
+              '¿Deseas continuar con el proceso de pago?',
+              style: const TextStyle(fontSize: 14, color: AppColors.onSurfaceVariant),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  BookingIntentManager.instance.clearPendingPaymentIntent();
+                  Navigator.pop(dialogContext);
+                  if (mounted) context.go(AppRoutes.home);
+                },
+                child: const Text(
+                  'Descartar',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  if (mounted) {
+                    context.push(
+                      AppRoutes.proofStatus,
+                      extra: {
+                        'orderId': paymentIntent.orderId,
+                        'serviceName': paymentIntent.serviceName,
+                        'businessName': paymentIntent.businessName,
+                      },
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Continuar pago',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
     if (!BookingIntentManager.instance.hasIntent()) {
       context.go(AppRoutes.home);
       return;
