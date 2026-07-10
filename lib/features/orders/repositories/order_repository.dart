@@ -14,6 +14,16 @@ abstract class OrderRepository {
     required String observations,
   });
 
+  Future<String> createOrderWithPendingPayment({
+    required String businessId,
+    required double price,
+    required double costo,
+    required String serviceName,
+    required OrderType type,
+    required PaymentMethod paymentMethod,
+    required String observations,
+  });
+
   Future<List<WashGoOrder>> getBusinessOrders(String businessId);
   Stream<List<WashGoOrder>> watchBusinessOrders(String businessId);
   Stream<List<ClientOrder>> watchClientOrders();

@@ -1927,15 +1927,30 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
               obs += _getVehicleCategory();
             }
 
-            final result = await _orderRepository.createOrder(
-              businessId: businessId,
-              price: currentPrice,
-              costo: currentCosto,
-              serviceName: currentName,
-              type: serviceType,
-              paymentMethod: paymentMethod,
-              observations: obs,
-            );
+            final bool isBankTransfer = paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA;
+
+            String result;
+            if (isBankTransfer) {
+              result = await _orderRepository.createOrderWithPendingPayment(
+                businessId: businessId,
+                price: currentPrice,
+                costo: currentCosto,
+                serviceName: currentName,
+                type: serviceType,
+                paymentMethod: paymentMethod,
+                observations: obs,
+              );
+            } else {
+              result = await _orderRepository.createOrder(
+                businessId: businessId,
+                price: currentPrice,
+                costo: currentCosto,
+                serviceName: currentName,
+                type: serviceType,
+                paymentMethod: paymentMethod,
+                observations: obs,
+              );
+            }
 
             if (!actualScheduleNow) {
               final duration = _selectedService != null
@@ -1964,6 +1979,33 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
 
             if (mounted) {
               Navigator.pop(context);
+            }
+
+            if (isBankTransfer) {
+              // Save PendingPaymentIntent and navigate to bank transfer instructions
+              final intentManager = BookingIntentManager.instance;
+              await intentManager.ensureInitialized();
+              intentManager.savePendingPaymentIntent(PendingPaymentIntent(
+                orderId: result,
+                paymentMethod: 'TRANSFERENCIA_BANCARIA',
+                amount: currentPrice,
+                serviceName: currentName,
+                businessName: widget.laundry.name,
+                businessId: businessId,
+                createdAt: DateTime.now(),
+              ));
+              if (!context.mounted) return;
+              context.pushNamed(
+                AppRoutes.bankTransferInstructions,
+                extra: {
+                  'orderId': result,
+                  'amount': currentPrice,
+                  'serviceName': currentName,
+                  'businessName': widget.laundry.name,
+                  'businessId': businessId,
+                },
+              );
+              return;
             }
 
             final orderId = result;

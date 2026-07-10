@@ -33,6 +33,10 @@ import 'package:washgo/features/splash/pages/splash_page.dart';
 import 'package:washgo/features/auth/pages/policy_viewer_page.dart';
 import 'package:washgo/features/payments/pages/paypal_success_page.dart';
 import 'package:washgo/features/payments/pages/paypal_cancel_page.dart';
+import 'package:washgo/features/payments/pages/bank_transfer_instructions_page.dart';
+import 'package:washgo/features/payments/pages/proof_upload_page.dart';
+import 'package:washgo/features/payments/pages/proof_status_page.dart';
+import 'package:washgo/features/payments/pages/admin_payment_review_page.dart';
 
 // Converts FirebaseAuth state and real-time database user profile updates into a Listenable.
 class AppRouterRefreshNotifier extends ChangeNotifier {
@@ -245,6 +249,57 @@ GoRouter _createAppRouter() {
     GoRoute(
       path: AppRoutes.paypalCancelScheme,
       builder: (context, state) => const PaypalCancelPage(),
+    ),
+    GoRoute(
+      name: AppRoutes.bankTransferInstructions,
+      path: AppRoutes.bankTransferInstructions,
+      builder: (context, state) {
+        final extras = (state.extra as Map<String, dynamic>?) ?? {};
+        return BankTransferInstructionsPage(
+          orderId: extras['orderId'] as String? ?? '',
+          amount: (extras['amount'] as num?)?.toDouble() ?? 0.0,
+          serviceName: extras['serviceName'] as String? ?? '',
+          businessName: extras['businessName'] as String? ?? '',
+          businessId: extras['businessId'] as String?,
+        );
+      },
+    ),
+    GoRoute(
+      name: AppRoutes.proofUpload,
+      path: AppRoutes.proofUpload,
+      builder: (context, state) {
+        final extras = (state.extra as Map<String, dynamic>?) ?? {};
+        return ProofUploadPage(
+          orderId: extras['orderId'] as String? ?? '',
+          amount: (extras['amount'] as num?)?.toDouble() ?? 0.0,
+          serviceName: extras['serviceName'] as String? ?? '',
+          businessName: extras['businessName'] as String? ?? '',
+        );
+      },
+    ),
+    GoRoute(
+      name: AppRoutes.proofStatus,
+      path: AppRoutes.proofStatus,
+      builder: (context, state) {
+        final extras = (state.extra as Map<String, dynamic>?) ?? {};
+        return ProofStatusPage(
+          orderId: extras['orderId'] as String? ?? '',
+          proofStatus: extras['proofStatus'] as String? ?? 'PENDING',
+          amount: (extras['amount'] as num?)?.toDouble() ?? 0.0,
+          serviceName: extras['serviceName'] as String? ?? '',
+          businessName: extras['businessName'] as String? ?? '',
+        );
+      },
+    ),
+    GoRoute(
+      name: AppRoutes.adminPaymentReview,
+      path: AppRoutes.adminPaymentReview,
+      builder: (context, state) {
+        final extras = (state.extra as Map<String, dynamic>?) ?? {};
+        return AdminPaymentReviewPage(
+          businessId: extras['businessId'] as String? ?? '',
+        );
+      },
     ),
   ];
 

@@ -114,6 +114,34 @@ class FirebaseOrderRepository implements OrderRepository {
   }
 
   @override
+  Future<String> createOrderWithPendingPayment({
+    required String businessId,
+    required double price,
+    required double costo,
+    required String serviceName,
+    required OrderType type,
+    required PaymentMethod paymentMethod,
+    required String observations,
+  }) async {
+    final result = await _connector
+        .createOrderWithPendingPayment(
+          businessId: businessId,
+          price: price,
+          costo: costo,
+          serviceName: serviceName,
+          type: type,
+          paymentMethod: paymentMethod,
+        )
+        .observations(observations)
+        .execute();
+
+    _notifyClientControllers();
+    _notifyBusinessControllers(businessId);
+
+    return result.data.order_insert.id;
+  }
+
+  @override
   Future<List<WashGoOrder>> getBusinessOrders(String businessId) async {
     final response = await _connector
         .getBusinessOrders(businessId: businessId)

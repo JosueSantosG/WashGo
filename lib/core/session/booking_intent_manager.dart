@@ -56,11 +56,53 @@ class BookingIntent {
       );
 }
 
+class PendingPaymentIntent {
+  final String orderId;
+  final String paymentMethod;
+  final double amount;
+  final String serviceName;
+  final String businessName;
+  final String? businessId;
+  final DateTime createdAt;
+
+  PendingPaymentIntent({
+    required this.orderId,
+    required this.paymentMethod,
+    required this.amount,
+    required this.serviceName,
+    required this.businessName,
+    this.businessId,
+    required this.createdAt,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'orderId': orderId,
+        'paymentMethod': paymentMethod,
+        'amount': amount,
+        'serviceName': serviceName,
+        'businessName': businessName,
+        'businessId': businessId,
+        'createdAt': createdAt.toIso8601String(),
+      };
+
+  factory PendingPaymentIntent.fromJson(Map<String, dynamic> json) =>
+      PendingPaymentIntent(
+        orderId: json['orderId'] as String,
+        paymentMethod: json['paymentMethod'] as String,
+        amount: (json['amount'] as num).toDouble(),
+        serviceName: json['serviceName'] as String,
+        businessName: json['businessName'] as String,
+        businessId: json['businessId'] as String?,
+        createdAt: DateTime.parse(json['createdAt'] as String),
+      );
+}
+
 class BookingIntentManager {
   BookingIntentManager._privateConstructor();
   static final BookingIntentManager instance = BookingIntentManager._privateConstructor();
 
   static const _key = 'booking_intent';
+  static const _pendingPaymentKey = 'pending_payment_intent';
   static const _maxAge = Duration(hours: 24);
 
   SharedPreferences? _prefs;
@@ -107,6 +149,31 @@ class BookingIntentManager {
     _removePersistedIntent();
   }
 
+  // ---- Pending Payment Intent ----
+
+  void savePendingPaymentIntent(PendingPaymentIntent intent) {
+    _persistPendingPaymentIntent(intent);
+  }
+
+  PendingPaymentIntent? getPendingPaymentIntent() {
+    return _loadPendingPaymentIntent();
+  }
+
+  bool hasPendingPaymentIntent() {
+    final intent = getPendingPaymentIntent();
+    if (intent == null) return false;
+    final age = DateTime.now().difference(intent.createdAt);
+    if (age > _maxAge) {
+      clearPendingPaymentIntent();
+      return false;
+    }
+    return true;
+  }
+
+  void clearPendingPaymentIntent() {
+    _removePersistedPendingPaymentIntent();
+  }
+
   bool hasIntent() {
     return getIntent() != null;
   }
@@ -136,5 +203,24 @@ class BookingIntentManager {
 
   void _removePersistedIntent() {
     _prefs?.remove(_key);
+  }
+
+  void _persistPendingPaymentIntent(PendingPaymentIntent intent) {
+    _prefs?.setString(_pendingPaymentKey, jsonEncode(intent.toJson()));
+  }
+
+  PendingPaymentIntent? _loadPendingPaymentIntent() {
+    final raw = _prefs?.getString(_pendingPaymentKey);
+    if (raw == null) return null;
+    try {
+      final json = jsonDecode(raw) as Map<String, dynamic>;
+      return PendingPaymentIntent.fromJson(json);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _removePersistedPendingPaymentIntent() {
+    _prefs?.remove(_pendingPaymentKey);
   }
 }
