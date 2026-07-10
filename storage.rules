@@ -1,9 +1,19 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /invoices/{invoiceId} {
+    // Invoices remain locked
+    match /invoices/{allPaths=**} {
       allow read, write: if false;
     }
+
+    // Proof images: authenticated users can upload/read, public signed URL via cloud function
+    match /proofs/{orderId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                    && request.resource.size < 10 * 1024 * 1024;
+    }
+
+    // Everything else locked
     match /{allPaths=**} {
       allow read, write: if false;
     }

@@ -9,6 +9,9 @@ import 'package:washgo/features/orders/widgets/review_bottom_sheet.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:washgo/config/routes/app_routes.dart';
+import 'package:washgo/features/payments/repositories/bank_transfer_repository.dart';
+import 'package:washgo/features/payments/models/payment_proof_model.dart';
 
 class BookingsTab extends StatefulWidget {
   final List<ClientOrder> orders;
@@ -566,6 +569,107 @@ class _BookingsTabState extends State<BookingsTab> {
           ),
           const SizedBox(height: 12),
 
+          // Estado de comprobante de pago (Transferencia Bancaria)
+          if (order.paymentMethod == 'TRANSFERENCIA_BANCARIA' &&
+              statusStr == 'PENDIENTE_PAGO') ...[
+            FutureBuilder<PaymentProofModel?>(
+              future: BankTransferRepository().getProofStatus(order.id),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: 10),
+                        Text(
+                          'Verificando estado del pago...',
+                          style: TextStyle(fontSize: 13, color: AppColors.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final proof = snapshot.data;
+                if (proof == null) {
+                  // No se ha subido comprobante aún
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.cloud_upload_outlined, color: Colors.blue.shade700, size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Pendiente de comprobante — Sube tu comprobante de pago para que el dueño lo revise.',
+                            style: TextStyle(fontSize: 13, color: Colors.blue.shade900),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                IconData icon;
+                MaterialColor color;
+                String message;
+
+                switch (proof.status) {
+                  case PaymentProofStatus.PENDING:
+                    icon = Icons.access_time_rounded;
+                    color = Colors.amber;
+                    message = 'Comprobante recibido. El dueño lo está revisando...';
+                  case PaymentProofStatus.APPROVED:
+                    icon = Icons.check_circle_rounded;
+                    color = Colors.green;
+                    message = 'Pago verificado correctamente.';
+                  case PaymentProofStatus.REJECTED:
+                    icon = Icons.cancel_rounded;
+                    color = Colors.red;
+                    message = proof.rejectionReason != null
+                        ? 'Comprobante rechazado: ${proof.rejectionReason}'
+                        : 'Comprobante rechazado. Sube uno nuevo.';
+                }
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(icon, color: color.shade700, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          message,
+                          style: TextStyle(fontSize: 13, color: color.shade900, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+
           // Fecha y Hora de la Reserva
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -600,7 +704,6 @@ class _BookingsTabState extends State<BookingsTab> {
 
           // Dynamic Turn & Wait Time in Real-Time
           if ((statusStr == 'EN_COLA' || statusStr == 'PENDIENTE_PAGO') &&
-              order.paymentMethod == 'CASH' &&
               widget.getQueuePosition != null) ...[
             const SizedBox(height: 12),
             FutureBuilder<QueuePosition>(
@@ -927,7 +1030,7 @@ class _BookingsTabState extends State<BookingsTab> {
             const Divider(height: 32),
             Row(
               children: [
-                if (order.paymentMethod == 'CASH' &&
+                if ((order.paymentMethod == 'CASH' || order.paymentMethod == 'TRANSFERENCIA_BANCARIA') &&
                     (statusStr == 'PENDIENTE_PAGO' || statusStr == 'EN_COLA')) ...[
                   Expanded(
                     child: OutlinedButton.icon(
@@ -969,6 +1072,76 @@ class _BookingsTabState extends State<BookingsTab> {
             ),
           ],
 
+          // Bank transfer action button
+          if (order.paymentMethod == 'TRANSFERENCIA_BANCARIA' &&
+              statusStr == 'PENDIENTE_PAGO') ...[
+            const SizedBox(height: 12),
+            FutureBuilder<PaymentProofModel?>(
+              future: BankTransferRepository().getProofStatus(order.id),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 48,
+                    child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  );
+                }
+                final proof = snapshot.data;
+                if (proof == null || proof.status == PaymentProofStatus.REJECTED) {
+                  return SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        context.push(AppRoutes.proofUpload, extra: {
+                          'orderId': order.id,
+                          'amount': order.price,
+                          'serviceName': order.serviceName ?? 'Servicio',
+                          'businessName': order.businessName,
+                        });
+                      },
+                      icon: const Icon(Icons.cloud_upload_outlined, color: Colors.white, size: 18),
+                      label: Text(proof == null ? 'Subir Comprobante' : 'Subir nuevo comprobante'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  );
+                } else if (proof.status == PaymentProofStatus.PENDING) {
+                  return SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        context.push(AppRoutes.proofStatus, extra: {
+                          'orderId': order.id,
+                          'proofStatus': 'PENDING',
+                          'amount': order.price,
+                          'serviceName': order.serviceName ?? 'Servicio',
+                          'businessName': order.businessName,
+                        });
+                      },
+                      icon: const Icon(Icons.visibility_outlined, color: AppColors.primary, size: 18),
+                      label: const Text('Ver Estado de Pago'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(color: AppColors.primary, width: 1.5),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ],
+
         ],
       ),
     );
@@ -997,7 +1170,6 @@ class _BookingsTabState extends State<BookingsTab> {
             ),
             if (statusStr != 'COMPLETADO')
               if ((statusStr == 'EN_COLA' || statusStr == 'PENDIENTE_PAGO') &&
-                  order.paymentMethod == 'CASH' &&
                   widget.getQueuePosition != null)
                 FutureBuilder<QueuePosition>(
                   future: _getQueueFuture(order.businessId, order.id),

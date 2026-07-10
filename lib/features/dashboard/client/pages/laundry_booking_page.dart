@@ -1958,6 +1958,23 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
               }
             }
 
+            final orderId = result;
+
+            // Save PendingPaymentIntent for bank transfer before any Navigator pops
+            if (paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA) {
+              BookingIntentManager.instance.savePendingPaymentIntent(
+                PendingPaymentIntent(
+                  orderId: orderId,
+                  paymentMethod: 'TRANSFERENCIA_BANCARIA',
+                  amount: currentPrice,
+                  serviceName: currentName,
+                  businessName: widget.laundry.name,
+                  businessId: businessId,
+                  createdAt: DateTime.now(),
+                ),
+              );
+            }
+
             if (!routeContext.mounted) return;
 
             Navigator.pop(routeContext);
@@ -1966,8 +1983,22 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
               Navigator.pop(context);
             }
 
-            final orderId = result;
-            _showOrderCreatedSuccess(orderId);
+            if (paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA) {
+              if (mounted) {
+                context.push(
+                  AppRoutes.bankTransferInstructions,
+                  extra: {
+                    'orderId': orderId,
+                    'amount': currentPrice,
+                    'serviceName': currentName,
+                    'businessName': widget.laundry.name,
+                    'businessId': businessId,
+                  },
+                );
+              }
+            } else {
+              _showOrderCreatedSuccess(orderId);
+            }
           },
         ),
       ),

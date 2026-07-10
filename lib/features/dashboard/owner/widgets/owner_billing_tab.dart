@@ -34,6 +34,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
   int _completedCount = 0;
   double _cashTotal = 0.0;
   double _paypalTotal = 0.0;
+  double _bankTransferTotal = 0.0;
   double _averageTicket = 0.0;
   List<_EmployeeStat> _sortedStats = [];
 
@@ -42,6 +43,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
     int completedCount = 0;
     double cashTotal = 0.0;
     double paypalTotal = 0.0;
+    double bankTransferTotal = 0.0;
 
     for (final inv in _filteredInvoices) {
       totalBilled += inv.total;
@@ -53,6 +55,8 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
         cashTotal += inv.total;
       } else if (paymentUpper == 'PAYPAL') {
         paypalTotal += inv.total;
+      } else if (paymentUpper.contains('TRANSFERENCIA')) {
+        bankTransferTotal += inv.total;
       }
     }
 
@@ -75,6 +79,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
     _completedCount = completedCount;
     _cashTotal = cashTotal;
     _paypalTotal = paypalTotal;
+    _bankTransferTotal = bankTransferTotal;
     _averageTicket = averageTicket;
     _sortedStats = sortedStats;
   }
@@ -94,7 +99,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
   String _selectedDateFilter = 'Todas'; // 'Todas', '7dias', '30dias', 'rango'
   DateTimeRange? _selectedDateRange;
   String? _selectedEmployeeName = 'all'; // 'all' or actual employee name
-  String _selectedPaymentMethod = 'Todos'; // 'Todos', 'Efectivo', 'PayPal'
+  String _selectedPaymentMethod = 'Todos'; // 'Todos', 'Efectivo', 'PayPal', 'Transferencia'
   String _selectedStatus = 'Todos'; // 'Todos', 'Emitida', 'Pendiente', 'Fallo'
 
   final TextEditingController _searchController = TextEditingController();
@@ -170,7 +175,13 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
       // 3. Map payment method
       PaymentMethod? paymentMethod;
       if (_selectedPaymentMethod != 'Todos') {
-        paymentMethod = _selectedPaymentMethod == 'Efectivo' ? PaymentMethod.CASH : PaymentMethod.PAYPAL;
+        if (_selectedPaymentMethod == 'Efectivo') {
+          paymentMethod = PaymentMethod.CASH;
+        } else if (_selectedPaymentMethod == 'Transferencia') {
+          paymentMethod = PaymentMethod.TRANSFERENCIA_BANCARIA;
+        } else {
+          paymentMethod = PaymentMethod.PAYPAL;
+        }
       }
 
       // 4. Map status
@@ -328,7 +339,13 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
 
       PaymentMethod? paymentMethod;
       if (_selectedPaymentMethod != 'Todos') {
-        paymentMethod = _selectedPaymentMethod == 'Efectivo' ? PaymentMethod.CASH : PaymentMethod.PAYPAL;
+        if (_selectedPaymentMethod == 'Efectivo') {
+          paymentMethod = PaymentMethod.CASH;
+        } else if (_selectedPaymentMethod == 'Transferencia') {
+          paymentMethod = PaymentMethod.TRANSFERENCIA_BANCARIA;
+        } else {
+          paymentMethod = PaymentMethod.PAYPAL;
+        }
       }
 
       InvoiceStatus? status;
@@ -454,6 +471,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
                 averageTicket: _averageTicket,
                 cashTotal: _cashTotal,
                 paypalTotal: _paypalTotal,
+                bankTransferTotal: _bankTransferTotal,
               ),
               const SizedBox(height: 28),
 
@@ -782,7 +800,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
             ),
             const SizedBox(height: 8),
             Row(
-              children: ['Todos', 'Efectivo', 'PayPal'].map((method) {
+              children: ['Todos', 'Efectivo', 'PayPal', 'Transferencia'].map((method) {
                 final isSelected = _selectedPaymentMethod == method;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8.0),
@@ -866,6 +884,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
     required double averageTicket,
     required double cashTotal,
     required double paypalTotal,
+    required double bankTransferTotal,
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -929,7 +948,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
             _buildMetricCard(
               title: 'Métodos de Pago',
               value: 'Efe: \$${cashTotal.toStringAsFixed(0)}',
-              subtitle: 'PP: \$${paypalTotal.toStringAsFixed(0)}',
+              subtitle: 'PP: \$${paypalTotal.toStringAsFixed(0)} • Transf: \$${bankTransferTotal.toStringAsFixed(0)}',
               icon: Icons.account_balance_wallet_rounded,
               gradient: const LinearGradient(
                 colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
@@ -1276,17 +1295,25 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
                               decoration: BoxDecoration(
                                 color: (invoice.paymentMethod.toUpperCase() == 'PAYPAL')
                                     ? Colors.blue.withValues(alpha: 0.1)
-                                    : Colors.green.withValues(alpha: 0.1),
+                                    : invoice.paymentMethod.toUpperCase().contains('TRANSFERENCIA')
+                                        ? Colors.purple.withValues(alpha: 0.1)
+                                        : Colors.green.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                invoice.paymentMethod.toUpperCase() == 'PAYPAL' ? 'PayPal' : 'Efectivo',
+                                invoice.paymentMethod.toUpperCase() == 'PAYPAL'
+                                    ? 'PayPal'
+                                    : invoice.paymentMethod.toUpperCase().contains('TRANSFERENCIA')
+                                        ? 'Transferencia'
+                                        : 'Efectivo',
                                 style: GoogleFonts.inter(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                   color: (invoice.paymentMethod.toUpperCase() == 'PAYPAL')
                                       ? Colors.blue[700]
-                                      : Colors.green[700],
+                                      : invoice.paymentMethod.toUpperCase().contains('TRANSFERENCIA')
+                                          ? Colors.purple[700]
+                                          : Colors.green[700],
                                 ),
                               ),
                             ),

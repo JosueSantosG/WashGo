@@ -18,6 +18,7 @@ import 'package:washgo/features/dashboard/client/widgets/tabs/profile_tab.dart';
 import 'package:washgo/features/invoices/pages/client_invoice_history_page.dart';
 import 'package:washgo/features/dashboard/client/widgets/vehicles/vehicle_dialogs.dart';
 import 'package:washgo/core/session/booking_intent_manager.dart';
+import 'package:washgo/features/payments/pages/proof_status_page.dart';
 
 import 'package:washgo/features/auth/models/washgo_user.dart';
 import 'package:washgo/features/auth/repositories/auth_repository.dart';
@@ -456,6 +457,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _fetchMyVehicles();
       } else {
         BookingIntentManager.instance.clearIntent();
+        BookingIntentManager.instance.clearPendingPaymentIntent();
         if (mounted) {
           setState(() {
             _showContinueBanner = false;
@@ -607,6 +609,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _checkPendingBookingIntent() {
+    // First, check for a pending payment intent (bank transfer)
+    if (BookingIntentManager.instance.hasPendingPaymentIntent()) {
+      final paymentIntent = BookingIntentManager.instance.getPendingPaymentIntent();
+      if (paymentIntent != null && mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProofStatusPage(
+              orderId: paymentIntent.orderId,
+              proofStatus: 'PENDING',
+              amount: paymentIntent.amount,
+              serviceName: paymentIntent.serviceName,
+              businessName: paymentIntent.businessName,
+            ),
+          ),
+        );
+        return;
+      }
+    }
+
     final intent = BookingIntentManager.instance.getIntent();
     if (intent == null || !mounted) return;
 
