@@ -1647,6 +1647,55 @@ ref.subscribe(...);
 ```
 
 
+### ServerGetOrderById
+#### Required Arguments
+```dart
+String id = ...;
+ExampleConnector.instance.serverGetOrderById(
+  id: id,
+).execute();
+```
+
+
+
+#### Return Type
+`execute()` returns a `QueryResult<ServerGetOrderByIdData, ServerGetOrderByIdVariables>`
+```dart
+/// Result of an Operation Request (query/mutation).
+class OperationResult<Data, Variables> {
+  OperationResult(this.dataConnect, this.data, this.ref);
+  Data data;
+  OperationRef<Data, Variables> ref;
+  FirebaseDataConnect dataConnect;
+}
+
+/// Result of a query request. Created to hold extra variables in the future.
+class QueryResult<Data, Variables> extends OperationResult<Data, Variables> {
+  QueryResult(super.dataConnect, super.data, super.ref);
+}
+
+final result = await ExampleConnector.instance.serverGetOrderById(
+  id: id,
+);
+ServerGetOrderByIdData data = result.data;
+final ref = result.ref;
+```
+
+#### Getting the Ref
+Each builder returns an `execute` function, which is a helper function that creates a `Ref` object, and executes the underlying operation.
+An example of how to use the `Ref` object is shown below:
+```dart
+String id = ...;
+
+final ref = ExampleConnector.instance.serverGetOrderById(
+  id: id,
+).ref();
+ref.execute();
+
+ref.subscribe(...);
+```
+
+
 ### GetPrepaidHistoryByOrderId
 #### Required Arguments
 ```dart
@@ -2182,6 +2231,235 @@ ref.execute();
 ref.subscribe(...);
 ```
 
+
+### GetPaymentProof
+#### Required Arguments
+```dart
+String orderId = ...;
+ExampleConnector.instance.getPaymentProof(
+  orderId: orderId,
+).execute();
+```
+
+
+
+#### Return Type
+`execute()` returns a `QueryResult<GetPaymentProofData, GetPaymentProofVariables>`
+```dart
+/// Result of an Operation Request (query/mutation).
+class OperationResult<Data, Variables> {
+  OperationResult(this.dataConnect, this.data, this.ref);
+  Data data;
+  OperationRef<Data, Variables> ref;
+  FirebaseDataConnect dataConnect;
+}
+
+/// Result of a query request. Created to hold extra variables in the future.
+class QueryResult<Data, Variables> extends OperationResult<Data, Variables> {
+  QueryResult(super.dataConnect, super.data, super.ref);
+}
+
+final result = await ExampleConnector.instance.getPaymentProof(
+  orderId: orderId,
+);
+GetPaymentProofData data = result.data;
+final ref = result.ref;
+```
+
+#### Getting the Ref
+Each builder returns an `execute` function, which is a helper function that creates a `Ref` object, and executes the underlying operation.
+An example of how to use the `Ref` object is shown below:
+```dart
+String orderId = ...;
+
+final ref = ExampleConnector.instance.getPaymentProof(
+  orderId: orderId,
+).ref();
+ref.execute();
+
+ref.subscribe(...);
+```
+
+
+### GetPendingTransferOrders
+#### Required Arguments
+```dart
+String businessId = ...;
+ExampleConnector.instance.getPendingTransferOrders(
+  businessId: businessId,
+).execute();
+```
+
+
+
+#### Return Type
+`execute()` returns a `QueryResult<GetPendingTransferOrdersData, GetPendingTransferOrdersVariables>`
+```dart
+/// Result of an Operation Request (query/mutation).
+class OperationResult<Data, Variables> {
+  OperationResult(this.dataConnect, this.data, this.ref);
+  Data data;
+  OperationRef<Data, Variables> ref;
+  FirebaseDataConnect dataConnect;
+}
+
+/// Result of a query request. Created to hold extra variables in the future.
+class QueryResult<Data, Variables> extends OperationResult<Data, Variables> {
+  QueryResult(super.dataConnect, super.data, super.ref);
+}
+
+final result = await ExampleConnector.instance.getPendingTransferOrders(
+  businessId: businessId,
+);
+GetPendingTransferOrdersData data = result.data;
+final ref = result.ref;
+```
+
+#### Getting the Ref
+Each builder returns an `execute` function, which is a helper function that creates a `Ref` object, and executes the underlying operation.
+An example of how to use the `Ref` object is shown below:
+```dart
+String businessId = ...;
+
+final ref = ExampleConnector.instance.getPendingTransferOrders(
+  businessId: businessId,
+).ref();
+ref.execute();
+
+ref.subscribe(...);
+```
+
+
+### GetTransferPaymentStats
+#### Required Arguments
+```dart
+String businessId = ...;
+ExampleConnector.instance.getTransferPaymentStats(
+  businessId: businessId,
+).execute();
+```
+
+
+
+#### Return Type
+`execute()` returns a `QueryResult<GetTransferPaymentStatsData, GetTransferPaymentStatsVariables>`
+```dart
+/// Result of an Operation Request (query/mutation).
+class OperationResult<Data, Variables> {
+  OperationResult(this.dataConnect, this.data, this.ref);
+  Data data;
+  OperationRef<Data, Variables> ref;
+  FirebaseDataConnect dataConnect;
+}
+
+/// Result of a query request. Created to hold extra variables in the future.
+class QueryResult<Data, Variables> extends OperationResult<Data, Variables> {
+  QueryResult(super.dataConnect, super.data, super.ref);
+}
+
+final result = await ExampleConnector.instance.getTransferPaymentStats(
+  businessId: businessId,
+);
+GetTransferPaymentStatsData data = result.data;
+final ref = result.ref;
+```
+
+#### Getting the Ref
+Each builder returns an `execute` function, which is a helper function that creates a `Ref` object, and executes the underlying operation.
+An example of how to use the `Ref` object is shown below:
+```dart
+String businessId = ...;
+
+final ref = ExampleConnector.instance.getTransferPaymentStats(
+  businessId: businessId,
+).ref();
+ref.execute();
+
+ref.subscribe(...);
+```
+
+
+### GetExpiredPendingTransferOrders
+#### Required Arguments
+```dart
+// No required arguments
+ExampleConnector.instance.getExpiredPendingTransferOrders().execute();
+```
+
+
+
+#### Return Type
+`execute()` returns a `QueryResult<GetExpiredPendingTransferOrdersData, void>`
+```dart
+/// Result of an Operation Request (query/mutation).
+class OperationResult<Data, Variables> {
+  OperationResult(this.dataConnect, this.data, this.ref);
+  Data data;
+  OperationRef<Data, Variables> ref;
+  FirebaseDataConnect dataConnect;
+}
+
+/// Result of a query request. Created to hold extra variables in the future.
+class QueryResult<Data, Variables> extends OperationResult<Data, Variables> {
+  QueryResult(super.dataConnect, super.data, super.ref);
+}
+
+final result = await ExampleConnector.instance.getExpiredPendingTransferOrders();
+GetExpiredPendingTransferOrdersData data = result.data;
+final ref = result.ref;
+```
+
+#### Getting the Ref
+Each builder returns an `execute` function, which is a helper function that creates a `Ref` object, and executes the underlying operation.
+An example of how to use the `Ref` object is shown below:
+```dart
+final ref = ExampleConnector.instance.getExpiredPendingTransferOrders().ref();
+ref.execute();
+
+ref.subscribe(...);
+```
+
+
+### GetPendingPaymentProofs
+#### Required Arguments
+```dart
+// No required arguments
+ExampleConnector.instance.getPendingPaymentProofs().execute();
+```
+
+
+
+#### Return Type
+`execute()` returns a `QueryResult<GetPendingPaymentProofsData, void>`
+```dart
+/// Result of an Operation Request (query/mutation).
+class OperationResult<Data, Variables> {
+  OperationResult(this.dataConnect, this.data, this.ref);
+  Data data;
+  OperationRef<Data, Variables> ref;
+  FirebaseDataConnect dataConnect;
+}
+
+/// Result of a query request. Created to hold extra variables in the future.
+class QueryResult<Data, Variables> extends OperationResult<Data, Variables> {
+  QueryResult(super.dataConnect, super.data, super.ref);
+}
+
+final result = await ExampleConnector.instance.getPendingPaymentProofs();
+GetPendingPaymentProofsData data = result.data;
+final ref = result.ref;
+```
+
+#### Getting the Ref
+Each builder returns an `execute` function, which is a helper function that creates a `Ref` object, and executes the underlying operation.
+An example of how to use the `Ref` object is shown below:
+```dart
+final ref = ExampleConnector.instance.getPendingPaymentProofs().ref();
+ref.execute();
+
+ref.subscribe(...);
+```
+
 ## Mutations
 
 ### UpsertUser
@@ -2612,7 +2890,11 @@ The builder pattern allows Data Connect to distinguish between fields that haven
 ```dart
 class CreateOrderVariablesBuilder {
   ...
-   CreateOrderVariablesBuilder observations(String? t) {
+   CreateOrderVariablesBuilder status(OrderStatus t) {
+   _status.value = t;
+   return this;
+  }
+  CreateOrderVariablesBuilder observations(String? t) {
    _observations.value = t;
    return this;
   }
@@ -2627,6 +2909,7 @@ ExampleConnector.instance.createOrder(
   type: type,
   paymentMethod: paymentMethod,
 )
+.status(status)
 .observations(observations)
 .execute();
 ```
@@ -5641,6 +5924,552 @@ final ref = ExampleConnector.instance.consumePrepaidAndCreateMetric(
   saldoResultante: saldoResultante,
   metricId: metricId,
   metricCostoUnitario: metricCostoUnitario,
+).ref();
+ref.execute();
+```
+
+
+### ServerCreateOrderWithPendingPayment
+#### Required Arguments
+```dart
+String businessId = ...;
+String clientId = ...;
+double price = ...;
+double costo = ...;
+String serviceName = ...;
+OrderType type = ...;
+PaymentMethod paymentMethod = ...;
+ExampleConnector.instance.serverCreateOrderWithPendingPayment(
+  businessId: businessId,
+  clientId: clientId,
+  price: price,
+  costo: costo,
+  serviceName: serviceName,
+  type: type,
+  paymentMethod: paymentMethod,
+).execute();
+```
+
+#### Optional Arguments
+We return a builder for each query. For ServerCreateOrderWithPendingPayment, we created `ServerCreateOrderWithPendingPaymentBuilder`. For queries and mutations with optional parameters, we return a builder class.
+The builder pattern allows Data Connect to distinguish between fields that haven't been set and fields that have been set to null. A field can be set by calling its respective setter method like below:
+```dart
+class ServerCreateOrderWithPendingPaymentVariablesBuilder {
+  ...
+   ServerCreateOrderWithPendingPaymentVariablesBuilder observations(String? t) {
+   _observations.value = t;
+   return this;
+  }
+
+  ...
+}
+ExampleConnector.instance.serverCreateOrderWithPendingPayment(
+  businessId: businessId,
+  clientId: clientId,
+  price: price,
+  costo: costo,
+  serviceName: serviceName,
+  type: type,
+  paymentMethod: paymentMethod,
+)
+.observations(observations)
+.execute();
+```
+
+#### Return Type
+`execute()` returns a `OperationResult<ServerCreateOrderWithPendingPaymentData, ServerCreateOrderWithPendingPaymentVariables>`
+```dart
+/// Result of an Operation Request (query/mutation).
+class OperationResult<Data, Variables> {
+  OperationResult(this.dataConnect, this.data, this.ref);
+  Data data;
+  OperationRef<Data, Variables> ref;
+  FirebaseDataConnect dataConnect;
+}
+
+final result = await ExampleConnector.instance.serverCreateOrderWithPendingPayment(
+  businessId: businessId,
+  clientId: clientId,
+  price: price,
+  costo: costo,
+  serviceName: serviceName,
+  type: type,
+  paymentMethod: paymentMethod,
+);
+ServerCreateOrderWithPendingPaymentData data = result.data;
+final ref = result.ref;
+```
+
+#### Getting the Ref
+Each builder returns an `execute` function, which is a helper function that creates a `Ref` object, and executes the underlying operation.
+An example of how to use the `Ref` object is shown below:
+```dart
+String businessId = ...;
+String clientId = ...;
+double price = ...;
+double costo = ...;
+String serviceName = ...;
+OrderType type = ...;
+PaymentMethod paymentMethod = ...;
+
+final ref = ExampleConnector.instance.serverCreateOrderWithPendingPayment(
+  businessId: businessId,
+  clientId: clientId,
+  price: price,
+  costo: costo,
+  serviceName: serviceName,
+  type: type,
+  paymentMethod: paymentMethod,
+).ref();
+ref.execute();
+```
+
+
+### CreatePaymentProof
+#### Required Arguments
+```dart
+String orderId = ...;
+String imageUrl = ...;
+double declaredAmount = ...;
+PaymentAccountType paymentAccountType = ...;
+ExampleConnector.instance.createPaymentProof(
+  orderId: orderId,
+  imageUrl: imageUrl,
+  declaredAmount: declaredAmount,
+  paymentAccountType: paymentAccountType,
+).execute();
+```
+
+#### Optional Arguments
+We return a builder for each query. For CreatePaymentProof, we created `CreatePaymentProofBuilder`. For queries and mutations with optional parameters, we return a builder class.
+The builder pattern allows Data Connect to distinguish between fields that haven't been set and fields that have been set to null. A field can be set by calling its respective setter method like below:
+```dart
+class CreatePaymentProofVariablesBuilder {
+  ...
+   CreatePaymentProofVariablesBuilder referenceNumber(String? t) {
+   _referenceNumber.value = t;
+   return this;
+  }
+  CreatePaymentProofVariablesBuilder observations(String? t) {
+   _observations.value = t;
+   return this;
+  }
+
+  ...
+}
+ExampleConnector.instance.createPaymentProof(
+  orderId: orderId,
+  imageUrl: imageUrl,
+  declaredAmount: declaredAmount,
+  paymentAccountType: paymentAccountType,
+)
+.referenceNumber(referenceNumber)
+.observations(observations)
+.execute();
+```
+
+#### Return Type
+`execute()` returns a `OperationResult<CreatePaymentProofData, CreatePaymentProofVariables>`
+```dart
+/// Result of an Operation Request (query/mutation).
+class OperationResult<Data, Variables> {
+  OperationResult(this.dataConnect, this.data, this.ref);
+  Data data;
+  OperationRef<Data, Variables> ref;
+  FirebaseDataConnect dataConnect;
+}
+
+final result = await ExampleConnector.instance.createPaymentProof(
+  orderId: orderId,
+  imageUrl: imageUrl,
+  declaredAmount: declaredAmount,
+  paymentAccountType: paymentAccountType,
+);
+CreatePaymentProofData data = result.data;
+final ref = result.ref;
+```
+
+#### Getting the Ref
+Each builder returns an `execute` function, which is a helper function that creates a `Ref` object, and executes the underlying operation.
+An example of how to use the `Ref` object is shown below:
+```dart
+String orderId = ...;
+String imageUrl = ...;
+double declaredAmount = ...;
+PaymentAccountType paymentAccountType = ...;
+
+final ref = ExampleConnector.instance.createPaymentProof(
+  orderId: orderId,
+  imageUrl: imageUrl,
+  declaredAmount: declaredAmount,
+  paymentAccountType: paymentAccountType,
+).ref();
+ref.execute();
+```
+
+
+### ServerUpdatePaymentProofStatus
+#### Required Arguments
+```dart
+String id = ...;
+PaymentProofStatus status = ...;
+String reviewedBy = ...;
+ExampleConnector.instance.serverUpdatePaymentProofStatus(
+  id: id,
+  status: status,
+  reviewedBy: reviewedBy,
+).execute();
+```
+
+#### Optional Arguments
+We return a builder for each query. For ServerUpdatePaymentProofStatus, we created `ServerUpdatePaymentProofStatusBuilder`. For queries and mutations with optional parameters, we return a builder class.
+The builder pattern allows Data Connect to distinguish between fields that haven't been set and fields that have been set to null. A field can be set by calling its respective setter method like below:
+```dart
+class ServerUpdatePaymentProofStatusVariablesBuilder {
+  ...
+   ServerUpdatePaymentProofStatusVariablesBuilder observations(String? t) {
+   _observations.value = t;
+   return this;
+  }
+
+  ...
+}
+ExampleConnector.instance.serverUpdatePaymentProofStatus(
+  id: id,
+  status: status,
+  reviewedBy: reviewedBy,
+)
+.observations(observations)
+.execute();
+```
+
+#### Return Type
+`execute()` returns a `OperationResult<ServerUpdatePaymentProofStatusData, ServerUpdatePaymentProofStatusVariables>`
+```dart
+/// Result of an Operation Request (query/mutation).
+class OperationResult<Data, Variables> {
+  OperationResult(this.dataConnect, this.data, this.ref);
+  Data data;
+  OperationRef<Data, Variables> ref;
+  FirebaseDataConnect dataConnect;
+}
+
+final result = await ExampleConnector.instance.serverUpdatePaymentProofStatus(
+  id: id,
+  status: status,
+  reviewedBy: reviewedBy,
+);
+ServerUpdatePaymentProofStatusData data = result.data;
+final ref = result.ref;
+```
+
+#### Getting the Ref
+Each builder returns an `execute` function, which is a helper function that creates a `Ref` object, and executes the underlying operation.
+An example of how to use the `Ref` object is shown below:
+```dart
+String id = ...;
+PaymentProofStatus status = ...;
+String reviewedBy = ...;
+
+final ref = ExampleConnector.instance.serverUpdatePaymentProofStatus(
+  id: id,
+  status: status,
+  reviewedBy: reviewedBy,
+).ref();
+ref.execute();
+```
+
+
+### ServerUpdatePaymentProof
+#### Required Arguments
+```dart
+String id = ...;
+String imageUrl = ...;
+double declaredAmount = ...;
+PaymentAccountType paymentAccountType = ...;
+ExampleConnector.instance.serverUpdatePaymentProof(
+  id: id,
+  imageUrl: imageUrl,
+  declaredAmount: declaredAmount,
+  paymentAccountType: paymentAccountType,
+).execute();
+```
+
+#### Optional Arguments
+We return a builder for each query. For ServerUpdatePaymentProof, we created `ServerUpdatePaymentProofBuilder`. For queries and mutations with optional parameters, we return a builder class.
+The builder pattern allows Data Connect to distinguish between fields that haven't been set and fields that have been set to null. A field can be set by calling its respective setter method like below:
+```dart
+class ServerUpdatePaymentProofVariablesBuilder {
+  ...
+   ServerUpdatePaymentProofVariablesBuilder referenceNumber(String? t) {
+   _referenceNumber.value = t;
+   return this;
+  }
+  ServerUpdatePaymentProofVariablesBuilder observations(String? t) {
+   _observations.value = t;
+   return this;
+  }
+
+  ...
+}
+ExampleConnector.instance.serverUpdatePaymentProof(
+  id: id,
+  imageUrl: imageUrl,
+  declaredAmount: declaredAmount,
+  paymentAccountType: paymentAccountType,
+)
+.referenceNumber(referenceNumber)
+.observations(observations)
+.execute();
+```
+
+#### Return Type
+`execute()` returns a `OperationResult<ServerUpdatePaymentProofData, ServerUpdatePaymentProofVariables>`
+```dart
+/// Result of an Operation Request (query/mutation).
+class OperationResult<Data, Variables> {
+  OperationResult(this.dataConnect, this.data, this.ref);
+  Data data;
+  OperationRef<Data, Variables> ref;
+  FirebaseDataConnect dataConnect;
+}
+
+final result = await ExampleConnector.instance.serverUpdatePaymentProof(
+  id: id,
+  imageUrl: imageUrl,
+  declaredAmount: declaredAmount,
+  paymentAccountType: paymentAccountType,
+);
+ServerUpdatePaymentProofData data = result.data;
+final ref = result.ref;
+```
+
+#### Getting the Ref
+Each builder returns an `execute` function, which is a helper function that creates a `Ref` object, and executes the underlying operation.
+An example of how to use the `Ref` object is shown below:
+```dart
+String id = ...;
+String imageUrl = ...;
+double declaredAmount = ...;
+PaymentAccountType paymentAccountType = ...;
+
+final ref = ExampleConnector.instance.serverUpdatePaymentProof(
+  id: id,
+  imageUrl: imageUrl,
+  declaredAmount: declaredAmount,
+  paymentAccountType: paymentAccountType,
+).ref();
+ref.execute();
+```
+
+
+### ServerUpdateOrderStatus
+#### Required Arguments
+```dart
+String orderId = ...;
+OrderStatus status = ...;
+ExampleConnector.instance.serverUpdateOrderStatus(
+  orderId: orderId,
+  status: status,
+).execute();
+```
+
+
+
+#### Return Type
+`execute()` returns a `OperationResult<ServerUpdateOrderStatusData, ServerUpdateOrderStatusVariables>`
+```dart
+/// Result of an Operation Request (query/mutation).
+class OperationResult<Data, Variables> {
+  OperationResult(this.dataConnect, this.data, this.ref);
+  Data data;
+  OperationRef<Data, Variables> ref;
+  FirebaseDataConnect dataConnect;
+}
+
+final result = await ExampleConnector.instance.serverUpdateOrderStatus(
+  orderId: orderId,
+  status: status,
+);
+ServerUpdateOrderStatusData data = result.data;
+final ref = result.ref;
+```
+
+#### Getting the Ref
+Each builder returns an `execute` function, which is a helper function that creates a `Ref` object, and executes the underlying operation.
+An example of how to use the `Ref` object is shown below:
+```dart
+String orderId = ...;
+OrderStatus status = ...;
+
+final ref = ExampleConnector.instance.serverUpdateOrderStatus(
+  orderId: orderId,
+  status: status,
+).ref();
+ref.execute();
+```
+
+
+### CreateSystemNotification
+#### Required Arguments
+```dart
+String userId = ...;
+String titulo = ...;
+String mensaje = ...;
+ExampleConnector.instance.createSystemNotification(
+  userId: userId,
+  titulo: titulo,
+  mensaje: mensaje,
+).execute();
+```
+
+
+
+#### Return Type
+`execute()` returns a `OperationResult<CreateSystemNotificationData, CreateSystemNotificationVariables>`
+```dart
+/// Result of an Operation Request (query/mutation).
+class OperationResult<Data, Variables> {
+  OperationResult(this.dataConnect, this.data, this.ref);
+  Data data;
+  OperationRef<Data, Variables> ref;
+  FirebaseDataConnect dataConnect;
+}
+
+final result = await ExampleConnector.instance.createSystemNotification(
+  userId: userId,
+  titulo: titulo,
+  mensaje: mensaje,
+);
+CreateSystemNotificationData data = result.data;
+final ref = result.ref;
+```
+
+#### Getting the Ref
+Each builder returns an `execute` function, which is a helper function that creates a `Ref` object, and executes the underlying operation.
+An example of how to use the `Ref` object is shown below:
+```dart
+String userId = ...;
+String titulo = ...;
+String mensaje = ...;
+
+final ref = ExampleConnector.instance.createSystemNotification(
+  userId: userId,
+  titulo: titulo,
+  mensaje: mensaje,
+).ref();
+ref.execute();
+```
+
+
+### CompleteOrderWithTransferAndInvoice
+#### Required Arguments
+```dart
+String orderId = ...;
+String invoiceId = ...;
+String numeroUnico = ...;
+double subtotal = ...;
+double discount = ...;
+double tax = ...;
+double total = ...;
+PaymentMethod paymentMethod = ...;
+InvoiceStatus invoiceStatus = ...;
+ExampleConnector.instance.completeOrderWithTransferAndInvoice(
+  orderId: orderId,
+  invoiceId: invoiceId,
+  numeroUnico: numeroUnico,
+  subtotal: subtotal,
+  discount: discount,
+  tax: tax,
+  total: total,
+  paymentMethod: paymentMethod,
+  invoiceStatus: invoiceStatus,
+).execute();
+```
+
+#### Optional Arguments
+We return a builder for each query. For CompleteOrderWithTransferAndInvoice, we created `CompleteOrderWithTransferAndInvoiceBuilder`. For queries and mutations with optional parameters, we return a builder class.
+The builder pattern allows Data Connect to distinguish between fields that haven't been set and fields that have been set to null. A field can be set by calling its respective setter method like below:
+```dart
+class CompleteOrderWithTransferAndInvoiceVariablesBuilder {
+  ...
+   CompleteOrderWithTransferAndInvoiceVariablesBuilder observations(String? t) {
+   _observations.value = t;
+   return this;
+  }
+  CompleteOrderWithTransferAndInvoiceVariablesBuilder invoiceUrl(String? t) {
+   _invoiceUrl.value = t;
+   return this;
+  }
+
+  ...
+}
+ExampleConnector.instance.completeOrderWithTransferAndInvoice(
+  orderId: orderId,
+  invoiceId: invoiceId,
+  numeroUnico: numeroUnico,
+  subtotal: subtotal,
+  discount: discount,
+  tax: tax,
+  total: total,
+  paymentMethod: paymentMethod,
+  invoiceStatus: invoiceStatus,
+)
+.observations(observations)
+.invoiceUrl(invoiceUrl)
+.execute();
+```
+
+#### Return Type
+`execute()` returns a `OperationResult<CompleteOrderWithTransferAndInvoiceData, CompleteOrderWithTransferAndInvoiceVariables>`
+```dart
+/// Result of an Operation Request (query/mutation).
+class OperationResult<Data, Variables> {
+  OperationResult(this.dataConnect, this.data, this.ref);
+  Data data;
+  OperationRef<Data, Variables> ref;
+  FirebaseDataConnect dataConnect;
+}
+
+final result = await ExampleConnector.instance.completeOrderWithTransferAndInvoice(
+  orderId: orderId,
+  invoiceId: invoiceId,
+  numeroUnico: numeroUnico,
+  subtotal: subtotal,
+  discount: discount,
+  tax: tax,
+  total: total,
+  paymentMethod: paymentMethod,
+  invoiceStatus: invoiceStatus,
+);
+CompleteOrderWithTransferAndInvoiceData data = result.data;
+final ref = result.ref;
+```
+
+#### Getting the Ref
+Each builder returns an `execute` function, which is a helper function that creates a `Ref` object, and executes the underlying operation.
+An example of how to use the `Ref` object is shown below:
+```dart
+String orderId = ...;
+String invoiceId = ...;
+String numeroUnico = ...;
+double subtotal = ...;
+double discount = ...;
+double tax = ...;
+double total = ...;
+PaymentMethod paymentMethod = ...;
+InvoiceStatus invoiceStatus = ...;
+
+final ref = ExampleConnector.instance.completeOrderWithTransferAndInvoice(
+  orderId: orderId,
+  invoiceId: invoiceId,
+  numeroUnico: numeroUnico,
+  subtotal: subtotal,
+  discount: discount,
+  tax: tax,
+  total: total,
+  paymentMethod: paymentMethod,
+  invoiceStatus: invoiceStatus,
 ).ref();
 ref.execute();
 ```

@@ -1441,6 +1441,10 @@ extend type Order {
   """
   orderReservation_on_order: OrderReservation @fdc_generated(from: "OrderReservation.order", purpose: QUERY_SINGLE_ONE_TO_ONE)
   """
+  ✨ List `PaymentProof` objects in a one-to-one relationship (where `PaymentProof`.`order` is this object).
+  """
+  paymentProof_on_order: PaymentProof @fdc_generated(from: "PaymentProof.order", purpose: QUERY_SINGLE_ONE_TO_ONE)
+  """
   ✨ List `Review` objects in a one-to-one relationship (where `Review`.`order` is this object).
   """
   review_on_order: Review @fdc_generated(from: "Review.order", purpose: QUERY_SINGLE_ONE_TO_ONE)
@@ -1479,6 +1483,15 @@ extend type Order {
     """
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "Order.costo", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Order` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Order.createdAt", purpose: QUERY_COUNT)
   """
   ✨ Count the number of rows in the `Order` table where the `employeeId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
@@ -1619,6 +1632,10 @@ extend type Order {
   """
   costo_min: Float @fdc_generated(from: "Order.costo", purpose: QUERY_MIN)
   """
+  ✨ Minimum of the `createdAt` field in the `Order` table.
+  """
+  createdAt_min: Timestamp @fdc_generated(from: "Order.createdAt", purpose: QUERY_MIN)
+  """
   ✨ Minimum of the `price` field in the `Order` table.
   """
   price_min: Float @fdc_generated(from: "Order.price", purpose: QUERY_MIN)
@@ -1626,6 +1643,10 @@ extend type Order {
   ✨ Maximum of the `costo` field in the `Order` table.
   """
   costo_max: Float @fdc_generated(from: "Order.costo", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `createdAt` field in the `Order` table.
+  """
+  createdAt_max: Timestamp @fdc_generated(from: "Order.createdAt", purpose: QUERY_MAX)
   """
   ✨ Maximum of the `price` field in the `Order` table.
   """
@@ -1753,6 +1774,178 @@ extend type OrderReservation {
   A generated field that is used for caching results in SDKs.
   """
   _id: ID! @fdc_generated(from: "OrderReservation.id", purpose: ENTITY_ID)
+}
+extend type PaymentProof {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "PaymentProof", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `PaymentProof` table.
+  """
+  _count: Int! @fdc_generated(from: "PaymentProof.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentProof` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentProof.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentProof` table where the `declaredAmount` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  declaredAmount_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentProof.declaredAmount", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentProof` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentProof.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentProof` table where the `imageUrl` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  imageUrl_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentProof.imageUrl", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentProof` table where the `observations` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  observations_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentProof.observations", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentProof` table where the `orderId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  orderId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentProof.orderId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentProof` table where the `paymentAccountType` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  paymentAccountType_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentProof.paymentAccountType", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentProof` table where the `referenceNumber` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  referenceNumber_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentProof.referenceNumber", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentProof` table where the `reviewedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  reviewedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentProof.reviewedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentProof` table where the `reviewedBy` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  reviewedBy_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentProof.reviewedBy", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentProof` table where the `status` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  status_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentProof.status", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentProof` table where the `updatedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  updatedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentProof.updatedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `declaredAmount` field in the `PaymentProof` table.
+  """
+  declaredAmount_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "PaymentProof.declaredAmount", purpose: QUERY_SUM)
+  """
+  ✨ Average the `declaredAmount` field in the `PaymentProof` table.
+  """
+  declaredAmount_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "PaymentProof.declaredAmount", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `createdAt` field in the `PaymentProof` table.
+  """
+  createdAt_min: Timestamp @fdc_generated(from: "PaymentProof.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `declaredAmount` field in the `PaymentProof` table.
+  """
+  declaredAmount_min: Float @fdc_generated(from: "PaymentProof.declaredAmount", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `reviewedAt` field in the `PaymentProof` table.
+  """
+  reviewedAt_min: Timestamp @fdc_generated(from: "PaymentProof.reviewedAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `updatedAt` field in the `PaymentProof` table.
+  """
+  updatedAt_min: Timestamp @fdc_generated(from: "PaymentProof.updatedAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `PaymentProof` table.
+  """
+  createdAt_max: Timestamp @fdc_generated(from: "PaymentProof.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `declaredAmount` field in the `PaymentProof` table.
+  """
+  declaredAmount_max: Float @fdc_generated(from: "PaymentProof.declaredAmount", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `reviewedAt` field in the `PaymentProof` table.
+  """
+  reviewedAt_max: Timestamp @fdc_generated(from: "PaymentProof.reviewedAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `updatedAt` field in the `PaymentProof` table.
+  """
+  updatedAt_max: Timestamp @fdc_generated(from: "PaymentProof.updatedAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "PaymentProof.id", purpose: ENTITY_ID)
 }
 extend type PrepaidHistory {
   """

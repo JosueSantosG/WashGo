@@ -7,8 +7,8 @@ class GetPaymentProofVariablesBuilder {
   GetPaymentProofVariablesBuilder(this._dataConnect, {required  this.orderId,});
   Deserializer<GetPaymentProofData> dataDeserializer = (dynamic json)  => GetPaymentProofData.fromJson(jsonDecode(json));
   Serializer<GetPaymentProofVariables> varsSerializer = (GetPaymentProofVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetPaymentProofData, GetPaymentProofVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetPaymentProofData, GetPaymentProofVariables>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetPaymentProofData, GetPaymentProofVariables> ref() {
@@ -27,7 +27,7 @@ class GetPaymentProofPaymentProofs {
   final String? observations;
   final EnumValue<PaymentProofStatus> status;
   final Timestamp createdAt;
-  final Timestamp? updatedAt;
+  final Timestamp updatedAt;
   final String? reviewedBy;
   final Timestamp? reviewedAt;
   final GetPaymentProofPaymentProofsOrder order;
@@ -41,7 +41,7 @@ class GetPaymentProofPaymentProofs {
   observations = json['observations'] == null ? null : nativeFromJson<String>(json['observations']),
   status = paymentProofStatusDeserializer(json['status']),
   createdAt = Timestamp.fromJson(json['createdAt']),
-  updatedAt = json['updatedAt'] == null ? null : Timestamp.fromJson(json['updatedAt']),
+  updatedAt = Timestamp.fromJson(json['updatedAt']),
   reviewedBy = json['reviewedBy'] == null ? null : nativeFromJson<String>(json['reviewedBy']),
   reviewedAt = json['reviewedAt'] == null ? null : Timestamp.fromJson(json['reviewedAt']),
   order = GetPaymentProofPaymentProofsOrder.fromJson(json['order']);
@@ -91,9 +91,7 @@ class GetPaymentProofPaymentProofs {
     paymentProofStatusSerializer(status)
     ;
     json['createdAt'] = createdAt.toJson();
-    if (updatedAt != null) {
-      json['updatedAt'] = updatedAt!.toJson();
-    }
+    json['updatedAt'] = updatedAt.toJson();
     if (reviewedBy != null) {
       json['reviewedBy'] = nativeToJson<String?>(reviewedBy);
     }
@@ -113,7 +111,7 @@ class GetPaymentProofPaymentProofs {
     this.observations,
     required this.status,
     required this.createdAt,
-    this.updatedAt,
+    required this.updatedAt,
     this.reviewedBy,
     this.reviewedAt,
     required this.order,

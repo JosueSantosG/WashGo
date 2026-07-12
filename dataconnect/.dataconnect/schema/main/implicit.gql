@@ -86,6 +86,12 @@ extend type OrderReservation {
   """
   serviceId: UUID! @fdc_generated(from: "OrderReservation.service", purpose: IMPLICIT_REF_FIELD)
 }
+extend type PaymentProof {
+  """
+  ✨ Implicit foreign key field based on `PaymentProof`.`order`. It must match the value of `Order`.`id`. See `@ref` for how to customize it.
+  """
+  orderId: UUID! @fdc_generated(from: "PaymentProof.order", purpose: IMPLICIT_REF_FIELD)
+}
 extend type PrepaidHistory {
   """
   ✨ Implicit foreign key field based on `PrepaidHistory`.`business`. It must match the value of `Business`.`id`. See `@ref` for how to customize it.

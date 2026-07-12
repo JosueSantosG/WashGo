@@ -230,8 +230,13 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
   }
 
   String _getFunctionsBaseUrl() {
-    final projectId = Firebase.apps.isNotEmpty ? Firebase.app().options.projectId : 'washgo-app-8392';
+    var projectId = Firebase.apps.isNotEmpty ? Firebase.app().options.projectId : 'washgo-app-8392';
     if (Environment.useEmulators) {
+      if (projectId.endsWith('-dev')) {
+        projectId = projectId.substring(0, projectId.length - 4);
+      } else if (projectId.endsWith('-staging')) {
+        projectId = projectId.substring(0, projectId.length - 8);
+      }
       return 'http://${Environment.emulatorHost}:5001/$projectId/us-central1/api';
     } else {
       return 'https://us-central1-$projectId.cloudfunctions.net/api';

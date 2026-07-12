@@ -89,11 +89,29 @@ It accepts a CEL expression.
 """
 scalar OrderType_Expr
 """
+✨ `PaymentAccountType_Expr` is a server value variant of enum type `PaymentAccountType`.
+
+It accepts a CEL expression.
+"""
+scalar PaymentAccountType_Expr
+"""
 ✨ `PaymentMethod_Expr` is a server value variant of enum type `PaymentMethod`.
 
 It accepts a CEL expression.
 """
 scalar PaymentMethod_Expr
+"""
+✨ `PaymentProof_KeyOutput` returns the primary key fields of table type `PaymentProof`.
+
+It has the same format as `PaymentProof_Key`, but is only used as mutation return value.
+"""
+scalar PaymentProof_KeyOutput
+"""
+✨ `PaymentProofStatus_Expr` is a server value variant of enum type `PaymentProofStatus`.
+
+It accepts a CEL expression.
+"""
+scalar PaymentProofStatus_Expr
 """
 ✨ `PrepaidHistory_KeyOutput` returns the primary key fields of table type `PrepaidHistory`.
 
@@ -3569,6 +3587,22 @@ input Order_Data {
   """
   costo_update: [Float_Update!] @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `Order`.`createdAt` of type `Timestamp`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `Order`.`createdAt` of type `Timestamp`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `Order`.`createdAt` of type `Timestamp`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `Order`.`createdAt` of type `Timestamp`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
   ✨ Generated from Field `Order`.`invoiceUrl` of type `String`
   """
   invoiceUrl: String
@@ -3694,6 +3728,10 @@ input Order_Filter {
   """
   costo: Float_Filter
   """
+  ✨ Generated from Field `Order`.`createdAt` of type `Timestamp`
+  """
+  createdAt: Timestamp_Filter
+  """
   ✨ Generated from Field `Order`.`invoiceUrl` of type `String`
   """
   invoiceUrl: String_Filter
@@ -3733,6 +3771,10 @@ input Order_Filter {
   ✨ Generated from Field `Order`.`orderReservation_on_order` of type `OrderReservation`
   """
   orderReservation_on_order: OrderReservation_Filter
+  """
+  ✨ Generated from Field `Order`.`paymentProof_on_order` of type `PaymentProof`
+  """
+  paymentProof_on_order: PaymentProof_Filter
   """
   ✨ Generated from Field `Order`.`review_on_order` of type `Review`
   """
@@ -3787,6 +3829,10 @@ input Order_Having {
   ✨ Generated from Field `Order`.`costo_count` of type `Int!`
   """
   costo_count: Int_Filter
+  """
+  ✨ Generated from Field `Order`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
   """
   ✨ Generated from Field `Order`.`employeeId_count` of type `Int!`
   """
@@ -3852,6 +3898,10 @@ input Order_Having {
   """
   costo_min: Float_Filter
   """
+  ✨ Generated from Field `Order`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
   ✨ Generated from Field `Order`.`price_min` of type `Float`
   """
   price_min: Float_Filter
@@ -3859,6 +3909,10 @@ input Order_Having {
   ✨ Generated from Field `Order`.`costo_max` of type `Float`
   """
   costo_max: Float_Filter
+  """
+  ✨ Generated from Field `Order`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
   """
   ✨ Generated from Field `Order`.`price_max` of type `Float`
   """
@@ -3935,6 +3989,10 @@ input Order_Order {
   """
   costo: OrderDirection
   """
+  ✨ Generated from Field `Order`.`createdAt` of type `Timestamp`
+  """
+  createdAt: OrderDirection
+  """
   ✨ Generated from Field `Order`.`invoiceUrl` of type `String`
   """
   invoiceUrl: OrderDirection
@@ -3982,6 +4040,10 @@ input Order_Order {
   ✨ Generated from Field `Order`.`costo_count` of type `Int!`
   """
   costo_count: OrderDirection
+  """
+  ✨ Generated from Field `Order`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
   """
   ✨ Generated from Field `Order`.`employeeId_count` of type `Int!`
   """
@@ -4047,6 +4109,10 @@ input Order_Order {
   """
   costo_min: OrderDirection
   """
+  ✨ Generated from Field `Order`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
   ✨ Generated from Field `Order`.`price_min` of type `Float`
   """
   price_min: OrderDirection
@@ -4054,6 +4120,10 @@ input Order_Order {
   ✨ Generated from Field `Order`.`costo_max` of type `Float`
   """
   costo_max: OrderDirection
+  """
+  ✨ Generated from Field `Order`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
   """
   ✨ Generated from Field `Order`.`price_max` of type `Float`
   """
@@ -4647,6 +4717,108 @@ input OrderType_ListFilter {
   exist: OrderType_Filter
 }
 """
+✨ Generated filter input type for table 'PaymentAccountType'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input PaymentAccountType_Filter {
+  """
+  Match if field is exactly equal to provided value.
+  """
+  eq: PaymentAccountType
+  """
+  ✨ `_expr` server value variant of `eq` (Match if field is exactly equal to provided value.)
+  """
+  eq_expr: PaymentAccountType_Expr @fdc_forbiddenInVariables
+  """
+  Match if field is not equal to provided value.
+  """
+  ne: PaymentAccountType
+  """
+  ✨ `_expr` server value variant of `ne` (Match if field is not equal to provided value.)
+  """
+  ne_expr: PaymentAccountType_Expr @fdc_forbiddenInVariables
+  """
+  When true, match if field `IS NULL`. When false, match if field is `NOT NULL`.
+  """
+  isNull: Boolean
+  """
+  Match if field value is among the provided list of values.
+  """
+  in: [PaymentAccountType!]
+  """
+  Match if field value is not among the provided list of values.
+  """
+  nin: [PaymentAccountType!]
+  """
+  Match if field value is greater than the provided value, based on index ordering of supported enum values.
+  """
+  gt: PaymentAccountType
+  """
+  ✨ `_expr` server value variant of `gt` (Match if field value is greater than the provided value, based on index ordering of supported enum values.)
+  """
+  gt_expr: PaymentAccountType_Expr @fdc_forbiddenInVariables
+  """
+  Match if field is greater than or equal to the provided value.
+  """
+  ge: PaymentAccountType
+  """
+  ✨ `_expr` server value variant of `ge` (Match if field is greater than or equal to the provided value.)
+  """
+  ge_expr: PaymentAccountType_Expr @fdc_forbiddenInVariables
+  """
+  Match if field value is less than the provided value, based on index ordering of supported enum values.
+  """
+  lt: PaymentAccountType
+  """
+  ✨ `_expr` server value variant of `lt` (Match if field value is less than the provided value, based on index ordering of supported enum values.)
+  """
+  lt_expr: PaymentAccountType_Expr @fdc_forbiddenInVariables
+  """
+  Match if field is less than or equal to the provided value, based on index ordering of supported enum values.
+  """
+  le: PaymentAccountType
+  """
+  ✨ `_expr` server value variant of `le` (Match if field is less than or equal to the provided value, based on index ordering of supported enum values.)
+  """
+  le_expr: PaymentAccountType_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'PaymentAccountType'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input PaymentAccountType_ListFilter {
+  """
+  Match if list field contains the provided value as a member.
+  """
+  includes: PaymentAccountType
+  """
+  ✨ `_expr` server value variant of `includes` (Match if list field contains the provided value as a member.)
+  """
+  includes_expr: PaymentAccountType_Expr @fdc_forbiddenInVariables
+  """
+  Match if list field contains all of the provided values as members.
+  """
+  includesAll: [PaymentAccountType!]
+  """
+  Match if list field does not contain the provided value as a member.
+  """
+  excludes: PaymentAccountType
+  """
+  ✨ `_expr` server value variant of `excludes` (Match if list field does not contain the provided value as a member.)
+  """
+  excludes_expr: PaymentAccountType_Expr @fdc_forbiddenInVariables
+  """
+  Match if list field does not contain any of the provided values as members.
+  """
+  excludesAll: [PaymentAccountType!]
+  """
+  The desired number of enum values that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: PaymentAccountType_Filter
+}
+"""
 ✨ Generated filter input type for table 'PaymentMethod'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
 """
 input PaymentMethod_Filter {
@@ -4747,6 +4919,611 @@ input PaymentMethod_ListFilter {
   Condition of the related objects to filter for.
   """
   exist: PaymentMethod_Filter
+}
+"""
+✨ Generated data input type for table 'PaymentProof'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input PaymentProof_Data {
+  """
+  ✨ Generated from Field `PaymentProof`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `PaymentProof`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentProof`.`orderId` of type `UUID!`
+  """
+  orderId: UUID
+  """
+  ✨ `_expr` server value variant of `orderId` (✨ Generated from Field `PaymentProof`.`orderId` of type `UUID!`)
+  """
+  orderId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentProof`.`order` of type `Order!`
+  """
+  order: Order_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentProof`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `PaymentProof`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `PaymentProof`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `PaymentProof`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentProof`.`declaredAmount` of type `Float!`
+  """
+  declaredAmount: Float
+  """
+  ✨ `_expr` server value variant of `declaredAmount` (✨ Generated from Field `PaymentProof`.`declaredAmount` of type `Float!`)
+  """
+  declaredAmount_expr: Float_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `declaredAmount` (✨ Generated from Field `PaymentProof`.`declaredAmount` of type `Float!`)
+  """
+  declaredAmount_update: [Float_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentProof`.`imageUrl` of type `String!`
+  """
+  imageUrl: String
+  """
+  ✨ `_expr` server value variant of `imageUrl` (✨ Generated from Field `PaymentProof`.`imageUrl` of type `String!`)
+  """
+  imageUrl_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentProof`.`observations` of type `String`
+  """
+  observations: String
+  """
+  ✨ `_expr` server value variant of `observations` (✨ Generated from Field `PaymentProof`.`observations` of type `String`)
+  """
+  observations_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentProof`.`paymentAccountType` of type `PaymentAccountType!`
+  """
+  paymentAccountType: PaymentAccountType
+  """
+  ✨ `_expr` server value variant of `paymentAccountType` (✨ Generated from Field `PaymentProof`.`paymentAccountType` of type `PaymentAccountType!`)
+  """
+  paymentAccountType_expr: PaymentAccountType_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentProof`.`referenceNumber` of type `String`
+  """
+  referenceNumber: String
+  """
+  ✨ `_expr` server value variant of `referenceNumber` (✨ Generated from Field `PaymentProof`.`referenceNumber` of type `String`)
+  """
+  referenceNumber_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentProof`.`reviewedAt` of type `Timestamp`
+  """
+  reviewedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `reviewedAt` (✨ Generated from Field `PaymentProof`.`reviewedAt` of type `Timestamp`)
+  """
+  reviewedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `reviewedAt` (✨ Generated from Field `PaymentProof`.`reviewedAt` of type `Timestamp`)
+  """
+  reviewedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `reviewedAt` (✨ Generated from Field `PaymentProof`.`reviewedAt` of type `Timestamp`)
+  """
+  reviewedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentProof`.`reviewedBy` of type `String`
+  """
+  reviewedBy: String
+  """
+  ✨ `_expr` server value variant of `reviewedBy` (✨ Generated from Field `PaymentProof`.`reviewedBy` of type `String`)
+  """
+  reviewedBy_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentProof`.`status` of type `PaymentProofStatus!`
+  """
+  status: PaymentProofStatus
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `PaymentProof`.`status` of type `PaymentProofStatus!`)
+  """
+  status_expr: PaymentProofStatus_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentProof`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `updatedAt` (✨ Generated from Field `PaymentProof`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `updatedAt` (✨ Generated from Field `PaymentProof`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `PaymentProof`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'PaymentProof'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input PaymentProof_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [PaymentProof_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: PaymentProof_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [PaymentProof_Filter!]
+  """
+  ✨ Generated from Field `PaymentProof`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`orderId` of type `UUID!`
+  """
+  orderId: UUID_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`order` of type `Order!`
+  """
+  order: Order_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`declaredAmount` of type `Float!`
+  """
+  declaredAmount: Float_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`imageUrl` of type `String!`
+  """
+  imageUrl: String_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`observations` of type `String`
+  """
+  observations: String_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`paymentAccountType` of type `PaymentAccountType!`
+  """
+  paymentAccountType: PaymentAccountType_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`referenceNumber` of type `String`
+  """
+  referenceNumber: String_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`reviewedAt` of type `Timestamp`
+  """
+  reviewedAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`reviewedBy` of type `String`
+  """
+  reviewedBy: String_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`status` of type `PaymentProofStatus!`
+  """
+  status: PaymentProofStatus_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: Timestamp_Filter
+}
+"""
+✨ Generated first-row input type for table 'PaymentProof'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input PaymentProof_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [PaymentProof_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: PaymentProof_Filter
+}
+"""
+✨ Generated having input type for table 'PaymentProof'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input PaymentProof_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [PaymentProof_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: PaymentProof_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [PaymentProof_Having!]
+  """
+  ✨ Generated from Field `PaymentProof`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`declaredAmount_count` of type `Int!`
+  """
+  declaredAmount_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`imageUrl_count` of type `Int!`
+  """
+  imageUrl_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`observations_count` of type `Int!`
+  """
+  observations_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`orderId_count` of type `Int!`
+  """
+  orderId_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`paymentAccountType_count` of type `Int!`
+  """
+  paymentAccountType_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`referenceNumber_count` of type `Int!`
+  """
+  referenceNumber_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`reviewedAt_count` of type `Int!`
+  """
+  reviewedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`reviewedBy_count` of type `Int!`
+  """
+  reviewedBy_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`declaredAmount_sum` of type `Float`
+  """
+  declaredAmount_sum: Float_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`declaredAmount_avg` of type `Float`
+  """
+  declaredAmount_avg: Float_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`declaredAmount_min` of type `Float`
+  """
+  declaredAmount_min: Float_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`reviewedAt_min` of type `Timestamp`
+  """
+  reviewedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`declaredAmount_max` of type `Float`
+  """
+  declaredAmount_max: Float_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`reviewedAt_max` of type `Timestamp`
+  """
+  reviewedAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `PaymentProof`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'PaymentProof'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input PaymentProof_Key {
+  """
+  ✨ Generated from Field `PaymentProof`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `PaymentProof`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'PaymentProof'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input PaymentProof_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: PaymentProof_Filter
+}
+"""
+✨ Generated order input type for table 'PaymentProof'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input PaymentProof_Order {
+  """
+  ✨ Generated from Field `PaymentProof`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`orderId` of type `UUID!`
+  """
+  orderId: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`order` of type `Order!`
+  """
+  order: Order_Order
+  """
+  ✨ Generated from Field `PaymentProof`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`declaredAmount` of type `Float!`
+  """
+  declaredAmount: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`imageUrl` of type `String!`
+  """
+  imageUrl: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`observations` of type `String`
+  """
+  observations: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`paymentAccountType` of type `PaymentAccountType!`
+  """
+  paymentAccountType: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`referenceNumber` of type `String`
+  """
+  referenceNumber: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`reviewedAt` of type `Timestamp`
+  """
+  reviewedAt: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`reviewedBy` of type `String`
+  """
+  reviewedBy: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`status` of type `PaymentProofStatus!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`declaredAmount_count` of type `Int!`
+  """
+  declaredAmount_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`imageUrl_count` of type `Int!`
+  """
+  imageUrl_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`observations_count` of type `Int!`
+  """
+  observations_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`orderId_count` of type `Int!`
+  """
+  orderId_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`paymentAccountType_count` of type `Int!`
+  """
+  paymentAccountType_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`referenceNumber_count` of type `Int!`
+  """
+  referenceNumber_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`reviewedAt_count` of type `Int!`
+  """
+  reviewedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`reviewedBy_count` of type `Int!`
+  """
+  reviewedBy_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`declaredAmount_sum` of type `Float`
+  """
+  declaredAmount_sum: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`declaredAmount_avg` of type `Float`
+  """
+  declaredAmount_avg: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`declaredAmount_min` of type `Float`
+  """
+  declaredAmount_min: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`reviewedAt_min` of type `Timestamp`
+  """
+  reviewedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`declaredAmount_max` of type `Float`
+  """
+  declaredAmount_max: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`reviewedAt_max` of type `Timestamp`
+  """
+  reviewedAt_max: OrderDirection
+  """
+  ✨ Generated from Field `PaymentProof`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: OrderDirection
+}
+"""
+✨ Generated filter input type for table 'PaymentProofStatus'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input PaymentProofStatus_Filter {
+  """
+  Match if field is exactly equal to provided value.
+  """
+  eq: PaymentProofStatus
+  """
+  ✨ `_expr` server value variant of `eq` (Match if field is exactly equal to provided value.)
+  """
+  eq_expr: PaymentProofStatus_Expr @fdc_forbiddenInVariables
+  """
+  Match if field is not equal to provided value.
+  """
+  ne: PaymentProofStatus
+  """
+  ✨ `_expr` server value variant of `ne` (Match if field is not equal to provided value.)
+  """
+  ne_expr: PaymentProofStatus_Expr @fdc_forbiddenInVariables
+  """
+  When true, match if field `IS NULL`. When false, match if field is `NOT NULL`.
+  """
+  isNull: Boolean
+  """
+  Match if field value is among the provided list of values.
+  """
+  in: [PaymentProofStatus!]
+  """
+  Match if field value is not among the provided list of values.
+  """
+  nin: [PaymentProofStatus!]
+  """
+  Match if field value is greater than the provided value, based on index ordering of supported enum values.
+  """
+  gt: PaymentProofStatus
+  """
+  ✨ `_expr` server value variant of `gt` (Match if field value is greater than the provided value, based on index ordering of supported enum values.)
+  """
+  gt_expr: PaymentProofStatus_Expr @fdc_forbiddenInVariables
+  """
+  Match if field is greater than or equal to the provided value.
+  """
+  ge: PaymentProofStatus
+  """
+  ✨ `_expr` server value variant of `ge` (Match if field is greater than or equal to the provided value.)
+  """
+  ge_expr: PaymentProofStatus_Expr @fdc_forbiddenInVariables
+  """
+  Match if field value is less than the provided value, based on index ordering of supported enum values.
+  """
+  lt: PaymentProofStatus
+  """
+  ✨ `_expr` server value variant of `lt` (Match if field value is less than the provided value, based on index ordering of supported enum values.)
+  """
+  lt_expr: PaymentProofStatus_Expr @fdc_forbiddenInVariables
+  """
+  Match if field is less than or equal to the provided value, based on index ordering of supported enum values.
+  """
+  le: PaymentProofStatus
+  """
+  ✨ `_expr` server value variant of `le` (Match if field is less than or equal to the provided value, based on index ordering of supported enum values.)
+  """
+  le_expr: PaymentProofStatus_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'PaymentProofStatus'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input PaymentProofStatus_ListFilter {
+  """
+  Match if list field contains the provided value as a member.
+  """
+  includes: PaymentProofStatus
+  """
+  ✨ `_expr` server value variant of `includes` (Match if list field contains the provided value as a member.)
+  """
+  includes_expr: PaymentProofStatus_Expr @fdc_forbiddenInVariables
+  """
+  Match if list field contains all of the provided values as members.
+  """
+  includesAll: [PaymentProofStatus!]
+  """
+  Match if list field does not contain the provided value as a member.
+  """
+  excludes: PaymentProofStatus
+  """
+  ✨ `_expr` server value variant of `excludes` (Match if list field does not contain the provided value as a member.)
+  """
+  excludes_expr: PaymentProofStatus_Expr @fdc_forbiddenInVariables
+  """
+  Match if list field does not contain any of the provided values as members.
+  """
+  excludesAll: [PaymentProofStatus!]
+  """
+  The desired number of enum values that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: PaymentProofStatus_Filter
 }
 """
 ✨ Generated data input type for table 'PrepaidHistory'. It includes all necessary fields for creating or upserting rows into table.

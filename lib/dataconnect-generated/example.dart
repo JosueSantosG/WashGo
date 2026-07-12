@@ -112,6 +112,8 @@ part 'create_payment_proof.dart';
 
 part 'server_update_payment_proof_status.dart';
 
+part 'server_update_payment_proof.dart';
+
 part 'server_update_order_status.dart';
 
 part 'create_system_notification.dart';
@@ -180,6 +182,8 @@ part 'get_prepaid_service_metric_by_service_name.dart';
 
 part 'get_order_by_id.dart';
 
+part 'server_get_order_by_id.dart';
+
 part 'get_prepaid_history_by_order_id.dart';
 
 part 'get_business_reservation_config.dart';
@@ -209,6 +213,8 @@ part 'get_pending_transfer_orders.dart';
 part 'get_transfer_payment_stats.dart';
 
 part 'get_expired_pending_transfer_orders.dart';
+
+part 'get_pending_payment_proofs.dart';
 
 
 
@@ -861,6 +867,11 @@ class ExampleConnector {
   }
   
   
+  ServerUpdatePaymentProofVariablesBuilder serverUpdatePaymentProof ({required String id, required String imageUrl, required double declaredAmount, required PaymentAccountType paymentAccountType, }) {
+    return ServerUpdatePaymentProofVariablesBuilder(dataConnect, id: id,imageUrl: imageUrl,declaredAmount: declaredAmount,paymentAccountType: paymentAccountType,);
+  }
+  
+  
   ServerUpdateOrderStatusVariablesBuilder serverUpdateOrderStatus ({required String orderId, required OrderStatus status, }) {
     return ServerUpdateOrderStatusVariablesBuilder(dataConnect, orderId: orderId,status: status,);
   }
@@ -1031,6 +1042,11 @@ class ExampleConnector {
   }
   
   
+  ServerGetOrderByIdVariablesBuilder serverGetOrderById ({required String id, }) {
+    return ServerGetOrderByIdVariablesBuilder(dataConnect, id: id,);
+  }
+  
+  
   GetPrepaidHistoryByOrderIdVariablesBuilder getPrepaidHistoryByOrderId ({required String orderId, }) {
     return GetPrepaidHistoryByOrderIdVariablesBuilder(dataConnect, orderId: orderId,);
   }
@@ -1105,6 +1121,11 @@ class ExampleConnector {
     return GetExpiredPendingTransferOrdersVariablesBuilder(dataConnect, );
   }
   
+  
+  GetPendingPaymentProofsVariablesBuilder getPendingPaymentProofs () {
+    return GetPendingPaymentProofsVariablesBuilder(dataConnect, );
+  }
+  
 
   static ConnectorConfig connectorConfig = ConnectorConfig(
     'us-central1',
@@ -1114,18 +1135,9 @@ class ExampleConnector {
 
   ExampleConnector({required this.dataConnect});
   static ExampleConnector get instance {
-    
-    CacheSettings cacheSettings = CacheSettings(
-      maxAge: Duration(milliseconds:5000),
-      storage: CacheStorage.memory,
-    );
-    
     return ExampleConnector(
         dataConnect: FirebaseDataConnect.instanceFor(
             connectorConfig: connectorConfig,
-            
-            cacheSettings: cacheSettings,
-            
             sdkType: CallerSDKType.generated));
   }
 

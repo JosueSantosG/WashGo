@@ -6,8 +6,8 @@ class GetExpiredPendingTransferOrdersVariablesBuilder {
   GetExpiredPendingTransferOrdersVariablesBuilder(this._dataConnect, );
   Deserializer<GetExpiredPendingTransferOrdersData> dataDeserializer = (dynamic json)  => GetExpiredPendingTransferOrdersData.fromJson(jsonDecode(json));
   
-  Future<QueryResult<GetExpiredPendingTransferOrdersData, void>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetExpiredPendingTransferOrdersData, void>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetExpiredPendingTransferOrdersData, void> ref() {
@@ -23,7 +23,7 @@ class GetExpiredPendingTransferOrdersOrders {
   final double price;
   final String? serviceName;
   final String businessId;
-  final Timestamp createdAt;
+  final Timestamp? createdAt;
   final GetExpiredPendingTransferOrdersOrdersPaymentProofOnOrder? paymentProof_on_order;
   GetExpiredPendingTransferOrdersOrders.fromJson(dynamic json):
   
@@ -32,7 +32,7 @@ class GetExpiredPendingTransferOrdersOrders {
   price = nativeFromJson<double>(json['price']),
   serviceName = json['serviceName'] == null ? null : nativeFromJson<String>(json['serviceName']),
   businessId = nativeFromJson<String>(json['businessId']),
-  createdAt = Timestamp.fromJson(json['createdAt']),
+  createdAt = json['createdAt'] == null ? null : Timestamp.fromJson(json['createdAt']),
   paymentProof_on_order = json['paymentProof_on_order'] == null ? null : GetExpiredPendingTransferOrdersOrdersPaymentProofOnOrder.fromJson(json['paymentProof_on_order']);
   @override
   bool operator ==(Object other) {
@@ -66,7 +66,9 @@ class GetExpiredPendingTransferOrdersOrders {
       json['serviceName'] = nativeToJson<String?>(serviceName);
     }
     json['businessId'] = nativeToJson<String>(businessId);
-    json['createdAt'] = createdAt.toJson();
+    if (createdAt != null) {
+      json['createdAt'] = createdAt!.toJson();
+    }
     if (paymentProof_on_order != null) {
       json['paymentProof_on_order'] = paymentProof_on_order!.toJson();
     }
@@ -79,7 +81,7 @@ class GetExpiredPendingTransferOrdersOrders {
     required this.price,
     this.serviceName,
     required this.businessId,
-    required this.createdAt,
+    this.createdAt,
     this.paymentProof_on_order,
   });
 }

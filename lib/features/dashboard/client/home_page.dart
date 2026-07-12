@@ -609,26 +609,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _checkPendingBookingIntent() {
-    // First, check for a pending payment intent (bank transfer)
-    if (BookingIntentManager.instance.hasPendingPaymentIntent()) {
-      final paymentIntent = BookingIntentManager.instance.getPendingPaymentIntent();
-      if (paymentIntent != null && mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProofStatusPage(
-              orderId: paymentIntent.orderId,
-              proofStatus: 'PENDING',
-              amount: paymentIntent.amount,
-              serviceName: paymentIntent.serviceName,
-              businessName: paymentIntent.businessName,
-            ),
-          ),
-        );
-        return;
-      }
-    }
-
     final intent = BookingIntentManager.instance.getIntent();
     if (intent == null || !mounted) return;
 

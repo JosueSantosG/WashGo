@@ -26,6 +26,7 @@ class WashGoOrder {
   final PaymentMethod paymentMethod;
   final OrderParty client;
   final OrderParty? employee;
+  final PaymentProofStatus? paymentProofStatus;
 
   const WashGoOrder({
     required this.id,
@@ -39,5 +40,6 @@ class WashGoOrder {
     required this.paymentMethod,
     required this.client,
     this.employee,
+    this.paymentProofStatus,
   });
 }

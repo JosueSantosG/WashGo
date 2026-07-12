@@ -912,6 +912,41 @@ query GetOrderById($id: UUID!) @auth(level: USER) {
   }
 }
 
+# Get order by ID from server/admin context (NO_ACCESS)
+query ServerGetOrderById($id: UUID!) @auth(level: NO_ACCESS) {
+  order(key: { id: $id }) {
+    id
+    clientId
+    employeeId
+    costo
+    serviceName
+    status
+    observations
+    price
+    paymentMethod
+    type
+    business {
+      id
+      nombre
+      saldoPrepagoInicial
+      saldoPrepagoConsumido
+      owner {
+        id
+      }
+    }
+    client {
+      id
+      nombreCompleto
+      telefono
+      email
+    }
+    employee {
+      id
+      nombreCompleto
+    }
+  }
+}
+
 query GetPrepaidHistoryByOrderId($orderId: String!) @auth(level: USER) {
   prepaidHistories(where: { orderId: { eq: $orderId } }, limit: 1) {
     id
@@ -1097,7 +1132,7 @@ query GetPendingTransferOrders($businessId: UUID!) @auth(level: USER) {
       id
     }
   }
-  user(key: { id_expr: "auth.uid" }) @redact @check(expr: "'SUPER_ADMIN' in this.roles || (response.business != null && response.business.owner != null && response.business.owner.id == auth.uid)", message: "No tienes permiso para ver los pagos por transferencia") {
+  user(key: { id_expr: "auth.uid" }) @redact @check(expr: "'SUPER_ADMIN' in this.roles", message: "No tienes permiso para ver los pagos por transferencia") {
     id
     roles
   }
@@ -1141,7 +1176,7 @@ query GetTransferPaymentStats($businessId: UUID!) @auth(level: USER) {
       id
     }
   }
-  user(key: { id_expr: "auth.uid" }) @redact @check(expr: "'SUPER_ADMIN' in this.roles || (response.business != null && response.business.owner != null && response.business.owner.id == auth.uid)", message: "No tienes permiso para ver las estadísticas de pago") {
+  user(key: { id_expr: "auth.uid" }) @redact @check(expr: "'SUPER_ADMIN' in this.roles", message: "No tienes permiso para ver las estadísticas de pago") {
     id
     roles
   }
@@ -1182,3 +1217,53 @@ query GetExpiredPendingTransferOrders @auth(level: NO_ACCESS) {
     }
   }
 }
+
+# Get all pending payment proofs across all businesses (for SuperAdmin review)
+query GetPendingPaymentProofs @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) @redact @check(expr: "'SUPER_ADMIN' in this.roles", message: "No tienes permiso para ver los comprobantes pendientes") {
+    id
+    roles
+  }
+  paymentProofs(
+    where: {
+      status: { eq: PENDING }
+    }
+    orderBy: [{ createdAt: ASC }]
+  ) {
+    id
+    imageUrl
+    declaredAmount
+    paymentAccountType
+    referenceNumber
+    observations
+    status
+    createdAt
+    updatedAt
+    order {
+      id
+      price
+      paymentMethod
+      status
+      serviceName
+      createdAt
+      client {
+        id
+        nombreCompleto
+        telefono
+      }
+      business {
+        id
+        nombre
+      }
+      orderReservation_on_order {
+        scheduledAt
+        serviceDurationMinutos
+        service {
+          id
+          nombre
+        }
+      }
+    }
+  }
+}
+

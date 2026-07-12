@@ -251,6 +251,7 @@ GoRouter _createAppRouter() {
       builder: (context, state) => const PaypalCancelPage(),
     ),
     GoRoute(
+      name: AppRoutes.bankTransferInstructions,
       path: AppRoutes.bankTransferInstructions,
       builder: (context, state) {
         final args = (state.extra as Map<String, dynamic>?) ?? {};
@@ -264,6 +265,7 @@ GoRouter _createAppRouter() {
       },
     ),
     GoRoute(
+      name: AppRoutes.proofUpload,
       path: AppRoutes.proofUpload,
       builder: (context, state) {
         final args = (state.extra as Map<String, dynamic>?) ?? {};
@@ -276,6 +278,7 @@ GoRouter _createAppRouter() {
       },
     ),
     GoRoute(
+      name: AppRoutes.proofStatus,
       path: AppRoutes.proofStatus,
       builder: (context, state) {
         final args = (state.extra as Map<String, dynamic>?) ?? {};
@@ -289,8 +292,11 @@ GoRouter _createAppRouter() {
       },
     ),
     GoRoute(
+      name: AppRoutes.adminPaymentReview,
       path: AppRoutes.adminPaymentReview,
-      builder: (context, state) => const AdminPaymentReviewPage(),
+      builder: (context, state) {
+        return const AdminPaymentReviewPage();
+      },
     ),
   ];
 

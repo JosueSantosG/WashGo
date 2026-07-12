@@ -1,0 +1,42 @@
+<USER_REQUEST>
+## Módulo de revisión de comprobantes (SuperAdministrador)
+
+Implementa un módulo exclusivo para el **SuperAdministrador** encargado de gestionar los comprobantes de pago por transferencia bancaria.
+
+### Funcionalidades
+
+El SuperAdministrador deberá poder:
+
+* Visualizar todas las reservas con pagos pendientes de revisión.
+* Mostrar las solicitudes ordenadas por fecha y hora de llegada (FIFO), revisando primero las más antiguas.
+* Visualizar para cada solicitud:
+
+  * Local.
+  * Cliente.
+  * Reserva.
+  * Fecha y hora de la reserva.
+  * Monto.
+  * Nombre del archivo.
+  * Vista previa del comprobante.
+  * Estado del pago.
+
+### Acciones
+
+#### Aprobar comprobante
+
+Al aprobar un comprobante:
+
+* Cambiar el estado del pago a **Aprobado**.
+* Cambiar el estado de la reserva a **Confirmada**.
+* Registrar automáticamente:
+
+  * Administrador que realizó la aprobación.
+  * Fecha.
+  * Hora.
+* Registrar la acción en el historial de auditoría.
+
+#### Rechazar comprobante
+
+Al rechazar un comprobante:
+
+<truncated 2069 bytes>

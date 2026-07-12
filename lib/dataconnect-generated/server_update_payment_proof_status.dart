@@ -4,14 +4,9 @@ class ServerUpdatePaymentProofStatusVariablesBuilder {
   String id;
   PaymentProofStatus status;
   String reviewedBy;
-  Optional<Timestamp> _reviewedAt = Optional.optional((json) => json['reviewedAt'] = Timestamp.fromJson(json['reviewedAt']), defaultSerializer);
   Optional<String> _observations = Optional.optional(nativeFromJson, nativeToJson);
 
-  final FirebaseDataConnect _dataConnect;  ServerUpdatePaymentProofStatusVariablesBuilder reviewedAt(Timestamp? t) {
-   _reviewedAt.value = t;
-   return this;
-  }
-  ServerUpdatePaymentProofStatusVariablesBuilder observations(String? t) {
+  final FirebaseDataConnect _dataConnect;  ServerUpdatePaymentProofStatusVariablesBuilder observations(String? t) {
    _observations.value = t;
    return this;
   }
@@ -24,7 +19,7 @@ class ServerUpdatePaymentProofStatusVariablesBuilder {
   }
 
   MutationRef<ServerUpdatePaymentProofStatusData, ServerUpdatePaymentProofStatusVariables> ref() {
-    ServerUpdatePaymentProofStatusVariables vars= ServerUpdatePaymentProofStatusVariables(id: id,status: status,reviewedBy: reviewedBy,reviewedAt: _reviewedAt,observations: _observations,);
+    ServerUpdatePaymentProofStatusVariables vars= ServerUpdatePaymentProofStatusVariables(id: id,status: status,reviewedBy: reviewedBy,observations: _observations,);
     return _dataConnect.mutation("ServerUpdatePaymentProofStatus", dataDeserializer, varsSerializer, vars);
   }
 }
@@ -104,7 +99,6 @@ class ServerUpdatePaymentProofStatusVariables {
   final String id;
   final PaymentProofStatus status;
   final String reviewedBy;
-  late final Optional<Timestamp>reviewedAt;
   late final Optional<String>observations;
   @Deprecated('fromJson is deprecated for Variable classes as they are no longer required for deserialization.')
   ServerUpdatePaymentProofStatusVariables.fromJson(Map<String, dynamic> json):
@@ -115,10 +109,6 @@ class ServerUpdatePaymentProofStatusVariables {
   
   
   
-  
-  
-    reviewedAt = Optional.optional((json) => json['reviewedAt'] = Timestamp.fromJson(json['reviewedAt']), defaultSerializer);
-    reviewedAt.value = json['reviewedAt'] == null ? null : Timestamp.fromJson(json['reviewedAt']);
   
   
     observations = Optional.optional(nativeFromJson, nativeToJson);
@@ -138,12 +128,11 @@ class ServerUpdatePaymentProofStatusVariables {
     return id == otherTyped.id && 
     status == otherTyped.status && 
     reviewedBy == otherTyped.reviewedBy && 
-    reviewedAt == otherTyped.reviewedAt && 
     observations == otherTyped.observations;
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, status.hashCode, reviewedBy.hashCode, reviewedAt.hashCode, observations.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, status.hashCode, reviewedBy.hashCode, observations.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -153,9 +142,6 @@ class ServerUpdatePaymentProofStatusVariables {
     status.name
     ;
     json['reviewedBy'] = nativeToJson<String>(reviewedBy);
-    if(reviewedAt.state == OptionalState.set) {
-      json['reviewedAt'] = reviewedAt.toJson();
-    }
     if(observations.state == OptionalState.set) {
       json['observations'] = observations.toJson();
     }
@@ -166,7 +152,6 @@ class ServerUpdatePaymentProofStatusVariables {
     required this.id,
     required this.status,
     required this.reviewedBy,
-    required this.reviewedAt,
     required this.observations,
   });
 }

@@ -51,9 +51,20 @@ enum InvoiceStatus {
   FAILED
 }
 
+enum PaymentProofStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PaymentAccountType {
+  GUAYAQUIL
+  PICHINCHA
+}
+
 # Users table
 type User @table {
-  id: String! @default(expr: "auth.uid")
+  id: String!
   nombreCompleto: String!
   email: String! @unique
   telefono: String
@@ -147,6 +158,7 @@ type Order @table {
   type: OrderType!
   paymentMethod: PaymentMethod!
   status: OrderStatus!
+  createdAt: Timestamp @default(expr: "request.time")
 }
 
 # Invoices
@@ -260,6 +272,22 @@ type OrderReservation @table {
   serviceDurationMinutos: Int!
   service: Service!
   createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# Payment Proofs
+type PaymentProof @table {
+  id: UUID! @default(expr: "uuidV4()")
+  order: Order! @unique
+  imageUrl: String!
+  declaredAmount: Float!
+  paymentAccountType: PaymentAccountType!
+  referenceNumber: String
+  observations: String
+  status: PaymentProofStatus! @default(value: PENDING)
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+  reviewedBy: String
+  reviewedAt: Timestamp
 }
 
 

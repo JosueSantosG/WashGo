@@ -39,12 +39,25 @@ const OrderType = {
 }
 exports.OrderType = OrderType;
 
+const PaymentAccountType = {
+  GUAYAQUIL: "GUAYAQUIL",
+  PICHINCHA: "PICHINCHA",
+}
+exports.PaymentAccountType = PaymentAccountType;
+
 const PaymentMethod = {
   PAYPAL: "PAYPAL",
   CASH: "CASH",
   TRANSFERENCIA_BANCARIA: "TRANSFERENCIA_BANCARIA",
 }
 exports.PaymentMethod = PaymentMethod;
+
+const PaymentProofStatus = {
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+}
+exports.PaymentProofStatus = PaymentProofStatus;
 
 const ServiceType = {
   LOCAL: "LOCAL",
@@ -424,6 +437,55 @@ function consumePrepaidAndCreateMetric(dcOrVarsOrOptions, varsOrOptions, options
 }
 exports.consumePrepaidAndCreateMetric = consumePrepaidAndCreateMetric;
 
+function serverCreateOrderWithPendingPayment(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeMutation('ServerCreateOrderWithPendingPayment', inputVars, inputOpts);
+}
+exports.serverCreateOrderWithPendingPayment = serverCreateOrderWithPendingPayment;
+
+function createPaymentProof(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeMutation('CreatePaymentProof', inputVars, inputOpts);
+}
+exports.createPaymentProof = createPaymentProof;
+
+function serverUpdatePaymentProofStatus(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeMutation('ServerUpdatePaymentProofStatus', inputVars, inputOpts);
+}
+exports.serverUpdatePaymentProofStatus = serverUpdatePaymentProofStatus;
+
+function serverUpdatePaymentProof(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeMutation('ServerUpdatePaymentProof', inputVars, inputOpts);
+}
+exports.serverUpdatePaymentProof = serverUpdatePaymentProof;
+
+function serverUpdateOrderStatus(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeMutation('ServerUpdateOrderStatus', inputVars, inputOpts);
+}
+exports.serverUpdateOrderStatus = serverUpdateOrderStatus;
+
+function createSystemNotification(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeMutation('CreateSystemNotification', inputVars, inputOpts);
+}
+exports.createSystemNotification = createSystemNotification;
+
+function completeOrderWithTransferAndInvoice(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeMutation('CompleteOrderWithTransferAndInvoice', inputVars, inputOpts);
+}
+exports.completeOrderWithTransferAndInvoice = completeOrderWithTransferAndInvoice;
+
 function getUsers(dcOrOptions, options) {
   const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
   dcInstance.useGen(true);
@@ -641,6 +703,13 @@ function getOrderById(dcOrVarsOrOptions, varsOrOptions, options) {
 }
 exports.getOrderById = getOrderById;
 
+function serverGetOrderById(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('ServerGetOrderById', inputVars, inputOpts);
+}
+exports.serverGetOrderById = serverGetOrderById;
+
 function getPrepaidHistoryByOrderId(dcOrVarsOrOptions, varsOrOptions, options) {
   const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
   dcInstance.useGen(true);
@@ -717,4 +786,39 @@ function checkBusinessEmployeeAdmin(dcOrVarsOrOptions, varsOrOptions, options) {
   return dcInstance.executeQuery('CheckBusinessEmployeeAdmin', inputVars, inputOpts);
 }
 exports.checkBusinessEmployeeAdmin = checkBusinessEmployeeAdmin;
+
+function getPaymentProof(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetPaymentProof', inputVars, inputOpts);
+}
+exports.getPaymentProof = getPaymentProof;
+
+function getPendingTransferOrders(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetPendingTransferOrders', inputVars, inputOpts);
+}
+exports.getPendingTransferOrders = getPendingTransferOrders;
+
+function getTransferPaymentStats(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetTransferPaymentStats', inputVars, inputOpts);
+}
+exports.getTransferPaymentStats = getTransferPaymentStats;
+
+function getExpiredPendingTransferOrders(dcOrOptions, options) {
+  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetExpiredPendingTransferOrders', undefined, inputOpts);
+}
+exports.getExpiredPendingTransferOrders = getExpiredPendingTransferOrders;
+
+function getPendingPaymentProofs(dcOrOptions, options) {
+  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetPendingPaymentProofs', undefined, inputOpts);
+}
+exports.getPendingPaymentProofs = getPendingPaymentProofs;
 

@@ -131,6 +131,16 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
   }
 
   Future<void> _fetchMyVehicles() async {
+    if (_isGuest) {
+      if (mounted) {
+        setState(() {
+          _myVehicles = [];
+          _loadingVehicles = false;
+        });
+        _autoSelectVehicleFromIntent();
+      }
+      return;
+    }
     try {
       final vehicles = await _vehicleRepository.getMyVehicles();
       if (mounted) {

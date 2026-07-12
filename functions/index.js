@@ -5,12 +5,36 @@ const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
 const crypto = require("crypto");
-const { getOrderById, completeOrderWithInvoiceOnly, getInvoiceById, getPaymentProof, getExpiredPendingTransferOrders, createPaymentProof, serverUpdatePaymentProofStatus, serverUpdateOrderStatus, createSystemNotification, completeOrderWithTransferAndInvoice } = require("@washgo/db-admin");
+const { getOrderById, serverGetOrderById, completeOrderWithInvoiceOnly, getInvoiceById, getPaymentProof, getExpiredPendingTransferOrders, createPaymentProof, serverUpdatePaymentProof, serverUpdatePaymentProofStatus, serverUpdateOrderStatus, createSystemNotification, completeOrderWithTransferAndInvoice } = require("@washgo/db-admin");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 
 // Initialize Firebase Admin SDK
 if (admin.apps.length === 0) {
   admin.initializeApp();
+}
+
+const { getDownloadURL } = require("firebase-admin/storage");
+
+/**
+ * Gets a download URL for a file in a way that works in both emulator and production.
+ */
+async function getDownloadUrlSafe(file) {
+  try {
+    return await getDownloadURL(file);
+  } catch (error) {
+    console.warn("getDownloadURL failed, trying fallback:", error.message);
+    const bucketName = file.bucket.name;
+    const encodedPath = encodeURIComponent(file.name);
+    if (process.env.FIREBASE_STORAGE_EMULATOR_HOST) {
+      return `http://${process.env.FIREBASE_STORAGE_EMULATOR_HOST}/v0/b/${bucketName}/o/${encodedPath}?alt=media`;
+    }
+    // Last resort: try signed URL (will throw if no service account)
+    const [url] = await file.getSignedUrl({
+      action: "read",
+      expires: Date.now() + 1000 * 60 * 60 * 24 * 365 * 5,
+    });
+    return url;
+  }
 }
 
 // Define secrets
@@ -90,7 +114,7 @@ app.post("/paypal/create-order", authenticate, async (req, res) => {
 
   try {
     // Fetch order details from database
-    const orderResult = await getOrderById({ id: orderId });
+    const orderResult = await serverGetOrderById({ id: orderId });
     const order = orderResult.data.order;
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
@@ -163,7 +187,7 @@ app.post("/orders/complete-paypal-payment", authenticate, async (req, res) => {
 
   try {
     // Fetch order details from database
-    const orderResult = await getOrderById({ id: orderId });
+    const orderResult = await serverGetOrderById({ id: orderId });
     const order = orderResult.data.order;
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
@@ -212,11 +236,8 @@ app.post("/orders/complete-paypal-payment", authenticate, async (req, res) => {
       },
     });
 
-    // Generate Signed URL (expires in 5 years)
-    const [signedUrl] = await file.getSignedUrl({
-      action: "read",
-      expires: Date.now() + 1000 * 60 * 60 * 24 * 365 * 5,
-    });
+    // Generate Signed URL / Download URL (resilient to emulator environment)
+    const signedUrl = await getDownloadUrlSafe(file);
 
     // Complete order with mutation using admin SDK
     await completeOrderWithInvoiceOnly({
@@ -254,8 +275,8 @@ app.post("/orders/complete-cash-payment", authenticate, async (req, res) => {
   }
 
   try {
-    // Fetch order details from database using user auth context to verify permissions
-    const orderResult = await getOrderById({ id: orderId }, { auth: req.user });
+    // Fetch order details from database using server/admin context
+    const orderResult = await serverGetOrderById({ id: orderId });
     const order = orderResult.data.order;
     if (!order) {
       return res.status(404).json({ error: "Order not found or unauthorized to access" });
@@ -292,11 +313,8 @@ app.post("/orders/complete-cash-payment", authenticate, async (req, res) => {
       },
     });
 
-    // Generate Signed URL (expires in 5 years)
-    const [signedUrl] = await file.getSignedUrl({
-      action: "read",
-      expires: Date.now() + 1000 * 60 * 60 * 24 * 365 * 5,
-    });
+    // Generate Signed URL / Download URL (resilient to emulator environment)
+    const signedUrl = await getDownloadUrlSafe(file);
 
     // Complete order with mutation using admin SDK
     await completeOrderWithInvoiceOnly({
@@ -350,10 +368,7 @@ app.get("/invoices/:invoiceId/url", authenticate, async (req, res) => {
       return res.status(404).json({ error: "Invoice PDF file not found in storage" });
     }
 
-    const [signedUrl] = await file.getSignedUrl({
-      action: "read",
-      expires: Date.now() + 1000 * 60 * 60 * 2, // 2 hours
-    });
+    const signedUrl = await getDownloadUrlSafe(file);
 
     return res.json({
       url: signedUrl,
@@ -377,7 +392,7 @@ app.post("/payments/upload-proof", authenticate, async (req, res) => {
 
   try {
     // Fetch order
-    const orderResult = await getOrderById({ id: orderId });
+    const orderResult = await serverGetOrderById({ id: orderId });
     const order = orderResult.data.order;
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
@@ -397,6 +412,7 @@ app.post("/payments/upload-proof", authenticate, async (req, res) => {
     }
 
     // Check if a proof was already submitted
+    let existingProofId = null;
     const existingProof = await getPaymentProof({ orderId });
     if (existingProof.data.paymentProofs && existingProof.data.paymentProofs.length > 0) {
       const currentStatus = existingProof.data.paymentProofs[0].status;
@@ -406,7 +422,8 @@ app.post("/payments/upload-proof", authenticate, async (req, res) => {
       if (currentStatus === "APPROVED") {
         return res.status(409).json({ error: "Payment proof was already approved for this order." });
       }
-      // If REJECTED, allow re-upload
+      // If REJECTED, allow re-upload — store the existing proof ID so we update it later
+      existingProofId = existingProof.data.paymentProofs[0].id;
     }
 
     // Validate image extension
@@ -425,21 +442,30 @@ app.post("/payments/upload-proof", authenticate, async (req, res) => {
       metadata: { contentType: `image/${ext === "jpg" ? "jpeg" : ext}` },
     });
 
-    // Generate signed URL (valid for 5 years to match invoice pattern)
-    const [imageUrl] = await file.getSignedUrl({
-      action: "read",
-      expires: Date.now() + 1000 * 60 * 60 * 24 * 365 * 5,
-    });
+    // Generate signed URL / Download URL (resilient to emulator environment)
+    const imageUrl = await getDownloadUrlSafe(file);
 
-    // Create payment proof record
-    await createPaymentProof({
-      orderId,
+    const commonData = {
       imageUrl,
       declaredAmount: parseFloat(declaredAmount),
       paymentAccountType,
       referenceNumber: referenceNumber || null,
       observations: observations || null,
-    });
+    };
+
+    if (existingProofId) {
+      // Re-upload after rejection: update the existing record
+      await serverUpdatePaymentProof({
+        id: existingProofId,
+        ...commonData,
+      });
+    } else {
+      // First-time upload: create a new record
+      await createPaymentProof({
+        orderId,
+        ...commonData,
+      });
+    }
 
     return res.json({
       success: true,
@@ -462,18 +488,17 @@ app.post("/payments/review-proof", authenticate, async (req, res) => {
   }
 
   try {
-    // Fetch order with auth context to verify permissions
-    const orderResult = await getOrderById({ id: orderId }, { auth: req.user });
+    // Fetch order with server/admin context
+    const orderResult = await serverGetOrderById({ id: orderId });
     const order = orderResult.data.order;
     if (!order) {
       return res.status(404).json({ error: "Order not found or unauthorized" });
     }
 
-    // Verify caller is business owner or SUPER_ADMIN
-    const isOwner = order.business?.owner?.id === req.user.uid;
+    // Verify caller is SUPER_ADMIN
     const isSuperAdmin = req.user.token?.roles?.includes("SUPER_ADMIN");
-    if (!isOwner && !isSuperAdmin) {
-      return res.status(403).json({ error: "Forbidden: Only the business owner can review payment proofs" });
+    if (!isSuperAdmin) {
+      return res.status(403).json({ error: "Forbidden: Only a super admin can review payment proofs" });
     }
 
     if (order.paymentMethod !== "TRANSFERENCIA_BANCARIA") {
@@ -485,7 +510,7 @@ app.post("/payments/review-proof", authenticate, async (req, res) => {
     }
 
     // Fetch payment proof to get its id
-    const proofResult = await getPaymentProof({ orderId }, { auth: { uid: req.user.uid, token: req.user.token } });
+    const proofResult = await getPaymentProof({ orderId });
     const proof = proofResult.data?.paymentProofs?.[0];
     if (!proof) {
       return res.status(404).json({ error: "Payment proof not found for this order" });
@@ -496,7 +521,6 @@ app.post("/payments/review-proof", authenticate, async (req, res) => {
       id: proof.id,
       status,
       reviewedBy: req.user.uid,
-      reviewedAt_expr: "request.time",
       observations: observations || null,
     });
 
@@ -532,8 +556,8 @@ app.post("/payments/review-proof", authenticate, async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("Review Proof Error:", error.message);
-    return res.status(500).json({ error: error.message });
+    console.error("Review Proof Error:", error);
+    return res.status(500).json({ error: error.message, stack: error.stack });
   }
 });
 
@@ -566,10 +590,7 @@ app.get("/payments/proof-image/:orderId", async (req, res) => {
       return res.status(404).json({ error: "Proof image file not found in storage" });
     }
 
-    const [signedUrl] = await files[0].getSignedUrl({
-      action: "read",
-      expires: Date.now() + 1000 * 60 * 60 * 2, // 2 hours
-    });
+    const signedUrl = await getDownloadUrlSafe(files[0]);
 
     return res.json({ imageUrl: signedUrl });
   } catch (error) {
@@ -586,7 +607,7 @@ app.get("/payments/proof-status/:orderId", async (req, res) => {
   }
 
   try {
-    const orderResult = await getOrderById({ id: orderId });
+    const orderResult = await serverGetOrderById({ id: orderId });
     const order = orderResult.data.order;
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
@@ -654,7 +675,7 @@ exports.cleanupPendingTransfers = onSchedule({
     let cancelledCount = 0;
 
     for (const order of orders) {
-      const createdAt = new Date(order._createdAt).getTime();
+      const createdAt = new Date(order.createdAt).getTime();
       if (now - createdAt < TWENTY_FOUR_HOURS_MS) {
         continue; // Skip orders younger than 24h
       }

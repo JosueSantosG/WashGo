@@ -30,6 +30,7 @@ class GetClientOrdersOrders {
   final GetClientOrdersOrdersBusiness business;
   final GetClientOrdersOrdersEmployee? employee;
   final GetClientOrdersOrdersReviewOnOrder? review_on_order;
+  final GetClientOrdersOrdersPaymentProofOnOrder? paymentProof_on_order;
   GetClientOrdersOrders.fromJson(dynamic json):
   
   id = nativeFromJson<String>(json['id']),
@@ -43,7 +44,8 @@ class GetClientOrdersOrders {
   invoiceUrl = json['invoiceUrl'] == null ? null : nativeFromJson<String>(json['invoiceUrl']),
   business = GetClientOrdersOrdersBusiness.fromJson(json['business']),
   employee = json['employee'] == null ? null : GetClientOrdersOrdersEmployee.fromJson(json['employee']),
-  review_on_order = json['review_on_order'] == null ? null : GetClientOrdersOrdersReviewOnOrder.fromJson(json['review_on_order']);
+  review_on_order = json['review_on_order'] == null ? null : GetClientOrdersOrdersReviewOnOrder.fromJson(json['review_on_order']),
+  paymentProof_on_order = json['paymentProof_on_order'] == null ? null : GetClientOrdersOrdersPaymentProofOnOrder.fromJson(json['paymentProof_on_order']);
   @override
   bool operator ==(Object other) {
     if(identical(this, other)) {
@@ -65,11 +67,12 @@ class GetClientOrdersOrders {
     invoiceUrl == otherTyped.invoiceUrl && 
     business == otherTyped.business && 
     employee == otherTyped.employee && 
-    review_on_order == otherTyped.review_on_order;
+    review_on_order == otherTyped.review_on_order && 
+    paymentProof_on_order == otherTyped.paymentProof_on_order;
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, price.hashCode, costo.hashCode, serviceName.hashCode, observations.hashCode, type.hashCode, paymentMethod.hashCode, status.hashCode, invoiceUrl.hashCode, business.hashCode, employee.hashCode, review_on_order.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, price.hashCode, costo.hashCode, serviceName.hashCode, observations.hashCode, type.hashCode, paymentMethod.hashCode, status.hashCode, invoiceUrl.hashCode, business.hashCode, employee.hashCode, review_on_order.hashCode, paymentProof_on_order.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -102,6 +105,9 @@ class GetClientOrdersOrders {
     if (review_on_order != null) {
       json['review_on_order'] = review_on_order!.toJson();
     }
+    if (paymentProof_on_order != null) {
+      json['paymentProof_on_order'] = paymentProof_on_order!.toJson();
+    }
     return json;
   }
 
@@ -118,6 +124,7 @@ class GetClientOrdersOrders {
     required this.business,
     this.employee,
     this.review_on_order,
+    this.paymentProof_on_order,
   });
 }
 
@@ -277,6 +284,78 @@ class GetClientOrdersOrdersReviewOnOrder {
     required this.id,
     required this.calificacion,
     this.comentario,
+  });
+}
+
+@immutable
+class GetClientOrdersOrdersPaymentProofOnOrder {
+  final String id;
+  final String imageUrl;
+  final double declaredAmount;
+  final EnumValue<PaymentAccountType> paymentAccountType;
+  final String? referenceNumber;
+  final String? observations;
+  final EnumValue<PaymentProofStatus> status;
+  GetClientOrdersOrdersPaymentProofOnOrder.fromJson(dynamic json):
+  
+  id = nativeFromJson<String>(json['id']),
+  imageUrl = nativeFromJson<String>(json['imageUrl']),
+  declaredAmount = nativeFromJson<double>(json['declaredAmount']),
+  paymentAccountType = paymentAccountTypeDeserializer(json['paymentAccountType']),
+  referenceNumber = json['referenceNumber'] == null ? null : nativeFromJson<String>(json['referenceNumber']),
+  observations = json['observations'] == null ? null : nativeFromJson<String>(json['observations']),
+  status = paymentProofStatusDeserializer(json['status']);
+  @override
+  bool operator ==(Object other) {
+    if(identical(this, other)) {
+      return true;
+    }
+    if(other.runtimeType != runtimeType) {
+      return false;
+    }
+
+    final GetClientOrdersOrdersPaymentProofOnOrder otherTyped = other as GetClientOrdersOrdersPaymentProofOnOrder;
+    return id == otherTyped.id && 
+    imageUrl == otherTyped.imageUrl && 
+    declaredAmount == otherTyped.declaredAmount && 
+    paymentAccountType == otherTyped.paymentAccountType && 
+    referenceNumber == otherTyped.referenceNumber && 
+    observations == otherTyped.observations && 
+    status == otherTyped.status;
+    
+  }
+  @override
+  int get hashCode => Object.hashAll([id.hashCode, imageUrl.hashCode, declaredAmount.hashCode, paymentAccountType.hashCode, referenceNumber.hashCode, observations.hashCode, status.hashCode]);
+  
+
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> json = {};
+    json['id'] = nativeToJson<String>(id);
+    json['imageUrl'] = nativeToJson<String>(imageUrl);
+    json['declaredAmount'] = nativeToJson<double>(declaredAmount);
+    json['paymentAccountType'] = 
+    paymentAccountTypeSerializer(paymentAccountType)
+    ;
+    if (referenceNumber != null) {
+      json['referenceNumber'] = nativeToJson<String?>(referenceNumber);
+    }
+    if (observations != null) {
+      json['observations'] = nativeToJson<String?>(observations);
+    }
+    json['status'] = 
+    paymentProofStatusSerializer(status)
+    ;
+    return json;
+  }
+
+  GetClientOrdersOrdersPaymentProofOnOrder({
+    required this.id,
+    required this.imageUrl,
+    required this.declaredAmount,
+    required this.paymentAccountType,
+    this.referenceNumber,
+    this.observations,
+    required this.status,
   });
 }
 

@@ -95,6 +95,11 @@ class FirebaseOrderRepository implements OrderRepository {
     required PaymentMethod paymentMethod,
     required String observations,
   }) async {
+    final status = (paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA ||
+            paymentMethod == PaymentMethod.PAYPAL)
+        ? OrderStatus.PENDIENTE_PAGO
+        : OrderStatus.EN_COLA;
+
     final result = await _connector
         .createOrder(
           businessId: businessId,
@@ -104,6 +109,7 @@ class FirebaseOrderRepository implements OrderRepository {
           type: type,
           paymentMethod: paymentMethod,
         )
+        .status(status)
         .observations(observations)
         .execute();
 
@@ -150,6 +156,14 @@ class FirebaseOrderRepository implements OrderRepository {
         );
       }
 
+      PaymentProofStatus? paymentProofStatus;
+      final proof = o.paymentProof_on_order;
+      if (proof != null) {
+        paymentProofStatus = proof.status is Known<PaymentProofStatus>
+            ? (proof.status as Known<PaymentProofStatus>).value
+            : null;
+      }
+
       return WashGoOrder(
         id: o.id,
         status: status,
@@ -162,6 +176,7 @@ class FirebaseOrderRepository implements OrderRepository {
         paymentMethod: paymentMethod,
         client: client,
         employee: employee,
+        paymentProofStatus: paymentProofStatus,
       );
     }).toList();
     unawaited(_checkAndExpireOrders(mapped));
@@ -237,6 +252,14 @@ class FirebaseOrderRepository implements OrderRepository {
                       );
                     }
 
+                    PaymentProofStatus? paymentProofStatus;
+                    final proof = o.paymentProof_on_order;
+                    if (proof != null) {
+                      paymentProofStatus = proof.status is Known<PaymentProofStatus>
+                          ? (proof.status as Known<PaymentProofStatus>).value
+                          : null;
+                    }
+
                     return WashGoOrder(
                       id: o.id,
                       status: status,
@@ -249,6 +272,7 @@ class FirebaseOrderRepository implements OrderRepository {
                       paymentMethod: paymentMethod,
                       client: client,
                       employee: employee,
+                      paymentProofStatus: paymentProofStatus,
                     );
                   }).toList();
                   emit(mapped);

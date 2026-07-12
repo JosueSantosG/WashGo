@@ -1,75 +1,9 @@
-<<<<<<< HEAD
-import 'dart:async';
-import 'package:flutter/foundation.dart';
-import 'package:washgo/features/payments/models/payment_proof_model.dart';
-import 'package:washgo/features/payments/services/bank_transfer_service.dart';
-
-/// Repository for bank transfer payment operations.
-///
-/// Wraps [BankTransferService] and provides cached state management
-/// for proof status polling, matching the pattern used by other repositories.
-class BankTransferRepository {
-  final BankTransferService _service;
-
-  BankTransferRepository({BankTransferService? service})
-      : _service = service ?? BankTransferService.instance;
-
-  // --- Proof status polling cache ---
-  final Map<String, _ProofStatusState> _statusCache = {};
-
-  /// Uploads a payment proof image.
-  Future<PaymentProofModel> uploadProof({
-    required String orderId,
-    required List<int> imageBytes,
-    required String extension,
-    required double declaredAmount,
-    required String paymentAccountType,
-    String? referenceNumber,
-    String? observations,
-  }) async {
-    final proof = await _service.uploadProof(
-      orderId: orderId,
-      imageBytes: imageBytes,
-      extension: extension,
-      declaredAmount: declaredAmount,
-      paymentAccountType: paymentAccountType,
-      referenceNumber: referenceNumber,
-      observations: observations,
-    );
-
-    // Update cache
-    _statusCache[orderId] = _ProofStatusState(
-      latestProof: proof,
-      lastFetch: DateTime.now(),
-    );
-
-    return proof;
-  }
-
-  /// Approves or rejects a payment proof (owner/admin action).
-  Future<Map<String, dynamic>> reviewProof({
-    required String orderId,
-    required String status,
-    String? observations,
-  }) async {
-    final result = await _service.reviewProof(
-      orderId: orderId,
-      status: status,
-      observations: observations,
-    );
-
-    // Invalidate cache so next poll fetches fresh data
-    _statusCache.remove(orderId);
-
-    return result;
-  }
-
-  /// Gets a signed URL for the proof image (cached for a short period).
-=======
-import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:washgo/features/payments/models/payment_proof_model.dart';
 import 'package:washgo/features/payments/services/bank_transfer_service.dart';
+
+import 'package:washgo/dataconnect-generated/example.dart' as dc;
 
 class BankTransferRepository {
   final BankTransferService _service;
@@ -81,17 +15,129 @@ class BankTransferRepository {
   })  : _service = service ?? BankTransferService(),
         _storage = storage ?? FirebaseStorage.instance;
 
+  Future<List<PaymentProofModel>> getPendingProofs(String businessId) async {
+    final result = await dc.ExampleConnector.instance
+        .getPendingTransferOrders(businessId: businessId)
+        .execute();
+
+    final proofs = <PaymentProofModel>[];
+    for (final order in result.data.orders) {
+      final proofOnOrder = order.paymentProof_on_order;
+      if (proofOnOrder != null) {
+        PaymentProofStatus status;
+        final rawStatus = proofOnOrder.status is dc.Known<dc.PaymentProofStatus>
+            ? (proofOnOrder.status as dc.Known<dc.PaymentProofStatus>).value
+            : dc.PaymentProofStatus.PENDING;
+        switch (rawStatus) {
+          case dc.PaymentProofStatus.APPROVED:
+            status = PaymentProofStatus.APPROVED;
+            break;
+          case dc.PaymentProofStatus.REJECTED:
+            status = PaymentProofStatus.REJECTED;
+            break;
+          case dc.PaymentProofStatus.PENDING:
+            status = PaymentProofStatus.PENDING;
+            break;
+        }
+
+        PaymentAccountType accountType;
+        final rawAccountType = proofOnOrder.paymentAccountType is dc.Known<dc.PaymentAccountType>
+            ? (proofOnOrder.paymentAccountType as dc.Known<dc.PaymentAccountType>).value
+            : dc.PaymentAccountType.GUAYAQUIL;
+        switch (rawAccountType) {
+          case dc.PaymentAccountType.PICHINCHA:
+            accountType = PaymentAccountType.PICHINCHA;
+            break;
+          case dc.PaymentAccountType.GUAYAQUIL:
+            accountType = PaymentAccountType.GUAYAQUIL;
+            break;
+        }
+
+        proofs.add(PaymentProofModel(
+          orderId: order.id,
+          imageUrl: proofOnOrder.imageUrl,
+          status: status,
+          accountType: accountType,
+          referenceNumber: proofOnOrder.referenceNumber,
+          amount: proofOnOrder.declaredAmount,
+          createdAt: proofOnOrder.createdAt.toDateTime(),
+          rejectionReason: proofOnOrder.observations,
+        ));
+      }
+    }
+    return proofs;
+  }
+
+  Future<List<PaymentProofModel>> getAllPendingProofs() async {
+    final result = await dc.ExampleConnector.instance
+        .getPendingPaymentProofs()
+        .execute();
+
+    final proofs = <PaymentProofModel>[];
+    for (final proof in result.data.paymentProofs) {
+      PaymentProofStatus status;
+      final rawStatus = proof.status is dc.Known<dc.PaymentProofStatus>
+          ? (proof.status as dc.Known<dc.PaymentProofStatus>).value
+          : dc.PaymentProofStatus.PENDING;
+      switch (rawStatus) {
+        case dc.PaymentProofStatus.APPROVED:
+          status = PaymentProofStatus.APPROVED;
+          break;
+        case dc.PaymentProofStatus.REJECTED:
+          status = PaymentProofStatus.REJECTED;
+          break;
+        case dc.PaymentProofStatus.PENDING:
+          status = PaymentProofStatus.PENDING;
+          break;
+      }
+
+      PaymentAccountType accountType;
+      final rawAccountType = proof.paymentAccountType is dc.Known<dc.PaymentAccountType>
+          ? (proof.paymentAccountType as dc.Known<dc.PaymentAccountType>).value
+          : dc.PaymentAccountType.GUAYAQUIL;
+      switch (rawAccountType) {
+        case dc.PaymentAccountType.PICHINCHA:
+          accountType = PaymentAccountType.PICHINCHA;
+          break;
+        case dc.PaymentAccountType.GUAYAQUIL:
+          accountType = PaymentAccountType.GUAYAQUIL;
+          break;
+      }
+
+      final order = proof.order;
+      final reservation = order.orderReservation_on_order;
+
+      proofs.add(PaymentProofModel(
+        orderId: order.id,
+        imageUrl: proof.imageUrl,
+        status: status,
+        accountType: accountType,
+        referenceNumber: proof.referenceNumber,
+        amount: proof.declaredAmount,
+        createdAt: proof.createdAt.toDateTime(),
+        rejectionReason: proof.observations,
+        businessName: order.business.nombre,
+        clientName: order.client.nombreCompleto,
+        clientPhone: order.client.telefono,
+        serviceName: order.serviceName,
+        scheduledAt: reservation?.scheduledAt.toDateTime(),
+        serviceDurationMinutos: reservation?.serviceDurationMinutos,
+      ));
+    }
+    return proofs;
+  }
+
 
   Future<PaymentProofModel> uploadProof({
     required String orderId,
-    required String imagePath,
+    required XFile imageFile,
     required PaymentAccountType accountType,
     required String referenceNumber,
     required double amount,
   }) async {
     return _service.uploadProof(
       orderId: orderId,
-      imageFile: File(imagePath),
+      imageFile: imageFile,
       accountType: accountType.name,
       referenceNumber: referenceNumber,
       amount: amount,
@@ -102,101 +148,10 @@ class BankTransferRepository {
     return _service.getProofStatus(orderId);
   }
 
->>>>>>> worktree-fix-flutter-analyze-errors
   Future<String?> getProofImageUrl(String orderId) async {
     return _service.getProofImageUrl(orderId);
   }
 
-<<<<<<< HEAD
-  /// Gets the current proof status, with optional cache.
-  Future<Map<String, dynamic>> getProofStatus(
-    String orderId, {
-    bool forceRefresh = false,
-  }) async {
-    if (!forceRefresh) {
-      final cached = _statusCache[orderId];
-      if (cached != null &&
-          DateTime.now().difference(cached.lastFetch).inSeconds < 30) {
-        return {
-          'proof': cached.latestProof,
-          'orderStatus': cached.orderStatus,
-          'paymentMethod': 'TRANSFERENCIA_BANCARIA',
-          'clientName': cached.clientName,
-        };
-      }
-    }
-
-    final data = await _service.getProofStatus(orderId);
-
-    // Update cache
-    final proof = data['proof'] as PaymentProofModel?;
-    if (proof != null) {
-      _statusCache[orderId] = _ProofStatusState(
-        latestProof: proof,
-        orderStatus: data['orderStatus'] as String? ?? '',
-        clientName: data['clientName'] as String?,
-        lastFetch: DateTime.now(),
-      );
-    }
-
-    return data;
-  }
-
-  /// Returns a stream that polls proof status at a given interval.
-  ///
-  /// Useful for the proof status page that needs to auto-refresh
-  /// while the admin reviews the proof.
-  Stream<PaymentProofModel?> watchProofStatus(
-    String orderId, {
-    Duration interval = const Duration(seconds: 15),
-  }) async* {
-    // Yield cached value first if available
-    final cached = _statusCache[orderId];
-    if (cached != null) {
-      yield cached.latestProof;
-    }
-
-    await for (final _ in Stream.periodic(interval)) {
-      try {
-        final data = await getProofStatus(orderId, forceRefresh: true);
-        yield data['proof'] as PaymentProofModel?;
-      } catch (e) {
-        debugPrint('Error polling proof status: $e');
-        yield null;
-      }
-    }
-  }
-
-  /// Lists all pending payment proofs for a business.
-  Future<List<Map<String, dynamic>>> getPendingProofs(String businessId) async {
-    return _service.getPendingProofs(businessId);
-  }
-
-  /// Clears the cache for a specific order.
-  void clearCache(String orderId) {
-    _statusCache.remove(orderId);
-  }
-
-  /// Clears all cached data.
-  void clearAll() {
-    _statusCache.clear();
-  }
-}
-
-class _ProofStatusState {
-  final PaymentProofModel latestProof;
-  final String orderStatus;
-  final String? clientName;
-  final DateTime lastFetch;
-
-  _ProofStatusState({
-    required this.latestProof,
-    this.orderStatus = '',
-    this.clientName,
-    required this.lastFetch,
-  });
-}
-=======
   Future<void> reviewProof({
     required String orderId,
     required PaymentProofStatus status,
@@ -211,12 +166,12 @@ class _ProofStatusState {
 
   Future<String> uploadProofImageToStorage({
     required String orderId,
-    required String imagePath,
+    required XFile imageFile,
   }) async {
     final ref = _storage
         .ref('proofs/$orderId/${DateTime.now().millisecondsSinceEpoch}.jpg');
-    await ref.putFile(File(imagePath));
+    final bytes = await imageFile.readAsBytes();
+    await ref.putData(bytes);
     return await ref.getDownloadURL();
   }
 }
->>>>>>> worktree-fix-flutter-analyze-errors

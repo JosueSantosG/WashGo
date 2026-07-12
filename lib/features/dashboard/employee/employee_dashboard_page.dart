@@ -749,9 +749,10 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
         for (final order in orders) {
           final status = order.status;
           final isEnCola = status == OrderStatus.EN_COLA;
+          final isPendingPago = status == OrderStatus.PENDIENTE_PAGO;
           final orderEmployeeId = order.employee?.id;
 
-          if (isEnCola && orderEmployeeId == null) {
+          if ((isEnCola || isPendingPago) && orderEmployeeId == null) {
             pending.add(order);
           } else if (orderEmployeeId == _employeeId) {
             myActive.add(order);
@@ -800,9 +801,10 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
       for (final order in orders) {
         final status = order.status;
         final isEnCola = status == OrderStatus.EN_COLA;
+        final isPendingPago = status == OrderStatus.PENDIENTE_PAGO;
         final orderEmployeeId = order.employee?.id;
 
-        if (isEnCola && orderEmployeeId == null) {
+        if ((isEnCola || isPendingPago) && orderEmployeeId == null) {
           pending.add(order);
         } else if (orderEmployeeId == _employeeId) {
           myActive.add(order);
@@ -2239,6 +2241,11 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
                     ],
                   ),
                 ),
+                if (order.paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA &&
+                    order.paymentProofStatus != null) ...[
+                  const SizedBox(height: 8),
+                  _buildPaymentProofBadge(order.paymentProofStatus!),
+                ],
                 if (order.observations != null && order.observations!.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Builder(
@@ -2368,6 +2375,51 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
     );
   }
 
+  Widget _buildPaymentProofBadge(PaymentProofStatus proofStatus) {
+    Color color;
+    String label;
+    IconData icon;
+
+    switch (proofStatus) {
+      case PaymentProofStatus.PENDING:
+        color = Colors.amber;
+        label = 'Comprobante: Pendiente de revisión';
+        icon = Icons.hourglass_empty_rounded;
+      case PaymentProofStatus.APPROVED:
+        color = Colors.green;
+        label = 'Comprobante: Aprobado';
+        icon = Icons.check_circle_rounded;
+      case PaymentProofStatus.REJECTED:
+        color = Colors.red;
+        label = 'Comprobante: Rechazado';
+        icon = Icons.cancel_rounded;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 16),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildActionButtonsForStatus(WashGoOrder order, OrderStatus status, OrderType type) {
     if (status == OrderStatus.ACEPTADO) {
       if (type == OrderType.DELIVERY) {
@@ -2414,6 +2466,44 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
           padding: const EdgeInsets.symmetric(vertical: 12),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
+      );
+    } else if (status == OrderStatus.PENDIENTE_PAGO) {
+      final isTransfer = order.paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isTransfer && order.paymentProofStatus != null) ...[
+            _buildPaymentProofBadge(order.paymentProofStatus!),
+            const SizedBox(height: 8),
+          ],
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.amber.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.amber.withValues(alpha: 0.2)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline_rounded, color: Colors.amber.shade700, size: 16),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    isTransfer && order.paymentProofStatus != null
+                        ? 'Esperando aprobación del comprobante de pago por el superadmin'
+                        : 'Esperando confirmación de pago',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.amber.shade700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       );
     }
 

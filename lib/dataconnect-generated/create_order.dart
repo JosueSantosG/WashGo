@@ -7,9 +7,14 @@ class CreateOrderVariablesBuilder {
   String serviceName;
   OrderType type;
   PaymentMethod paymentMethod;
+  Optional<OrderStatus> _status = Optional.optional((data) => OrderStatus.values.byName(data), enumSerializer);
   Optional<String> _observations = Optional.optional(nativeFromJson, nativeToJson);
 
-  final FirebaseDataConnect _dataConnect;  CreateOrderVariablesBuilder observations(String? t) {
+  final FirebaseDataConnect _dataConnect;  CreateOrderVariablesBuilder status(OrderStatus t) {
+   _status.value = t;
+   return this;
+  }
+  CreateOrderVariablesBuilder observations(String? t) {
    _observations.value = t;
    return this;
   }
@@ -22,7 +27,7 @@ class CreateOrderVariablesBuilder {
   }
 
   MutationRef<CreateOrderData, CreateOrderVariables> ref() {
-    CreateOrderVariables vars= CreateOrderVariables(businessId: businessId,price: price,costo: costo,serviceName: serviceName,type: type,paymentMethod: paymentMethod,observations: _observations,);
+    CreateOrderVariables vars= CreateOrderVariables(businessId: businessId,price: price,costo: costo,serviceName: serviceName,type: type,paymentMethod: paymentMethod,status: _status,observations: _observations,);
     return _dataConnect.mutation("CreateOrder", dataDeserializer, varsSerializer, vars);
   }
 }
@@ -103,6 +108,7 @@ class CreateOrderVariables {
   final String serviceName;
   final OrderType type;
   final PaymentMethod paymentMethod;
+  late final Optional<OrderStatus>status;
   late final Optional<String>observations;
   @Deprecated('fromJson is deprecated for Variable classes as they are no longer required for deserialization.')
   CreateOrderVariables.fromJson(Map<String, dynamic> json):
@@ -119,6 +125,10 @@ class CreateOrderVariables {
   
   
   
+  
+  
+    status = Optional.optional((data) => OrderStatus.values.byName(data), enumSerializer);
+    status.value = json['status'] == null ? null : OrderStatus.values.byName(json['status']);
   
   
     observations = Optional.optional(nativeFromJson, nativeToJson);
@@ -141,11 +151,12 @@ class CreateOrderVariables {
     serviceName == otherTyped.serviceName && 
     type == otherTyped.type && 
     paymentMethod == otherTyped.paymentMethod && 
+    status == otherTyped.status && 
     observations == otherTyped.observations;
     
   }
   @override
-  int get hashCode => Object.hashAll([businessId.hashCode, price.hashCode, costo.hashCode, serviceName.hashCode, type.hashCode, paymentMethod.hashCode, observations.hashCode]);
+  int get hashCode => Object.hashAll([businessId.hashCode, price.hashCode, costo.hashCode, serviceName.hashCode, type.hashCode, paymentMethod.hashCode, status.hashCode, observations.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -160,6 +171,9 @@ class CreateOrderVariables {
     json['paymentMethod'] = 
     paymentMethod.name
     ;
+    if(status.state == OptionalState.set) {
+      json['status'] = status.toJson();
+    }
     if(observations.state == OptionalState.set) {
       json['observations'] = observations.toJson();
     }
@@ -173,6 +187,7 @@ class CreateOrderVariables {
     required this.serviceName,
     required this.type,
     required this.paymentMethod,
+    required this.status,
     required this.observations,
   });
 }

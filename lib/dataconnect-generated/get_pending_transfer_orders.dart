@@ -7,8 +7,8 @@ class GetPendingTransferOrdersVariablesBuilder {
   GetPendingTransferOrdersVariablesBuilder(this._dataConnect, {required  this.businessId,});
   Deserializer<GetPendingTransferOrdersData> dataDeserializer = (dynamic json)  => GetPendingTransferOrdersData.fromJson(jsonDecode(json));
   Serializer<GetPendingTransferOrdersVariables> varsSerializer = (GetPendingTransferOrdersVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetPendingTransferOrdersData, GetPendingTransferOrdersVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetPendingTransferOrdersData, GetPendingTransferOrdersVariables>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetPendingTransferOrdersData, GetPendingTransferOrdersVariables> ref() {
@@ -24,7 +24,7 @@ class GetPendingTransferOrdersOrders {
   final String? serviceName;
   final EnumValue<OrderStatus> status;
   final String? observations;
-  final Timestamp createdAt;
+  final Timestamp? createdAt;
   final GetPendingTransferOrdersOrdersClient client;
   final GetPendingTransferOrdersOrdersPaymentProofOnOrder? paymentProof_on_order;
   GetPendingTransferOrdersOrders.fromJson(dynamic json):
@@ -34,7 +34,7 @@ class GetPendingTransferOrdersOrders {
   serviceName = json['serviceName'] == null ? null : nativeFromJson<String>(json['serviceName']),
   status = orderStatusDeserializer(json['status']),
   observations = json['observations'] == null ? null : nativeFromJson<String>(json['observations']),
-  createdAt = Timestamp.fromJson(json['createdAt']),
+  createdAt = json['createdAt'] == null ? null : Timestamp.fromJson(json['createdAt']),
   client = GetPendingTransferOrdersOrdersClient.fromJson(json['client']),
   paymentProof_on_order = json['paymentProof_on_order'] == null ? null : GetPendingTransferOrdersOrdersPaymentProofOnOrder.fromJson(json['paymentProof_on_order']);
   @override
@@ -74,7 +74,9 @@ class GetPendingTransferOrdersOrders {
     if (observations != null) {
       json['observations'] = nativeToJson<String?>(observations);
     }
-    json['createdAt'] = createdAt.toJson();
+    if (createdAt != null) {
+      json['createdAt'] = createdAt!.toJson();
+    }
     json['client'] = client.toJson();
     if (paymentProof_on_order != null) {
       json['paymentProof_on_order'] = paymentProof_on_order!.toJson();
@@ -88,7 +90,7 @@ class GetPendingTransferOrdersOrders {
     this.serviceName,
     required this.status,
     this.observations,
-    required this.createdAt,
+    this.createdAt,
     required this.client,
     this.paymentProof_on_order,
   });
@@ -150,7 +152,7 @@ class GetPendingTransferOrdersOrdersPaymentProofOnOrder {
   final String? observations;
   final EnumValue<PaymentProofStatus> status;
   final Timestamp createdAt;
-  final Timestamp? updatedAt;
+  final Timestamp updatedAt;
   GetPendingTransferOrdersOrdersPaymentProofOnOrder.fromJson(dynamic json):
   
   id = nativeFromJson<String>(json['id']),
@@ -161,7 +163,7 @@ class GetPendingTransferOrdersOrdersPaymentProofOnOrder {
   observations = json['observations'] == null ? null : nativeFromJson<String>(json['observations']),
   status = paymentProofStatusDeserializer(json['status']),
   createdAt = Timestamp.fromJson(json['createdAt']),
-  updatedAt = json['updatedAt'] == null ? null : Timestamp.fromJson(json['updatedAt']);
+  updatedAt = Timestamp.fromJson(json['updatedAt']);
   @override
   bool operator ==(Object other) {
     if(identical(this, other)) {
@@ -205,9 +207,7 @@ class GetPendingTransferOrdersOrdersPaymentProofOnOrder {
     paymentProofStatusSerializer(status)
     ;
     json['createdAt'] = createdAt.toJson();
-    if (updatedAt != null) {
-      json['updatedAt'] = updatedAt!.toJson();
-    }
+    json['updatedAt'] = updatedAt.toJson();
     return json;
   }
 
@@ -220,7 +220,7 @@ class GetPendingTransferOrdersOrdersPaymentProofOnOrder {
     this.observations,
     required this.status,
     required this.createdAt,
-    this.updatedAt,
+    required this.updatedAt,
   });
 }
 

@@ -8,6 +8,7 @@ import 'package:washgo/config/routes/app_routes.dart';
 import 'package:washgo/features/auth/models/super_admin_session.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
 import 'package:washgo/features/dashboard/admin/widgets/app_ratings_tab.dart';
+import 'package:washgo/features/payments/pages/admin_payment_review_page.dart';
 import 'package:washgo/core/utils/type_utils.dart';
 
 class SuperAdminDashboardPage extends StatefulWidget {
@@ -274,7 +275,9 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
+      appBar: _selectedIndex == 1
+          ? null
+          : AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -425,7 +428,9 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
                       ],
                     ),
                   ))
-          : const AppRatingsTab(),
+          : _selectedIndex == 1
+              ? const AdminPaymentReviewPage()
+              : const AppRatingsTab(),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
@@ -470,6 +475,14 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
                   color: AppColors.primary,
                 ),
                 label: 'Locales',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.receipt_long_outlined),
+                activeIcon: Icon(
+                  Icons.receipt_long_rounded,
+                  color: AppColors.primary,
+                ),
+                label: 'Comprobantes',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.analytics_outlined),

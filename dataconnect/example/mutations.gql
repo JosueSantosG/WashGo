@@ -123,6 +123,7 @@ mutation CreateOrder(
   $serviceName: String!,
   $type: OrderType!,
   $paymentMethod: PaymentMethod!,
+  $status: OrderStatus! = EN_COLA,
   $observations: String
 ) @auth(level: USER) {
   order_insert(data: {
@@ -133,7 +134,7 @@ mutation CreateOrder(
     serviceName: $serviceName,
     type: $type,
     paymentMethod: $paymentMethod,
-    status: EN_COLA,
+    status: $status,
     observations: $observations
   })
 }
@@ -1300,19 +1301,41 @@ mutation ServerUpdatePaymentProofStatus(
   $id: UUID!,
   $status: PaymentProofStatus!,
   $reviewedBy: String!,
-  $reviewedAt: Timestamp,
   $observations: String
 ) @auth(level: NO_ACCESS) {
   paymentProof_update(key: { id: $id }, data: {
     status: $status,
     reviewedBy: $reviewedBy,
-    reviewedAt: $reviewedAt,
+    reviewedAt_expr: "request.time",
     observations: $observations,
     updatedAt_expr: "request.time"
   })
 }
 
-# 4. Update order status from server side (NO_ACCESS level)
+# 4. Update an existing payment proof record (for re-upload after rejection)
+# $id is the PaymentProof's own id, looked up via getPaymentProof by orderId first
+mutation ServerUpdatePaymentProof(
+  $id: UUID!,
+  $imageUrl: String!,
+  $declaredAmount: Float!,
+  $paymentAccountType: PaymentAccountType!,
+  $referenceNumber: String,
+  $observations: String
+) @auth(level: NO_ACCESS) {
+  paymentProof_update(key: { id: $id }, data: {
+    imageUrl: $imageUrl,
+    declaredAmount: $declaredAmount,
+    paymentAccountType: $paymentAccountType,
+    referenceNumber: $referenceNumber,
+    observations: $observations,
+    status: PENDING,
+    reviewedBy: null,
+    reviewedAt: null,
+    updatedAt_expr: "request.time"
+  })
+}
+
+# 5. Update order status from server side (NO_ACCESS level)
 mutation ServerUpdateOrderStatus(
   $orderId: UUID!,
   $status: OrderStatus!

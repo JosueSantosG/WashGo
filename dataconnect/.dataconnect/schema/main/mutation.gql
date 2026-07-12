@@ -90,6 +90,15 @@ extend type Mutation {
     data: OrderReservation_Data!
   ): OrderReservation_KeyOutput! @fdc_generated(from: "OrderReservation", purpose: INSERT_SINGLE)
   """
+  ✨ Insert a single `PaymentProof` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  paymentProof_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: PaymentProof_Data!
+  ): PaymentProof_KeyOutput! @fdc_generated(from: "PaymentProof", purpose: INSERT_SINGLE)
+  """
   ✨ Insert a single `PrepaidHistory` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   prepaidHistory_insert(
@@ -251,6 +260,15 @@ extend type Mutation {
     """
     data: [OrderReservation_Data!]!
   ): [OrderReservation_KeyOutput!]! @fdc_generated(from: "OrderReservation", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `PaymentProof` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  paymentProof_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [PaymentProof_Data!]!
+  ): [PaymentProof_KeyOutput!]! @fdc_generated(from: "PaymentProof", purpose: INSERT_MULTIPLE)
   """
   ✨ Insert `PrepaidHistory` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -414,6 +432,15 @@ extend type Mutation {
     data: OrderReservation_Data!
   ): OrderReservation_KeyOutput! @fdc_generated(from: "OrderReservation", purpose: UPSERT_SINGLE)
   """
+  ✨ Insert or update a single `PaymentProof` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PaymentProof`.
+  """
+  paymentProof_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: PaymentProof_Data!
+  ): PaymentProof_KeyOutput! @fdc_generated(from: "PaymentProof", purpose: UPSERT_SINGLE)
+  """
   ✨ Insert or update a single `PrepaidHistory` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PrepaidHistory`.
   """
   prepaidHistory_upsert(
@@ -575,6 +602,15 @@ extend type Mutation {
     """
     data: [OrderReservation_Data!]!
   ): [OrderReservation_KeyOutput!]! @fdc_generated(from: "OrderReservation", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `PaymentProof` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PaymentProof`.
+  """
+  paymentProof_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [PaymentProof_Data!]!
+  ): [PaymentProof_KeyOutput!]! @fdc_generated(from: "PaymentProof", purpose: UPSERT_MULTIPLE)
   """
   ✨ Insert or update `PrepaidHistory` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PrepaidHistory`.
   """
@@ -887,6 +923,30 @@ extend type Mutation {
     """
     data: OrderReservation_Data!
   ): OrderReservation_KeyOutput @fdc_generated(from: "OrderReservation", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `PaymentProof` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `PaymentProof` or `null` if not found.
+  """
+  paymentProof_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PaymentProof_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PaymentProof_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: PaymentProof_Data!
+  ): PaymentProof_KeyOutput @fdc_generated(from: "PaymentProof", purpose: UPDATE_SINGLE)
   """
   ✨ Update a single `PrepaidHistory` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `PrepaidHistory` or `null` if not found.
   """
@@ -1275,6 +1335,25 @@ extend type Mutation {
     data: OrderReservation_Data!
   ): Int! @fdc_generated(from: "OrderReservation", purpose: UPDATE_MULTIPLE)
   """
+  ✨ Update `PaymentProof` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  paymentProof_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: PaymentProof_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: PaymentProof_Data!
+  ): Int! @fdc_generated(from: "PaymentProof", purpose: UPDATE_MULTIPLE)
+  """
   ✨ Update `PrepaidHistory` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
   prepaidHistory_updateMany(
@@ -1617,6 +1696,25 @@ extend type Mutation {
     first: OrderReservation_FirstRow
   ): OrderReservation_KeyOutput @fdc_generated(from: "OrderReservation", purpose: DELETE_SINGLE)
   """
+  ✨ Delete a single `PaymentProof` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  paymentProof_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PaymentProof_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PaymentProof_FirstRow
+  ): PaymentProof_KeyOutput @fdc_generated(from: "PaymentProof", purpose: DELETE_SINGLE)
+  """
   ✨ Delete a single `PrepaidHistory` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
   prepaidHistory_delete(
@@ -1913,6 +2011,20 @@ extend type Mutation {
     """
     all: Boolean = false
   ): Int! @fdc_generated(from: "OrderReservation", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `PaymentProof` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  paymentProof_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: PaymentProof_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentProof", purpose: DELETE_MULTIPLE)
   """
   ✨ Delete `PrepaidHistory` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """
