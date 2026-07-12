@@ -792,14 +792,17 @@ class FirebaseOrderRepository implements OrderRepository {
     final now = DateTime.now();
     for (final order in orders) {
       final String orderId = order.id;
-      final String statusStr = (order is ClientOrder) ? order.status : order.status.name;
-      final String observations = order.observations ?? '';
+      final observations = order.observations ?? '';
 
-      if (statusStr.toUpperCase() == 'COMPLETADO' ||
-          statusStr.toUpperCase() == 'CANCELADO' ||
-          statusStr.toUpperCase() == 'EN_SERVICIO') {
-        continue;
-      }
+      final bool isTerminal = order is ClientOrder
+          ? (order.status.toUpperCase() == 'COMPLETADO' ||
+              order.status.toUpperCase() == 'CANCELADO' ||
+              order.status.toUpperCase() == 'EN_SERVICIO')
+          : (order.status == OrderStatus.COMPLETADO ||
+              order.status == OrderStatus.CANCELADO ||
+              order.status == OrderStatus.EN_SERVICIO);
+
+      if (isTerminal) continue;
 
       final parsed = ParsedObservations.parse(observations);
       if (parsed.scheduleType == 'Programado') {
