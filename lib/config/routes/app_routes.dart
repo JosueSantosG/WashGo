@@ -23,6 +23,8 @@ class AppRoutes {
   static const String paypalCancel = '/paypal-callback/cancel';
   static const String paypalSuccessScheme = '/success';
   static const String paypalCancelScheme = '/cancel';
+  static const String payphoneSuccess = '/payphone-callback/success';
+  static const String payphoneCancel = '/payphone-callback/cancel';
   static const String bankTransferInstructions = '/bank-transfer/instructions';
   static const String proofUpload = '/bank-transfer/upload';
   static const String proofStatus = '/bank-transfer/status';

@@ -143,10 +143,11 @@ class _LoginPageState extends State<LoginPage> {
                               alignment: Alignment.centerLeft,
                               child: Row(
                                 children: [
-                                  const Icon(
-                                    Icons.local_car_wash,
-                                    size: 40,
-                                    color: AppColors.primary,
+                                  Image.asset(
+                                    'assets/images/logo.png',
+                                    height: 40,
+                                    width: 40,
+                                    fit: BoxFit.contain,
                                   ),
                                   const SizedBox(width: 8),
                                   Text(

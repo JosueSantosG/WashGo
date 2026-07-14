@@ -72,6 +72,12 @@ extend type Order {
   """
   serviceId: UUID @fdc_generated(from: "Order.service", purpose: IMPLICIT_REF_FIELD)
 }
+extend type OrderLog {
+  """
+  ✨ Implicit foreign key field based on `OrderLog`.`order`. It must match the value of `Order`.`id`. See `@ref` for how to customize it.
+  """
+  orderId: UUID! @fdc_generated(from: "OrderLog.order", purpose: IMPLICIT_REF_FIELD)
+}
 extend type OrderReservation {
   """
   ✨ Implicit foreign key field based on `OrderReservation`.`business`. It must match the value of `Business`.`id`. See `@ref` for how to customize it.

@@ -1433,6 +1433,40 @@ extend type Notification {
 }
 extend type Order {
   """
+  ✨ List `OrderLog` objects in a one-to-many relationship (where `OrderLog`.`order` is this object).
+  """
+  orderLogs_on_order(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: OrderLog_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [OrderLog_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: OrderLog_Having
+  ): [OrderLog!]! @fdc_generated(from: "OrderLog.order", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   ✨ List `Invoice` objects in a one-to-one relationship (where `Invoice`.`order` is this object).
   """
   invoice_on_order: Invoice @fdc_generated(from: "Invoice.order", purpose: QUERY_SINGLE_ONE_TO_ONE)
@@ -1655,6 +1689,82 @@ extend type Order {
   A generated field that is used for caching results in SDKs.
   """
   _id: ID! @fdc_generated(from: "Order.id", purpose: ENTITY_ID)
+}
+extend type OrderLog {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "OrderLog", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `OrderLog` table.
+  """
+  _count: Int! @fdc_generated(from: "OrderLog.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `OrderLog` table where the `actionType` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  actionType_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "OrderLog.actionType", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `OrderLog` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "OrderLog.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `OrderLog` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "OrderLog.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `OrderLog` table where the `newValue` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  newValue_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "OrderLog.newValue", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `OrderLog` table where the `orderId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  orderId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "OrderLog.orderId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `OrderLog` table where the `previousValue` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  previousValue_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "OrderLog.previousValue", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `createdAt` field in the `OrderLog` table.
+  """
+  createdAt_min: Timestamp @fdc_generated(from: "OrderLog.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `OrderLog` table.
+  """
+  createdAt_max: Timestamp @fdc_generated(from: "OrderLog.createdAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "OrderLog.id", purpose: ENTITY_ID)
 }
 extend type OrderReservation {
   """

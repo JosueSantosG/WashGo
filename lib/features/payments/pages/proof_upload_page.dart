@@ -2,10 +2,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:washgo/config/theme/app_colors.dart';
-import 'package:washgo/config/routes/app_routes.dart';
 import 'package:washgo/features/payments/models/payment_proof_model.dart';
 import 'package:washgo/features/payments/repositories/bank_transfer_repository.dart';
 import 'package:washgo/core/session/booking_intent_manager.dart';
@@ -144,17 +142,7 @@ class _ProofUploadPageState extends State<ProofUploadPage> {
 
       if (!mounted) return;
 
-      // Navigate to status page with the result
-      context.pushReplacementNamed(
-        AppRoutes.proofStatus,
-        extra: {
-          'orderId': widget.orderId,
-          'proofStatus': proof.status.name,
-          'amount': widget.amount,
-          'serviceName': widget.serviceName,
-          'businessName': widget.businessName,
-        },
-      );
+      Navigator.pop(context, proof);
     } catch (e) {
       if (!mounted) return;
       setState(() => _isUploading = false);

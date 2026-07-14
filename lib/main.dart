@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+﻿import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -19,24 +19,28 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Configure Crashlytics
-  try {
-    // Disable Crashlytics collection in debug mode or when running with local emulators
-    final enableCrashlytics = !kDebugMode && !Environment.useEmulators;
-    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(enableCrashlytics);
-    debugPrint('Firebase Crashlytics collection enabled: $enableCrashlytics');
+  if (!kIsWeb) {
+    try {
+      // Disable Crashlytics collection in debug mode or when running with local emulators
+      final enableCrashlytics = !kDebugMode && !Environment.useEmulators;
+      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(enableCrashlytics);
+      debugPrint('Firebase Crashlytics collection enabled: $enableCrashlytics');
 
-    // Pass all uncaught "fatal" errors from the framework to Crashlytics
-    FlutterError.onError = (errorDetails) {
-      FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
-    };
+      // Pass all uncaught "fatal" errors from the framework to Crashlytics
+      FlutterError.onError = (errorDetails) {
+        FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+      };
 
-    // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
-    PlatformDispatcher.instance.onError = (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-      return true;
-    };
-  } catch (e, stack) {
-    debugPrint('Error configuring Firebase Crashlytics: $e\n$stack');
+      // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
+      PlatformDispatcher.instance.onError = (error, stack) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
+    } catch (e, stack) {
+      debugPrint('Error configuring Firebase Crashlytics: $e\n$stack');
+    }
+  } else {
+    debugPrint('Firebase Crashlytics is not supported on Web.');
   }
 
   // Configurar para usar el emulador local de Data Connect y Storage/Auth

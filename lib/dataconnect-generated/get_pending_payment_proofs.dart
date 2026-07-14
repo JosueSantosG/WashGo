@@ -1,18 +1,29 @@
 part of 'example.dart';
 
 class GetPendingPaymentProofsVariablesBuilder {
-  
+  Optional<int> _limit = Optional.optional(nativeFromJson, nativeToJson);
+  Optional<int> _offset = Optional.optional(nativeFromJson, nativeToJson);
+
   final FirebaseDataConnect _dataConnect;
-  GetPendingPaymentProofsVariablesBuilder(this._dataConnect, );
-  Deserializer<GetPendingPaymentProofsData> dataDeserializer = (dynamic json)  => GetPendingPaymentProofsData.fromJson(jsonDecode(json));
-  
-  Future<QueryResult<GetPendingPaymentProofsData, void>> execute() {
-    return ref().execute();
+  GetPendingPaymentProofsVariablesBuilder limit(int? t) {
+   _limit.value = t;
+   return this;
+  }
+  GetPendingPaymentProofsVariablesBuilder offset(int? t) {
+   _offset.value = t;
+   return this;
   }
 
-  QueryRef<GetPendingPaymentProofsData, void> ref() {
-    
-    return _dataConnect.query("GetPendingPaymentProofs", dataDeserializer, emptySerializer, null);
+  GetPendingPaymentProofsVariablesBuilder(this._dataConnect, );
+  Deserializer<GetPendingPaymentProofsData> dataDeserializer = (dynamic json)  => GetPendingPaymentProofsData.fromJson(jsonDecode(json));
+  Serializer<GetPendingPaymentProofsVariables> varsSerializer = (GetPendingPaymentProofsVariables vars) => jsonEncode(vars.toJson());
+  Future<QueryResult<GetPendingPaymentProofsData, GetPendingPaymentProofsVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
+  }
+
+  QueryRef<GetPendingPaymentProofsData, GetPendingPaymentProofsVariables> ref() {
+    GetPendingPaymentProofsVariables vars= GetPendingPaymentProofsVariables(limit: _limit,offset: _offset,);
+    return _dataConnect.query("GetPendingPaymentProofs", dataDeserializer, varsSerializer, vars);
   }
 }
 
@@ -110,6 +121,7 @@ class GetPendingPaymentProofsPaymentProofsOrder {
   final EnumValue<PaymentMethod> paymentMethod;
   final EnumValue<OrderStatus> status;
   final String? serviceName;
+  final String? observations;
   final Timestamp? createdAt;
   final GetPendingPaymentProofsPaymentProofsOrderClient client;
   final GetPendingPaymentProofsPaymentProofsOrderBusiness business;
@@ -121,6 +133,7 @@ class GetPendingPaymentProofsPaymentProofsOrder {
   paymentMethod = paymentMethodDeserializer(json['paymentMethod']),
   status = orderStatusDeserializer(json['status']),
   serviceName = json['serviceName'] == null ? null : nativeFromJson<String>(json['serviceName']),
+  observations = json['observations'] == null ? null : nativeFromJson<String>(json['observations']),
   createdAt = json['createdAt'] == null ? null : Timestamp.fromJson(json['createdAt']),
   client = GetPendingPaymentProofsPaymentProofsOrderClient.fromJson(json['client']),
   business = GetPendingPaymentProofsPaymentProofsOrderBusiness.fromJson(json['business']),
@@ -140,6 +153,7 @@ class GetPendingPaymentProofsPaymentProofsOrder {
     paymentMethod == otherTyped.paymentMethod && 
     status == otherTyped.status && 
     serviceName == otherTyped.serviceName && 
+    observations == otherTyped.observations && 
     createdAt == otherTyped.createdAt && 
     client == otherTyped.client && 
     business == otherTyped.business && 
@@ -147,7 +161,7 @@ class GetPendingPaymentProofsPaymentProofsOrder {
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, price.hashCode, paymentMethod.hashCode, status.hashCode, serviceName.hashCode, createdAt.hashCode, client.hashCode, business.hashCode, orderReservation_on_order.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, price.hashCode, paymentMethod.hashCode, status.hashCode, serviceName.hashCode, observations.hashCode, createdAt.hashCode, client.hashCode, business.hashCode, orderReservation_on_order.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -162,6 +176,9 @@ class GetPendingPaymentProofsPaymentProofsOrder {
     ;
     if (serviceName != null) {
       json['serviceName'] = nativeToJson<String?>(serviceName);
+    }
+    if (observations != null) {
+      json['observations'] = nativeToJson<String?>(observations);
     }
     if (createdAt != null) {
       json['createdAt'] = createdAt!.toJson();
@@ -180,6 +197,7 @@ class GetPendingPaymentProofsPaymentProofsOrder {
     required this.paymentMethod,
     required this.status,
     this.serviceName,
+    this.observations,
     this.createdAt,
     required this.client,
     required this.business,
@@ -388,6 +406,57 @@ class GetPendingPaymentProofsData {
 
   GetPendingPaymentProofsData({
     required this.paymentProofs,
+  });
+}
+
+@immutable
+class GetPendingPaymentProofsVariables {
+  late final Optional<int>limit;
+  late final Optional<int>offset;
+  @Deprecated('fromJson is deprecated for Variable classes as they are no longer required for deserialization.')
+  GetPendingPaymentProofsVariables.fromJson(Map<String, dynamic> json) {
+  
+  
+    limit = Optional.optional(nativeFromJson, nativeToJson);
+    limit.value = json['limit'] == null ? null : nativeFromJson<int>(json['limit']);
+  
+  
+    offset = Optional.optional(nativeFromJson, nativeToJson);
+    offset.value = json['offset'] == null ? null : nativeFromJson<int>(json['offset']);
+  
+  }
+  @override
+  bool operator ==(Object other) {
+    if(identical(this, other)) {
+      return true;
+    }
+    if(other.runtimeType != runtimeType) {
+      return false;
+    }
+
+    final GetPendingPaymentProofsVariables otherTyped = other as GetPendingPaymentProofsVariables;
+    return limit == otherTyped.limit && 
+    offset == otherTyped.offset;
+    
+  }
+  @override
+  int get hashCode => Object.hashAll([limit.hashCode, offset.hashCode]);
+  
+
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> json = {};
+    if(limit.state == OptionalState.set) {
+      json['limit'] = limit.toJson();
+    }
+    if(offset.state == OptionalState.set) {
+      json['offset'] = offset.toJson();
+    }
+    return json;
+  }
+
+  GetPendingPaymentProofsVariables({
+    required this.limit,
+    required this.offset,
   });
 }
 

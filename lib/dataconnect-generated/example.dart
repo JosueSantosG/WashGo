@@ -22,6 +22,8 @@ part 'accept_order.dart';
 
 part 'update_order_status.dart';
 
+part 'update_order_payment_method_and_status.dart';
+
 part 'reschedule_order.dart';
 
 part 'create_service.dart';
@@ -120,6 +122,8 @@ part 'create_system_notification.dart';
 
 part 'complete_order_with_transfer_and_invoice.dart';
 
+part 'create_order_log.dart';
+
 part 'get_users.dart';
 
 part 'get_current_user.dart';
@@ -215,6 +219,16 @@ part 'get_transfer_payment_stats.dart';
 part 'get_expired_pending_transfer_orders.dart';
 
 part 'get_pending_payment_proofs.dart';
+
+part 'get_order_logs.dart';
+
+part 'super_admin_get_completed_orders.dart';
+
+part 'super_admin_get_cancelled_paid_orders.dart';
+
+part 'super_admin_get_cancelled_orders_summary.dart';
+
+part 'get_pending_electronic_orders.dart';
 
 
 
@@ -427,6 +441,8 @@ part 'get_pending_payment_proofs.dart';
     
       TRANSFERENCIA_BANCARIA,
     
+      PAYPHONE,
+    
   }
   
   String paymentMethodSerializer(EnumValue<PaymentMethod> e) {
@@ -443,6 +459,9 @@ part 'get_pending_payment_proofs.dart';
       
       case 'TRANSFERENCIA_BANCARIA':
         return const Known(PaymentMethod.TRANSFERENCIA_BANCARIA);
+      
+      case 'PAYPHONE':
+        return const Known(PaymentMethod.PAYPHONE);
       
       default:
         return Unknown(data);
@@ -639,6 +658,11 @@ class ExampleConnector {
   
   UpdateOrderStatusVariablesBuilder updateOrderStatus ({required String orderId, required OrderStatus status, }) {
     return UpdateOrderStatusVariablesBuilder(dataConnect, orderId: orderId,status: status,);
+  }
+  
+  
+  UpdateOrderPaymentMethodAndStatusVariablesBuilder updateOrderPaymentMethodAndStatus ({required String orderId, required PaymentMethod paymentMethod, required OrderStatus status, }) {
+    return UpdateOrderPaymentMethodAndStatusVariablesBuilder(dataConnect, orderId: orderId,paymentMethod: paymentMethod,status: status,);
   }
   
   
@@ -887,6 +911,11 @@ class ExampleConnector {
   }
   
   
+  CreateOrderLogVariablesBuilder createOrderLog ({required String orderId, required String actionType, }) {
+    return CreateOrderLogVariablesBuilder(dataConnect, orderId: orderId,actionType: actionType,);
+  }
+  
+  
   GetUsersVariablesBuilder getUsers () {
     return GetUsersVariablesBuilder(dataConnect, );
   }
@@ -1126,6 +1155,31 @@ class ExampleConnector {
     return GetPendingPaymentProofsVariablesBuilder(dataConnect, );
   }
   
+  
+  GetOrderLogsVariablesBuilder getOrderLogs ({required String orderId, }) {
+    return GetOrderLogsVariablesBuilder(dataConnect, orderId: orderId,);
+  }
+  
+  
+  SuperAdminGetCompletedOrdersVariablesBuilder superAdminGetCompletedOrders ({required Timestamp startOfMonth, required Timestamp endOfMonth, }) {
+    return SuperAdminGetCompletedOrdersVariablesBuilder(dataConnect, startOfMonth: startOfMonth,endOfMonth: endOfMonth,);
+  }
+  
+  
+  SuperAdminGetCancelledPaidOrdersVariablesBuilder superAdminGetCancelledPaidOrders ({required Timestamp startOfMonth, required Timestamp endOfMonth, }) {
+    return SuperAdminGetCancelledPaidOrdersVariablesBuilder(dataConnect, startOfMonth: startOfMonth,endOfMonth: endOfMonth,);
+  }
+  
+  
+  SuperAdminGetCancelledOrdersSummaryVariablesBuilder superAdminGetCancelledOrdersSummary ({required Timestamp startOfMonth, required Timestamp endOfMonth, }) {
+    return SuperAdminGetCancelledOrdersSummaryVariablesBuilder(dataConnect, startOfMonth: startOfMonth,endOfMonth: endOfMonth,);
+  }
+  
+  
+  GetPendingElectronicOrdersVariablesBuilder getPendingElectronicOrders () {
+    return GetPendingElectronicOrdersVariablesBuilder(dataConnect, );
+  }
+  
 
   static ConnectorConfig connectorConfig = ConnectorConfig(
     'us-central1',
@@ -1135,9 +1189,18 @@ class ExampleConnector {
 
   ExampleConnector({required this.dataConnect});
   static ExampleConnector get instance {
+    
+    CacheSettings cacheSettings = CacheSettings(
+      maxAge: Duration(milliseconds:5000),
+      storage: CacheStorage.memory,
+    );
+    
     return ExampleConnector(
         dataConnect: FirebaseDataConnect.instanceFor(
             connectorConfig: connectorConfig,
+            
+            cacheSettings: cacheSettings,
+            
             sdkType: CallerSDKType.generated));
   }
 

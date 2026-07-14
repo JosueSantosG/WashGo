@@ -6,36 +6,27 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:go_router/go_router.dart';
 import 'package:washgo/config/theme/app_colors.dart';
 import 'package:washgo/core/session/session_manager.dart';
-import 'package:washgo/features/dashboard/client/models/vehicle_item.dart';
 import 'package:washgo/features/auth/models/washgo_user.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class ProfileTab extends StatelessWidget {
   final User? user;
   final WashGoUser? washGoUser;
-  final bool loadingVehicles;
-  final List<VehicleItem> myVehicles;
   final bool isRolesLoading;
   final List<String> userRoles;
-  final VoidCallback onAddVehicle;
-  final Function(VehicleItem) onEditVehicle;
-  final Function(VehicleItem) onDeleteVehicle;
   final Future<void> Function({required String name, required String phone}) onUpdateProfile;
   final Future<void> Function() onDeleteAccount;
+  final bool hasActiveReservations;
 
   const ProfileTab({
     super.key,
     required this.user,
     required this.washGoUser,
-    required this.loadingVehicles,
-    required this.myVehicles,
     required this.isRolesLoading,
     required this.userRoles,
-    required this.onAddVehicle,
-    required this.onEditVehicle,
-    required this.onDeleteVehicle,
     required this.onUpdateProfile,
     required this.onDeleteAccount,
+    required this.hasActiveReservations,
   });
 
   @override
@@ -186,161 +177,6 @@ class ProfileTab extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 24),
-
-          // Section: Registered Vehicles
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'MIS VEHÍCULOS',
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: AppColors.outline,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              TextButton.icon(
-                onPressed: onAddVehicle,
-                icon: const Icon(Icons.add, size: 16, color: AppColors.primary),
-                label: Text(
-                  'Agregar',
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // Vehicles Carousel
-          if (loadingVehicles)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: CircularProgressIndicator(color: AppColors.primary),
-              ),
-            )
-          else if (myVehicles.isEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade100),
-              ),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.directions_car_outlined,
-                    color: AppColors.outline.withValues(alpha: 0.5),
-                    size: 40,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'No tienes vehículos registrados',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.onSurfaceVariant,
-                    ),
-                  ),
-                  Text(
-                    'Agrega tu vehículo para agilizar tus reservas.',
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      color: AppColors.outline,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            )
-          else
-            SizedBox(
-              height: 100,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: myVehicles.length,
-                itemBuilder: (context, idx) {
-                  final car = myVehicles[idx];
-                  return Container(
-                    width: 200,
-                    margin: const EdgeInsets.only(right: 12, bottom: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.02),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                      border: Border.all(color: Colors.grey.shade100),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(car.icon, color: AppColors.primary, size: 28),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                car.categoryDisplayName,
-                                style: GoogleFonts.inter(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                  color: AppColors.onSurface,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                car.plate.isEmpty
-                                    ? 'Sin placa'
-                                    : 'Placa: ${car.plate}',
-                                style: GoogleFonts.inter(
-                                  fontSize: 10,
-                                  color: AppColors.outline,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.edit_outlined,
-                            size: 18,
-                            color: AppColors.primary,
-                          ),
-                          onPressed: () => onEditVehicle(car),
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.delete_outline,
-                            size: 18,
-                            color: AppColors.error,
-                          ),
-                          onPressed: () => onDeleteVehicle(car),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
           const SizedBox(height: 24),
 
 
@@ -787,6 +623,57 @@ class ProfileTab extends StatelessWidget {
   }
 
   void _showDeleteAccountDialog(BuildContext context) {
+    if (hasActiveReservations) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Row(
+              children: [
+                const Icon(Icons.info_outline, color: Colors.orange, size: 28),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Reservas Activas',
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              'No puedes eliminar tu cuenta porque tienes reservas activas en curso.\n\n'
+              'Por favor, espera a que tus reservas se completen o cancélalas para poder continuar.',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: AppColors.onSurface,
+                height: 1.5,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Entendido',
+                  style: GoogleFonts.outfit(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
     bool isConfirmed = false;
     bool isDeleting = false;
 
@@ -826,7 +713,6 @@ class ProfileTab extends StatelessWidget {
                       'Al proceder, ocurrirá lo siguiente:\n'
                       '• Se eliminará permanentemente tu usuario de nuestros servidores.\n'
                       '• Perderás el acceso a tu historial de reservas y facturas.\n'
-                      '• Se borrarán todos tus vehículos registrados.\n'
                       '• Tu cuenta de autenticación será completamente eliminada.',
                       style: GoogleFonts.inter(
                         fontSize: 14,
@@ -980,7 +866,7 @@ class ProfileTab extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Inicia sesión para gestionar tus vehículos, actualizar tu información y acceder a configuraciones avanzadas.',
+              'Inicia sesión para actualizar tu información y acceder a configuraciones avanzadas.',
               style: GoogleFonts.inter(
                 fontSize: 15,
                 color: AppColors.onSurfaceVariant,

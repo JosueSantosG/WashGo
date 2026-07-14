@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_data_connect/firebase_data_connect.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:washgo/config/theme/app_colors.dart';
 import 'package:washgo/config/routes/app_routes.dart';
@@ -31,6 +32,17 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
   final Map<String, bool> _expandedBusinessIds = {};
   final Map<String, bool> _expandedServiceIds = {};
 
+  // Accounting State Variables
+  bool _isLoadingAccounting = false;
+  String _accountingError = '';
+  double _transferTotal = 0.0;
+  int _transferCount = 0;
+  double _electronicTotal = 0.0;
+  int _electronicCount = 0;
+  double _grandTotal = 0.0;
+  double _cancelledTotal = 0.0;
+  int _cancelledCount = 0;
+
   @override
   void dispose() {
     for (final controller in _priceControllers.values) {
@@ -43,6 +55,7 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
   void initState() {
     super.initState();
     _loadBusinesses();
+    _loadAccountingData();
   }
 
   Future<void> _loadBusinesses() async {
@@ -282,7 +295,9 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'WashGo SuperAdmin',
+              _selectedIndex == 2
+                  ? 'Contabilidad Global'
+                  : 'WashGo SuperAdmin',
               style: GoogleFonts.outfit(
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
@@ -290,20 +305,28 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
               ),
             ),
             Text(
-              'Panel de Control Global',
+              _selectedIndex == 2
+                  ? 'Resumen de ingresos del mes'
+                  : 'Panel de Control Global',
               style: GoogleFonts.inter(fontSize: 12, color: AppColors.outline),
             ),
           ],
         ),
         backgroundColor: AppColors.surface,
         elevation: 1,
-        shadowColor: Colors.black.withValues(alpha: 0.05),
+        shadowColor: Colors.black.withOpacity(0.05),
         actions: [
           if (_selectedIndex == 0)
             IconButton(
               tooltip: 'Recargar locales',
               icon: const Icon(Icons.refresh, color: AppColors.primary),
               onPressed: _isLoading ? null : _loadBusinesses,
+            ),
+          if (_selectedIndex == 2)
+            IconButton(
+              tooltip: 'Recargar contabilidad',
+              icon: const Icon(Icons.refresh, color: AppColors.primary),
+              onPressed: _isLoadingAccounting ? null : _loadAccountingData,
             ),
           const SizedBox(width: 8),
           TextButton.icon(
@@ -430,12 +453,14 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
                   ))
           : _selectedIndex == 1
               ? const AdminPaymentReviewPage()
-              : const AppRatingsTab(),
+              : _selectedIndex == 2
+                  ? _buildAccountingTab()
+                  : const AppRatingsTab(),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
+              color: Colors.black.withOpacity(0.06),
               blurRadius: 16,
               offset: const Offset(0, -4),
             ),
@@ -452,6 +477,9 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
               setState(() {
                 _selectedIndex = index;
               });
+              if (index == 2) {
+                _loadAccountingData();
+              }
             },
             type: BottomNavigationBarType.fixed,
             backgroundColor: Colors.white,
@@ -483,6 +511,14 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
                   color: AppColors.primary,
                 ),
                 label: 'Comprobantes',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.calculate_outlined),
+                activeIcon: Icon(
+                  Icons.calculate_rounded,
+                  color: AppColors.primary,
+                ),
+                label: 'Contabilidad',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.analytics_outlined),
@@ -1796,5 +1832,503 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
         });
       }
     }
+  }
+
+  Future<void> _loadAccountingData() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingAccounting = true;
+      _accountingError = '';
+    });
+
+    try {
+      final now = DateTime.now();
+      final startOfMonthLocal = DateTime(now.year, now.month, 1, 0, 0, 0);
+      final nextMonth = now.month == 12 ? 1 : now.month + 1;
+      final nextYear = now.month == 12 ? now.year + 1 : now.year;
+      final endOfMonthLocal = DateTime(nextYear, nextMonth, 1, 0, 0, 0).subtract(const Duration(milliseconds: 1));
+
+      final startTimestamp = Timestamp.fromJson(startOfMonthLocal.toUtc().toIso8601String());
+      final endTimestamp = Timestamp.fromJson(endOfMonthLocal.toUtc().toIso8601String());
+
+      // Fetch completed orders
+      final completedFuture = ExampleConnector.instance
+          .superAdminGetCompletedOrders(
+            startOfMonth: startTimestamp,
+            endOfMonth: endTimestamp,
+          )
+          .execute();
+
+      // Fetch approved payment proofs on cancelled orders
+      final cancelledPaidFuture = ExampleConnector.instance
+          .superAdminGetCancelledPaidOrders(
+            startOfMonth: startTimestamp,
+            endOfMonth: endTimestamp,
+          )
+          .execute();
+
+      // Fetch cancelled summary
+      final cancelledSummaryFuture = ExampleConnector.instance
+          .superAdminGetCancelledOrdersSummary(
+            startOfMonth: startTimestamp,
+            endOfMonth: endTimestamp,
+          )
+          .execute();
+
+      final results = await Future.wait([
+        completedFuture,
+        cancelledPaidFuture,
+        cancelledSummaryFuture,
+      ]);
+
+      final completedRes = results[0] as QueryResult<SuperAdminGetCompletedOrdersData, SuperAdminGetCompletedOrdersVariables>;
+      final cancelledPaidRes = results[1] as QueryResult<SuperAdminGetCancelledPaidOrdersData, SuperAdminGetCancelledPaidOrdersVariables>;
+      final cancelledSummaryRes = results[2] as QueryResult<SuperAdminGetCancelledOrdersSummaryData, SuperAdminGetCancelledOrdersSummaryVariables>;
+
+      double tempTransferTotal = 0.0;
+      int tempTransferCount = 0;
+      double tempElectronicTotal = 0.0;
+      int tempElectronicCount = 0;
+
+      // 1. Process completed orders
+      for (final order in completedRes.data.orders) {
+        final method = order.paymentMethod is Known<PaymentMethod>
+            ? (order.paymentMethod as Known<PaymentMethod>).value
+            : null;
+
+        if (method == PaymentMethod.CASH) {
+          continue; // Ignore cash
+        } else if (method == PaymentMethod.TRANSFERENCIA_BANCARIA) {
+          tempTransferTotal += order.price;
+          tempTransferCount++;
+        } else if (method == PaymentMethod.PAYPAL || method == PaymentMethod.PAYPHONE) {
+          tempElectronicTotal += order.price;
+          tempElectronicCount++;
+        }
+      }
+
+      // 2. Process cancelled paid orders (specifically bank transfers with approved proof of payment)
+      for (final proof in cancelledPaidRes.data.paymentProofs) {
+        final order = proof.order;
+        final method = order.paymentMethod is Known<PaymentMethod>
+            ? (order.paymentMethod as Known<PaymentMethod>).value
+            : null;
+
+        if (method == PaymentMethod.TRANSFERENCIA_BANCARIA) {
+          tempTransferTotal += proof.declaredAmount;
+          tempTransferCount++;
+        }
+      }
+
+      // 3. Process electronic cancelled orders (PayPal/Payphone with price > 0 are treated as paid)
+      for (final order in cancelledSummaryRes.data.orders) {
+        final method = order.paymentMethod is Known<PaymentMethod>
+            ? (order.paymentMethod as Known<PaymentMethod>).value
+            : null;
+
+        if (method == PaymentMethod.PAYPAL || method == PaymentMethod.PAYPHONE) {
+          if (order.price > 0) {
+            tempElectronicTotal += order.price;
+            tempElectronicCount++;
+          }
+        }
+      }
+
+      // 4. Calculate Cancelled Summary
+      double tempCancelledTotal = 0.0;
+      int tempCancelledCount = cancelledSummaryRes.data.orders.length;
+      for (final order in cancelledSummaryRes.data.orders) {
+        tempCancelledTotal += order.price;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _transferTotal = tempTransferTotal;
+        _transferCount = tempTransferCount;
+        _electronicTotal = tempElectronicTotal;
+        _electronicCount = tempElectronicCount;
+        _grandTotal = tempTransferTotal + tempElectronicTotal;
+        _cancelledTotal = tempCancelledTotal;
+        _cancelledCount = tempCancelledCount;
+        _isLoadingAccounting = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _accountingError = 'Error al cargar contabilidad: $e';
+        _isLoadingAccounting = false;
+      });
+    }
+  }
+
+  String _getCurrentMonthYearSpan() {
+    final now = DateTime.now();
+    final months = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    return '${months[now.month - 1]} ${now.year}';
+  }
+
+  Widget _buildAccountingTab() {
+    if (_isLoadingAccounting) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: AppColors.primary),
+            SizedBox(height: 16),
+            Text(
+              'Cargando contabilidad...',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_accountingError.isNotEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline_rounded,
+                color: AppColors.error,
+                size: 48,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                _accountingError,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: _loadAccountingData,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final monthYear = _getCurrentMonthYearSpan();
+
+    return RefreshIndicator(
+      onRefresh: _loadAccountingData,
+      color: AppColors.primary,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.calendar_today_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Período Contable',
+                          style: GoogleFonts.inter(
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          monthYear,
+                          style: GoogleFonts.outfit(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    'Mes en Curso',
+                    style: GoogleFonts.inter(
+                      color: AppColors.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppColors.primary, AppColors.primaryDark],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'GRAN TOTAL DEL MES',
+                        style: GoogleFonts.inter(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.account_balance_wallet_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '\$${_grandTotal.toStringAsFixed(2)}',
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${_transferCount + _electronicCount} servicios completados o pagados',
+                    style: GoogleFonts.inter(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _buildBreakdownCard(
+                    title: 'Transf. Bancaria',
+                    amount: _transferTotal,
+                    count: _transferCount,
+                    icon: Icons.account_balance_rounded,
+                    color: AppColors.info,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildBreakdownCard(
+                    title: 'PayPal / Tarjeta',
+                    amount: _electronicTotal,
+                    count: _electronicCount,
+                    icon: Icons.credit_card_rounded,
+                    color: AppColors.success,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50.withOpacity(0.8),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.red.shade100,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade100,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.cancel_presentation_rounded,
+                      color: Colors.red.shade700,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'ÓRDENES CANCELADAS DEL MES',
+                          style: GoogleFonts.inter(
+                            color: Colors.red.shade800,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '\$${_cancelledTotal.toStringAsFixed(2)}',
+                          style: GoogleFonts.outfit(
+                            color: Colors.red.shade900,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '$_cancelledCount servicios cancelados (informativo)',
+                          style: GoogleFonts.inter(
+                            color: Colors.red.shade700,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBreakdownCard({
+    required String title,
+    required double amount,
+    required int count,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 20,
+                ),
+              ),
+              Text(
+                '$count serv.',
+                style: GoogleFonts.inter(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '\$${amount.toStringAsFixed(2)}',
+            style: GoogleFonts.outfit(
+              color: AppColors.textPrimary,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

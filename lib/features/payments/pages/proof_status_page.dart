@@ -86,8 +86,11 @@ class _ProofStatusPageState extends State<ProofStatusPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Color(0xFF1E293B), size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Color(0xFF1E293B),
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
@@ -96,25 +99,25 @@ class _ProofStatusPageState extends State<ProofStatusPage> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? _buildErrorView()
-                : RefreshIndicator(
-                    onRefresh: _loadProofDetails,
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          _buildStatusHeader(),
-                          const SizedBox(height: 24),
-                          _buildInfoCard(),
-                          const SizedBox(height: 16),
-                          _buildTimeline(),
-                          const SizedBox(height: 24),
-                          _buildActions(),
-                        ],
-                      ),
-                    ),
+            ? _buildErrorView()
+            : RefreshIndicator(
+                onRefresh: _loadProofDetails,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      _buildStatusHeader(),
+                      const SizedBox(height: 24),
+                      _buildInfoCard(),
+                      const SizedBox(height: 16),
+                      _buildTimeline(),
+                      const SizedBox(height: 24),
+                      _buildActions(),
+                    ],
                   ),
+                ),
+              ),
       ),
     );
   }
@@ -126,8 +129,11 @@ class _ProofStatusPageState extends State<ProofStatusPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline_rounded,
-                size: 64, color: AppColors.error),
+            const Icon(
+              Icons.error_outline_rounded,
+              size: 64,
+              color: AppColors.error,
+            ),
             const SizedBox(height: 16),
             Text(
               'Error al cargar información',
@@ -167,19 +173,22 @@ class _ProofStatusPageState extends State<ProofStatusPage> {
         icon = Icons.access_time_rounded;
         color = const Color(0xFFD97706);
         title = 'Comprobante recibido';
-        subtitle = 'Estamos revisando tu pago. Este proceso puede tomar hasta 24 horas.';
+        subtitle =
+            'Estamos revisando tu pago. Este proceso puede tomar entre 5 a 10 minutos.';
         break;
       case PaymentProofStatus.APPROVED:
         icon = Icons.check_circle_rounded;
         color = const Color(0xFF16A34A);
         title = 'Pago verificado';
-        subtitle = 'Tu transferencia ha sido confirmada. Tu servicio está siendo procesado.';
+        subtitle =
+            'Tu transferencia ha sido confirmada. Tu servicio está siendo procesado.';
         break;
       case PaymentProofStatus.REJECTED:
         icon = Icons.cancel_rounded;
         color = const Color(0xFFDC2626);
         title = 'Pago rechazado';
-        subtitle = _proofDetails?.rejectionReason ??
+        subtitle =
+            _proofDetails?.rejectionReason ??
             'El comprobante no pudo ser verificado. Por favor sube un nuevo comprobante.';
         break;
     }
@@ -190,9 +199,7 @@ class _ProofStatusPageState extends State<ProofStatusPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
@@ -254,15 +261,6 @@ class _ProofStatusPageState extends State<ProofStatusPage> {
             const Divider(height: 20),
             _buildInfoRow('Referencia', _proofDetails!.referenceNumber!),
           ],
-          if (_proofDetails?.accountType != null) ...[
-            const Divider(height: 20),
-            _buildInfoRow(
-              'Banco',
-              _proofDetails!.accountType == PaymentAccountType.GUAYAQUIL
-                  ? 'Banco Guayaquil'
-                  : 'Banco Pichincha',
-            ),
-          ],
         ],
       ),
     );
@@ -311,33 +309,43 @@ class _ProofStatusPageState extends State<ProofStatusPage> {
             ),
           ),
           const SizedBox(height: 16),
-          _buildTimelineStep('Comprobante enviado', true,
-              isFirst: true,
-              status: _currentStatus == PaymentProofStatus.PENDING
-                  ? 'active'
-                  : 'completed'),
+          _buildTimelineStep(
+            'Comprobante enviado',
+            true,
+            isFirst: true,
+            status: _currentStatus == PaymentProofStatus.PENDING
+                ? 'active'
+                : 'completed',
+          ),
           _buildTimelineStep(
             'Pago verificado',
             _currentStatus == PaymentProofStatus.APPROVED,
             status: _currentStatus == PaymentProofStatus.APPROVED
                 ? 'completed'
                 : _currentStatus == PaymentProofStatus.REJECTED
-                    ? 'failed'
-                    : 'pending',
+                ? 'failed'
+                : 'pending',
           ),
-          _buildTimelineStep('Servicio procesado',
-              _currentStatus == PaymentProofStatus.APPROVED,
-              status: _currentStatus == PaymentProofStatus.APPROVED
-                  ? 'completed'
-                  : 'pending',
-              isLast: true),
+          _buildTimelineStep(
+            'Servicio procesado',
+            _currentStatus == PaymentProofStatus.APPROVED,
+            status: _currentStatus == PaymentProofStatus.APPROVED
+                ? 'completed'
+                : 'pending',
+            isLast: true,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildTimelineStep(String label, bool isActive,
-      {bool isFirst = false, bool isLast = false, String status = 'pending'}) {
+  Widget _buildTimelineStep(
+    String label,
+    bool isActive, {
+    bool isFirst = false,
+    bool isLast = false,
+    String status = 'pending',
+  }) {
     Color getColor() {
       switch (status) {
         case 'completed':
@@ -401,7 +409,9 @@ class _ProofStatusPageState extends State<ProofStatusPage> {
                 color: status == 'pending'
                     ? const Color(0xFF94A3B8)
                     : const Color(0xFF1E293B),
-                fontWeight: status != 'pending' ? FontWeight.w600 : FontWeight.normal,
+                fontWeight: status != 'pending'
+                    ? FontWeight.w600
+                    : FontWeight.normal,
               ),
             ),
           ),
@@ -416,8 +426,8 @@ class _ProofStatusPageState extends State<ProofStatusPage> {
         width: double.infinity,
         height: 52,
         child: ElevatedButton.icon(
-          onPressed: () {
-            context.pushReplacementNamed(
+          onPressed: () async {
+            final result = await context.pushNamed(
               AppRoutes.proofUpload,
               extra: {
                 'orderId': widget.orderId,
@@ -426,6 +436,9 @@ class _ProofStatusPageState extends State<ProofStatusPage> {
                 'businessName': widget.businessName,
               },
             );
+            if (result != null && mounted) {
+              _loadProofDetails();
+            }
           },
           icon: const Icon(Icons.refresh_rounded, size: 20),
           label: Text(
@@ -449,7 +462,13 @@ class _ProofStatusPageState extends State<ProofStatusPage> {
         width: double.infinity,
         height: 52,
         child: OutlinedButton.icon(
-          onPressed: () => context.go('/reservas'),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              context.go('/reservas');
+            }
+          },
           icon: const Icon(Icons.list_alt_rounded, size: 20),
           label: Text(
             'Ir a mis reservas',
@@ -477,7 +496,10 @@ class _ProofStatusPageState extends State<ProofStatusPage> {
             icon: const Icon(Icons.refresh_rounded, size: 20),
             label: Text(
               'Actualizar estado',
-              style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold),
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.primary,
@@ -490,7 +512,13 @@ class _ProofStatusPageState extends State<ProofStatusPage> {
         ),
         const SizedBox(height: 12),
         TextButton(
-          onPressed: () => context.go('/reservas'),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              context.go('/reservas');
+            }
+          },
           child: Text(
             'Ir a mis reservas',
             style: GoogleFonts.inter(

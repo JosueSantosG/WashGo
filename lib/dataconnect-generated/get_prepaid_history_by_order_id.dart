@@ -7,8 +7,8 @@ class GetPrepaidHistoryByOrderIdVariablesBuilder {
   GetPrepaidHistoryByOrderIdVariablesBuilder(this._dataConnect, {required  this.orderId,});
   Deserializer<GetPrepaidHistoryByOrderIdData> dataDeserializer = (dynamic json)  => GetPrepaidHistoryByOrderIdData.fromJson(jsonDecode(json));
   Serializer<GetPrepaidHistoryByOrderIdVariables> varsSerializer = (GetPrepaidHistoryByOrderIdVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetPrepaidHistoryByOrderIdData, GetPrepaidHistoryByOrderIdVariables>> execute() {
-    return ref().execute();
+  Future<QueryResult<GetPrepaidHistoryByOrderIdData, GetPrepaidHistoryByOrderIdVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<GetPrepaidHistoryByOrderIdData, GetPrepaidHistoryByOrderIdVariables> ref() {
@@ -20,11 +20,15 @@ class GetPrepaidHistoryByOrderIdVariablesBuilder {
 @immutable
 class GetPrepaidHistoryByOrderIdPrepaidHistories {
   final String id;
-  final GetPrepaidHistoryByOrderIdPrepaidHistoriesBusiness business;
+  final String serviceName;
+  final double costoConsumido;
+  final double saldoResultante;
   GetPrepaidHistoryByOrderIdPrepaidHistories.fromJson(dynamic json):
   
   id = nativeFromJson<String>(json['id']),
-  business = GetPrepaidHistoryByOrderIdPrepaidHistoriesBusiness.fromJson(json['business']);
+  serviceName = nativeFromJson<String>(json['serviceName']),
+  costoConsumido = nativeFromJson<double>(json['costoConsumido']),
+  saldoResultante = nativeFromJson<double>(json['saldoResultante']);
   @override
   bool operator ==(Object other) {
     if(identical(this, other)) {
@@ -36,91 +40,29 @@ class GetPrepaidHistoryByOrderIdPrepaidHistories {
 
     final GetPrepaidHistoryByOrderIdPrepaidHistories otherTyped = other as GetPrepaidHistoryByOrderIdPrepaidHistories;
     return id == otherTyped.id && 
-    business == otherTyped.business;
+    serviceName == otherTyped.serviceName && 
+    costoConsumido == otherTyped.costoConsumido && 
+    saldoResultante == otherTyped.saldoResultante;
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, business.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, serviceName.hashCode, costoConsumido.hashCode, saldoResultante.hashCode]);
   
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = {};
     json['id'] = nativeToJson<String>(id);
-    json['business'] = business.toJson();
+    json['serviceName'] = nativeToJson<String>(serviceName);
+    json['costoConsumido'] = nativeToJson<double>(costoConsumido);
+    json['saldoResultante'] = nativeToJson<double>(saldoResultante);
     return json;
   }
 
   GetPrepaidHistoryByOrderIdPrepaidHistories({
     required this.id,
-    required this.business,
-  });
-}
-
-@immutable
-class GetPrepaidHistoryByOrderIdPrepaidHistoriesBusiness {
-  final GetPrepaidHistoryByOrderIdPrepaidHistoriesBusinessOwner owner;
-  GetPrepaidHistoryByOrderIdPrepaidHistoriesBusiness.fromJson(dynamic json):
-  
-  owner = GetPrepaidHistoryByOrderIdPrepaidHistoriesBusinessOwner.fromJson(json['owner']);
-  @override
-  bool operator ==(Object other) {
-    if(identical(this, other)) {
-      return true;
-    }
-    if(other.runtimeType != runtimeType) {
-      return false;
-    }
-
-    final GetPrepaidHistoryByOrderIdPrepaidHistoriesBusiness otherTyped = other as GetPrepaidHistoryByOrderIdPrepaidHistoriesBusiness;
-    return owner == otherTyped.owner;
-    
-  }
-  @override
-  int get hashCode => owner.hashCode;
-  
-
-  Map<String, dynamic> toJson() {
-    Map<String, dynamic> json = {};
-    json['owner'] = owner.toJson();
-    return json;
-  }
-
-  GetPrepaidHistoryByOrderIdPrepaidHistoriesBusiness({
-    required this.owner,
-  });
-}
-
-@immutable
-class GetPrepaidHistoryByOrderIdPrepaidHistoriesBusinessOwner {
-  final String id;
-  GetPrepaidHistoryByOrderIdPrepaidHistoriesBusinessOwner.fromJson(dynamic json):
-  
-  id = nativeFromJson<String>(json['id']);
-  @override
-  bool operator ==(Object other) {
-    if(identical(this, other)) {
-      return true;
-    }
-    if(other.runtimeType != runtimeType) {
-      return false;
-    }
-
-    final GetPrepaidHistoryByOrderIdPrepaidHistoriesBusinessOwner otherTyped = other as GetPrepaidHistoryByOrderIdPrepaidHistoriesBusinessOwner;
-    return id == otherTyped.id;
-    
-  }
-  @override
-  int get hashCode => id.hashCode;
-  
-
-  Map<String, dynamic> toJson() {
-    Map<String, dynamic> json = {};
-    json['id'] = nativeToJson<String>(id);
-    return json;
-  }
-
-  GetPrepaidHistoryByOrderIdPrepaidHistoriesBusinessOwner({
-    required this.id,
+    required this.serviceName,
+    required this.costoConsumido,
+    required this.saldoResultante,
   });
 }
 

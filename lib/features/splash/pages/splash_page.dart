@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:washgo/config/routes/app_routes.dart';
 
-
 class WindshieldElement {
   final double xRatio;
   final double yRatio;
@@ -29,7 +28,8 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateMixin {
+class _SplashPageState extends State<SplashPage>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _wiperAnimation;
 
@@ -96,12 +96,14 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
         x = x < 0.5 ? x - 0.2 : x + 0.2;
         y = y < 0.5 ? y - 0.2 : y + 0.2;
       }
-      _dirtPatches.add(WindshieldElement(
-        xRatio: x.clamp(0.0, 1.0),
-        yRatio: y.clamp(0.0, 1.0),
-        radius: 30.0 + random.nextDouble() * 40.0,
-        opacity: 0.02 + random.nextDouble() * 0.04, // reduced opacity
-      ));
+      _dirtPatches.add(
+        WindshieldElement(
+          xRatio: x.clamp(0.0, 1.0),
+          yRatio: y.clamp(0.0, 1.0),
+          radius: 30.0 + random.nextDouble() * 40.0,
+          opacity: 0.02 + random.nextDouble() * 0.04, // reduced opacity
+        ),
+      );
     }
 
     // 2. Generate foam bubbles (fewer bubbles, avoiding the center)
@@ -113,25 +115,29 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
       if (x > 0.3 && x < 0.7 && y > 0.3 && y < 0.7) {
         continue;
       }
-      _foamBubbles.add(WindshieldElement(
-        xRatio: x,
-        yRatio: y,
-        radius: 6.0 + random.nextDouble() * 16.0, // slightly smaller bubbles
-        opacity: 0.15 + random.nextDouble() * 0.3,
-        type: random.nextDouble(),
-      ));
+      _foamBubbles.add(
+        WindshieldElement(
+          xRatio: x,
+          yRatio: y,
+          radius: 6.0 + random.nextDouble() * 16.0, // slightly smaller bubbles
+          opacity: 0.15 + random.nextDouble() * 0.3,
+          type: random.nextDouble(),
+        ),
+      );
       bubbleCount++;
     }
 
     // 3. Generate water droplets (fewer and more subtle)
     for (int i = 0; i < 40; i++) {
-      _waterDroplets.add(WindshieldElement(
-        xRatio: random.nextDouble(),
-        yRatio: random.nextDouble(),
-        radius: 1.5 + random.nextDouble() * 3.5,
-        opacity: 0.2 + random.nextDouble() * 0.35,
-        type: random.nextDouble(),
-      ));
+      _waterDroplets.add(
+        WindshieldElement(
+          xRatio: random.nextDouble(),
+          yRatio: random.nextDouble(),
+          radius: 1.5 + random.nextDouble() * 3.5,
+          opacity: 0.2 + random.nextDouble() * 0.35,
+          type: random.nextDouble(),
+        ),
+      );
     }
   }
 
@@ -167,14 +173,14 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
         },
         child: Stack(
           children: [
-            // Background: Premium Dark to Vibrant Blue Gradient
+            // Background: Clean Soft White-to-SkyBlue/Mint Gradient representing cleanliness and water
             Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color(0xFF0F172A), // Slate 900 (deep dark blue)
-                    Color(0xFF1E3A8A), // Blue 900
-                    Color(0xFF2563EB), // Blue 600 (corporate blue)
+                    Color(0xFFECFDF5), // Soft hygienic mint green
+                    Color(0xFFF8FAFC), // Pure clean slate white
+                    Color(0xFFE0F2FE), // Soft water-sky blue
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -188,57 +194,62 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Visual icon/logo for WashGo
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.25),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF2563EB).withValues(alpha: 0.3),
-                          blurRadius: 20,
-                          spreadRadius: 5,
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.directions_car_filled_rounded,
-                      size: 64,
-                      color: Colors.white,
-                    ),
+                  Image.asset(
+                    'assets/images/logo.png',
+                    width: 140,
+                    height: 140,
+                    fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 24),
                   // WashGo Title
-                  const Text(
-                    'WashGo',
+                  const Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'Wash',
+                          style: TextStyle(
+                            color: Color.fromARGB(
+                              255,
+                              5,
+                              44,
+                              107,
+                            ), // Deep Blue (#0A3D91)
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'Go',
+                          style: TextStyle(
+                            color: Color(0xFF007BFF), // Bright Blue (#007BFF)
+                          ),
+                        ),
+                      ],
+                    ),
                     style: TextStyle(
                       fontSize: 52,
                       fontWeight: FontWeight.w900,
-                      color: Colors.white,
                       letterSpacing: 3.0,
                     ),
                   ),
                   const SizedBox(height: 12),
                   // Slogan
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.06),
+                      color: const Color(0xFF0EA5E9).withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.1),
+                        color: const Color(0xFF0EA5E9).withValues(alpha: 0.15),
                       ),
                     ),
                     child: const Text(
                       'Tu lavado de autos a un clic',
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF0369A1), // Deep Sky Blue
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -253,11 +264,15 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                 animation: _wiperAnimation,
                 builder: (context, child) {
                   return ClipPath(
-                    clipper: UncleanAreaClipper(progress: _wiperAnimation.value),
+                    clipper: UncleanAreaClipper(
+                      progress: _wiperAnimation.value,
+                    ),
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
                       child: Container(
-                        color: Colors.white.withValues(alpha: 0.03), // steam haze color (more transparent)
+                        color: const Color(0xFF94A3B8).withValues(
+                          alpha: 0.18,
+                        ), // soft slate grey haze for light mode contrast
                       ),
                     ),
                   );
@@ -310,7 +325,9 @@ class WindshieldWiperPainter extends CustomPainter {
     final Offset pivotPoint = Offset(width / 2, height + 80);
 
     // R_max should cover the top corners of the screen
-    final double rMax = math.sqrt((width / 2) * (width / 2) + (height + 80) * (height + 80)) + 60;
+    final double rMax =
+        math.sqrt((width / 2) * (width / 2) + (height + 80) * (height + 80)) +
+        60;
     const double rMin = 110.0;
 
     // Wiper angles in radians (from left to right)
@@ -367,35 +384,47 @@ class WindshieldWiperPainter extends CustomPainter {
   }
 
   void _drawWindshieldDirt(Canvas canvas, Size size) {
-    // 1. Draw soft dirt patches (grey/brownish smudges)
+    // 1. Draw soft dirt patches (grey road film smudges for clean style)
     final Paint dirtPaint = Paint()..style = PaintingStyle.fill;
     for (var patch in dirtPatches) {
-      final center = Offset(patch.xRatio * size.width, patch.yRatio * size.height);
-      dirtPaint.color = const Color(0xFF5D4037).withValues(alpha: patch.opacity); // brown tint
+      final center = Offset(
+        patch.xRatio * size.width,
+        patch.yRatio * size.height,
+      );
+      dirtPaint.color = const Color(
+        0xFF64748B,
+      ).withValues(alpha: patch.opacity * 1.5); // slate grey smudges
       canvas.drawCircle(center, patch.radius, dirtPaint);
     }
 
-    // 2. Draw condensation/steam haze (glass look)
+    // 2. Draw condensation/steam haze (slate/grey glass look for light mode contrast)
     final Paint hazePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.05) // reduced opacity so text/background shine through
+      ..color = const Color(0xFF94A3B8).withValues(alpha: 0.12)
       ..style = PaintingStyle.fill;
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), hazePaint);
 
     // 3. Draw foam bubbles
     for (var bubble in foamBubbles) {
-      final center = Offset(bubble.xRatio * size.width, bubble.yRatio * size.height);
+      final center = Offset(
+        bubble.xRatio * size.width,
+        bubble.yRatio * size.height,
+      );
 
-      // Draw bubble fill (soft white)
+      // Draw bubble fill (soft sky blue/cyan fill for soap bubble contrast)
       final Paint fillPaint = Paint()
-        ..color = Colors.white.withValues(alpha: bubble.opacity * 0.45)
+        ..color = const Color(
+          0xFFBAE6FD,
+        ).withValues(alpha: bubble.opacity * 0.4)
         ..style = PaintingStyle.fill;
       canvas.drawCircle(center, bubble.radius, fillPaint);
 
-      // Draw bubble outline (crisp white)
+      // Draw bubble outline (more distinct blue outline)
       final Paint outlinePaint = Paint()
-        ..color = Colors.white.withValues(alpha: bubble.opacity * 0.85)
+        ..color = const Color(
+          0xFF0284C7,
+        ).withValues(alpha: bubble.opacity * 0.7)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0;
+        ..strokeWidth = 1.2;
       canvas.drawCircle(center, bubble.radius, outlinePaint);
 
       // Draw a small inner reflection highlight inside the bubble
@@ -403,7 +432,10 @@ class WindshieldWiperPainter extends CustomPainter {
         ..color = Colors.white.withValues(alpha: bubble.opacity * 0.9)
         ..style = PaintingStyle.fill;
       canvas.drawCircle(
-        Offset(center.dx - bubble.radius * 0.4, center.dy - bubble.radius * 0.4),
+        Offset(
+          center.dx - bubble.radius * 0.4,
+          center.dy - bubble.radius * 0.4,
+        ),
         bubble.radius * 0.15,
         highlightPaint,
       );
@@ -411,11 +443,14 @@ class WindshieldWiperPainter extends CustomPainter {
 
     // 4. Draw water droplets
     for (var drop in waterDroplets) {
-      final center = Offset(drop.xRatio * size.width, drop.yRatio * size.height);
+      final center = Offset(
+        drop.xRatio * size.width,
+        drop.yRatio * size.height,
+      );
 
-      // Drop Shadow (bottom-right):
+      // Drop Shadow (bottom-right): darker for better visibility in light mode
       final Paint shadowPaint = Paint()
-        ..color = Colors.black.withValues(alpha: drop.opacity * 0.2)
+        ..color = Colors.black.withValues(alpha: drop.opacity * 0.35)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5;
       canvas.drawArc(
@@ -436,9 +471,9 @@ class WindshieldWiperPainter extends CustomPainter {
         highlightPaint,
       );
 
-      // Highlight outline (top-left arc):
+      // Highlight outline (top-left arc): cyan-blue refraction tint for light mode
       final Paint whiteArcPaint = Paint()
-        ..color = Colors.white.withValues(alpha: drop.opacity * 0.5)
+        ..color = const Color(0xFF0EA5E9).withValues(alpha: drop.opacity * 0.6)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.0;
       canvas.drawArc(
@@ -480,7 +515,8 @@ class WindshieldWiperPainter extends CustomPainter {
       final double noise = (math.sin(r * 0.05 + progress * 20) * 3.0);
       final double waveR = r;
       final double waveA = waveAngle + (noise / r);
-      final double bubbleRadius = 3.0 + (math.sin(r * 0.1) + 1.0) * 3.0; // 3 to 9
+      final double bubbleRadius =
+          3.0 + (math.sin(r * 0.1) + 1.0) * 3.0; // 3 to 9
 
       final waveOffset = Offset(
         pivot.dx + waveR * math.cos(waveA),
@@ -505,7 +541,8 @@ class WindshieldWiperPainter extends CustomPainter {
 
     // 3. Draw wiper blade (rubber block)
     final Paint bladePaint = Paint()
-      ..color = const Color(0xFF1E293B) // slate dark
+      ..color =
+          const Color(0xFF1E293B) // slate dark
       ..strokeWidth = 7.0
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
@@ -513,7 +550,8 @@ class WindshieldWiperPainter extends CustomPainter {
 
     // 4. Draw metal backing of the blade (thin line right next to it or on it)
     final Paint metalBackingPaint = Paint()
-      ..color = const Color(0xFF475569) // slate grey
+      ..color =
+          const Color(0xFF475569) // slate grey
       ..strokeWidth = 3.0
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
@@ -533,7 +571,8 @@ class WindshieldWiperPainter extends CustomPainter {
     );
 
     final Paint armPaint = Paint()
-      ..color = const Color(0xFF0F172A) // deep black-blue
+      ..color =
+          const Color(0xFF0F172A) // deep black-blue
       ..strokeWidth = 5.0
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
@@ -575,7 +614,9 @@ class UncleanAreaClipper extends CustomClipper<Path> {
     final double width = size.width;
     final double height = size.height;
     final Offset pivotPoint = Offset(width / 2, height + 80);
-    final double rMax = math.sqrt((width / 2) * (width / 2) + (height + 80) * (height + 80)) + 60;
+    final double rMax =
+        math.sqrt((width / 2) * (width / 2) + (height + 80) * (height + 80)) +
+        60;
     const double rMin = 110.0;
     const double thetaStart = -155 * math.pi / 180;
     const double thetaEnd = -25 * math.pi / 180;

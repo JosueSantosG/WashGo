@@ -49,6 +49,7 @@ const PaymentMethod = {
   PAYPAL: "PAYPAL",
   CASH: "CASH",
   TRANSFERENCIA_BANCARIA: "TRANSFERENCIA_BANCARIA",
+  PAYPHONE: "PAYPHONE",
 }
 exports.PaymentMethod = PaymentMethod;
 
@@ -142,6 +143,13 @@ function updateOrderStatus(dcOrVarsOrOptions, varsOrOptions, options) {
   return dcInstance.executeMutation('UpdateOrderStatus', inputVars, inputOpts);
 }
 exports.updateOrderStatus = updateOrderStatus;
+
+function updateOrderPaymentMethodAndStatus(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeMutation('UpdateOrderPaymentMethodAndStatus', inputVars, inputOpts);
+}
+exports.updateOrderPaymentMethodAndStatus = updateOrderPaymentMethodAndStatus;
 
 function rescheduleOrder(dcOrVarsOrOptions, varsOrOptions, options) {
   const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
@@ -486,6 +494,13 @@ function completeOrderWithTransferAndInvoice(dcOrVarsOrOptions, varsOrOptions, o
 }
 exports.completeOrderWithTransferAndInvoice = completeOrderWithTransferAndInvoice;
 
+function createOrderLog(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeMutation('CreateOrderLog', inputVars, inputOpts);
+}
+exports.createOrderLog = createOrderLog;
+
 function getUsers(dcOrOptions, options) {
   const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
   dcInstance.useGen(true);
@@ -815,10 +830,45 @@ function getExpiredPendingTransferOrders(dcOrOptions, options) {
 }
 exports.getExpiredPendingTransferOrders = getExpiredPendingTransferOrders;
 
-function getPendingPaymentProofs(dcOrOptions, options) {
-  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
+function getPendingPaymentProofs(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, false);
   dcInstance.useGen(true);
-  return dcInstance.executeQuery('GetPendingPaymentProofs', undefined, inputOpts);
+  return dcInstance.executeQuery('GetPendingPaymentProofs', inputVars, inputOpts);
 }
 exports.getPendingPaymentProofs = getPendingPaymentProofs;
+
+function getOrderLogs(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetOrderLogs', inputVars, inputOpts);
+}
+exports.getOrderLogs = getOrderLogs;
+
+function superAdminGetCompletedOrders(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('SuperAdminGetCompletedOrders', inputVars, inputOpts);
+}
+exports.superAdminGetCompletedOrders = superAdminGetCompletedOrders;
+
+function superAdminGetCancelledPaidOrders(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('SuperAdminGetCancelledPaidOrders', inputVars, inputOpts);
+}
+exports.superAdminGetCancelledPaidOrders = superAdminGetCancelledPaidOrders;
+
+function superAdminGetCancelledOrdersSummary(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('SuperAdminGetCancelledOrdersSummary', inputVars, inputOpts);
+}
+exports.superAdminGetCancelledOrdersSummary = superAdminGetCancelledOrdersSummary;
+
+function getPendingElectronicOrders(dcOrOptions, options) {
+  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetPendingElectronicOrders', undefined, inputOpts);
+}
+exports.getPendingElectronicOrders = getPendingElectronicOrders;
 

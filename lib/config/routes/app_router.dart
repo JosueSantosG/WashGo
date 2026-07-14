@@ -33,6 +33,8 @@ import 'package:washgo/features/splash/pages/splash_page.dart';
 import 'package:washgo/features/auth/pages/policy_viewer_page.dart';
 import 'package:washgo/features/payments/pages/paypal_success_page.dart';
 import 'package:washgo/features/payments/pages/paypal_cancel_page.dart';
+import 'package:washgo/features/payments/pages/payphone_success_page.dart';
+import 'package:washgo/features/payments/pages/payphone_cancel_page.dart';
 import 'package:washgo/features/payments/pages/bank_transfer_instructions_page.dart';
 import 'package:washgo/features/payments/pages/proof_upload_page.dart';
 import 'package:washgo/features/payments/pages/proof_status_page.dart';
@@ -249,6 +251,25 @@ GoRouter _createAppRouter() {
     GoRoute(
       path: AppRoutes.paypalCancelScheme,
       builder: (context, state) => const PaypalCancelPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.payphoneSuccess,
+      builder: (context, state) {
+        final transactionId = state.uri.queryParameters['transactionId'] ?? state.uri.queryParameters['id'];
+        final orderId = state.uri.queryParameters['clientTransactionId'] ??
+            state.uri.queryParameters['orderId'] ??
+            state.uri.queryParameters['clientTxId'];
+        return PayphoneSuccessPage(transactionId: transactionId, orderId: orderId);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.payphoneCancel,
+      builder: (context, state) {
+        final orderId = state.uri.queryParameters['clientTransactionId'] ??
+            state.uri.queryParameters['orderId'] ??
+            state.uri.queryParameters['clientTxId'];
+        return PayphoneCancelPage(orderId: orderId);
+      },
     ),
     GoRoute(
       name: AppRoutes.bankTransferInstructions,

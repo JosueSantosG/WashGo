@@ -6,8 +6,8 @@ class GetClientOrdersVariablesBuilder {
   GetClientOrdersVariablesBuilder(this._dataConnect, );
   Deserializer<GetClientOrdersData> dataDeserializer = (dynamic json)  => GetClientOrdersData.fromJson(jsonDecode(json));
   
-  Future<QueryResult<GetClientOrdersData, void>> execute() {
-    return ref().execute();
+  Future<QueryResult<GetClientOrdersData, void>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<GetClientOrdersData, void> ref() {
@@ -27,6 +27,7 @@ class GetClientOrdersOrders {
   final EnumValue<PaymentMethod> paymentMethod;
   final EnumValue<OrderStatus> status;
   final String? invoiceUrl;
+  final Timestamp? createdAt;
   final GetClientOrdersOrdersBusiness business;
   final GetClientOrdersOrdersEmployee? employee;
   final GetClientOrdersOrdersReviewOnOrder? review_on_order;
@@ -42,6 +43,7 @@ class GetClientOrdersOrders {
   paymentMethod = paymentMethodDeserializer(json['paymentMethod']),
   status = orderStatusDeserializer(json['status']),
   invoiceUrl = json['invoiceUrl'] == null ? null : nativeFromJson<String>(json['invoiceUrl']),
+  createdAt = json['createdAt'] == null ? null : Timestamp.fromJson(json['createdAt']),
   business = GetClientOrdersOrdersBusiness.fromJson(json['business']),
   employee = json['employee'] == null ? null : GetClientOrdersOrdersEmployee.fromJson(json['employee']),
   review_on_order = json['review_on_order'] == null ? null : GetClientOrdersOrdersReviewOnOrder.fromJson(json['review_on_order']),
@@ -65,6 +67,7 @@ class GetClientOrdersOrders {
     paymentMethod == otherTyped.paymentMethod && 
     status == otherTyped.status && 
     invoiceUrl == otherTyped.invoiceUrl && 
+    createdAt == otherTyped.createdAt && 
     business == otherTyped.business && 
     employee == otherTyped.employee && 
     review_on_order == otherTyped.review_on_order && 
@@ -72,7 +75,7 @@ class GetClientOrdersOrders {
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, price.hashCode, costo.hashCode, serviceName.hashCode, observations.hashCode, type.hashCode, paymentMethod.hashCode, status.hashCode, invoiceUrl.hashCode, business.hashCode, employee.hashCode, review_on_order.hashCode, paymentProof_on_order.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, price.hashCode, costo.hashCode, serviceName.hashCode, observations.hashCode, type.hashCode, paymentMethod.hashCode, status.hashCode, invoiceUrl.hashCode, createdAt.hashCode, business.hashCode, employee.hashCode, review_on_order.hashCode, paymentProof_on_order.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -98,6 +101,9 @@ class GetClientOrdersOrders {
     if (invoiceUrl != null) {
       json['invoiceUrl'] = nativeToJson<String?>(invoiceUrl);
     }
+    if (createdAt != null) {
+      json['createdAt'] = createdAt!.toJson();
+    }
     json['business'] = business.toJson();
     if (employee != null) {
       json['employee'] = employee!.toJson();
@@ -121,6 +127,7 @@ class GetClientOrdersOrders {
     required this.paymentMethod,
     required this.status,
     this.invoiceUrl,
+    this.createdAt,
     required this.business,
     this.employee,
     this.review_on_order,

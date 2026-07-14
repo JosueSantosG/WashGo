@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -20,6 +21,14 @@ class PdfGenerator {
   }) async {
     final pdf = pw.Document();
 
+    pw.MemoryImage? logoImage;
+    try {
+      final logoBytes = await rootBundle.load('assets/images/logo.png');
+      logoImage = pw.MemoryImage(logoBytes.buffer.asUint8List());
+    } catch (e) {
+      // Gracefully handle case where rootBundle is not loaded (like in tests)
+    }
+
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
@@ -32,26 +41,35 @@ class PdfGenerator {
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Column(
+                  pw.Row(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text(
-                        businessName,
-                        style: pw.TextStyle(
-                          fontSize: 24,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.blue900,
-                        ),
-                      ),
-                      pw.SizedBox(height: 4),
-                      pw.Text(
-                        description.isNotEmpty ? description : 'Servicio de Lavandería Express',
-                        style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
-                      ),
-                      pw.SizedBox(height: 4),
-                      pw.Text(
-                        'R.U.C.: $ruc',
-                        style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                      if (logoImage != null) ...[
+                        pw.Image(logoImage, width: 45, height: 45),
+                        pw.SizedBox(width: 12),
+                      ],
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text(
+                            businessName,
+                            style: pw.TextStyle(
+                              fontSize: 18,
+                              fontWeight: pw.FontWeight.bold,
+                              color: PdfColors.blue900,
+                            ),
+                          ),
+                          pw.SizedBox(height: 4),
+                          pw.Text(
+                            description.isNotEmpty ? description : 'Servicio de Lavandería Express',
+                            style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+                          ),
+                          pw.SizedBox(height: 4),
+                          pw.Text(
+                            'R.U.C.: $ruc',
+                            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                          ),
+                        ],
                       ),
                     ],
                   ),

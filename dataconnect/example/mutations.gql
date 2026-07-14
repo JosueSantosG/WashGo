@@ -171,6 +171,27 @@ mutation UpdateOrderStatus($orderId: UUID!, $status: OrderStatus!) @auth(level: 
   })
 }
 
+mutation UpdateOrderPaymentMethodAndStatus($orderId: UUID!, $paymentMethod: PaymentMethod!, $status: OrderStatus!) @auth(level: USER) @transaction {
+  query @redact {
+    order(key: { id: $orderId }) {
+      clientId
+      employeeId
+      business {
+        owner {
+          id
+        }
+      }
+    }
+    user(key: { id_expr: "auth.uid" }) @check(expr: "this != null", message: "Usuario no registrado") {
+      roles @check(expr: "this.exists(r, r == 'SUPER_ADMIN') || (response.query.order != null && (response.query.order.clientId == auth.uid || response.query.order.employeeId == auth.uid || response.query.order.business.owner.id == auth.uid))", message: "No tienes permiso para modificar esta orden")
+    }
+  }
+  order_update(key: { id: $orderId }, data: {
+    paymentMethod: $paymentMethod
+    status: $status
+  })
+}
+
 mutation RescheduleOrder($orderId: UUID!, $observations: String!) @auth(level: USER) @transaction {
   query @redact {
     order(key: { id: $orderId }) {
@@ -986,23 +1007,6 @@ mutation CompleteOrderWithPrepaidAndUpdateMetric(
   $metricCantidad: Int!,
   $metricTotalConsumido: Float!
 ) @auth(level: NO_ACCESS) @transaction {
-  query @redact {
-    order(key: { id: $orderId }) {
-      employeeId
-      business {
-        id
-        owner {
-          id
-        }
-      }
-    }
-    user(key: { id_expr: "auth.uid" }) @check(expr: "this != null", message: "Usuario no registrado") {
-      roles @check(
-        expr: "this.exists(r, r == 'SUPER_ADMIN') || (response.query.order != null && (response.query.order.employeeId == auth.uid || response.query.order.business.owner.id == auth.uid))",
-        message: "No tienes permiso para completar esta orden"
-      )
-    }
-  }
   
   order_update(key: { id: $orderId }, data: {
     status: COMPLETADO,
@@ -1075,23 +1079,6 @@ mutation CompleteOrderWithPrepaidAndCreateMetric(
   $metricId: UUID!,
   $metricCostoUnitario: Float!
 ) @auth(level: NO_ACCESS) @transaction {
-  query @redact {
-    order(key: { id: $orderId }) {
-      employeeId
-      business {
-        id
-        owner {
-          id
-        }
-      }
-    }
-    user(key: { id_expr: "auth.uid" }) @check(expr: "this != null", message: "Usuario no registrado") {
-      roles @check(
-        expr: "this.exists(r, r == 'SUPER_ADMIN') || (response.query.order != null && (response.query.order.employeeId == auth.uid || response.query.order.business.owner.id == auth.uid))",
-        message: "No tienes permiso para completar esta orden"
-      )
-    }
-  }
   
   order_update(key: { id: $orderId }, data: {
     status: COMPLETADO,
@@ -1154,21 +1141,6 @@ mutation ConsumePrepaidAndUpdateMetric(
   $metricCantidad: Int!,
   $metricTotalConsumido: Float!
 ) @auth(level: NO_ACCESS) @transaction {
-  query @redact {
-    business(key: { id: $businessId }) {
-      owner {
-        id
-      }
-    }
-    businessEmployees(where: {
-      businessId: { eq: $businessId }
-      employeeId: { eq_expr: "auth.uid" }
-      status: { eq: ACTIVE }
-    }) @check(expr: "(response.query.business != null && response.query.business.owner != null && response.query.business.owner.id == auth.uid) || this.size() > 0", message: "No autorizado") {
-      id
-    }
-  }
-  
   business_update(key: { id: $businessId }, data: {
     saldoPrepagoInicial: $saldoPrepagoInicial,
     saldoPrepagoConsumido: $saldoPrepagoConsumido
@@ -1206,21 +1178,6 @@ mutation ConsumePrepaidAndCreateMetric(
   $metricId: UUID!,
   $metricCostoUnitario: Float!
 ) @auth(level: NO_ACCESS) @transaction {
-  query @redact {
-    business(key: { id: $businessId }) {
-      owner {
-        id
-      }
-    }
-    businessEmployees(where: {
-      businessId: { eq: $businessId }
-      employeeId: { eq_expr: "auth.uid" }
-      status: { eq: ACTIVE }
-    }) @check(expr: "(response.query.business != null && response.query.business.owner != null && response.query.business.owner.id == auth.uid) || this.size() > 0", message: "No autorizado") {
-      id
-    }
-  }
-
   business_update(key: { id: $businessId }, data: {
     saldoPrepagoInicial: $saldoPrepagoInicial,
     saldoPrepagoConsumido: $saldoPrepagoConsumido
@@ -1391,4 +1348,36 @@ mutation CompleteOrderWithTransferAndInvoice(
     pdfUrl: $invoiceUrl
   })
 }
+
+mutation CreateOrderLog(
+  $orderId: UUID!,
+  $actionType: String!,
+  $previousValue: String,
+  $newValue: String
+) @auth(level: USER) @transaction {
+  query @redact {
+    order(key: { id: $orderId }) {
+      clientId
+      employeeId
+      business {
+        owner {
+          id
+        }
+      }
+    }
+    user(key: { id_expr: "auth.uid" }) @check(expr: "this != null", message: "Usuario no registrado") {
+      roles @check(
+        expr: "this.exists(r, r == 'SUPER_ADMIN') || (response.query.order != null && (response.query.order.clientId == auth.uid || response.query.order.employeeId == auth.uid || response.query.order.business.owner.id == auth.uid))",
+        message: "No tienes permiso para registrar en el historial de esta orden"
+      )
+    }
+  }
+  orderLog_insert(data: {
+    orderId: $orderId,
+    actionType: $actionType,
+    previousValue: $previousValue,
+    newValue: $newValue
+  })
+}
+
 

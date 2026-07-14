@@ -7,8 +7,8 @@ class GetInvoiceDetailsForUrlVariablesBuilder {
   GetInvoiceDetailsForUrlVariablesBuilder(this._dataConnect, {required  this.invoiceId,});
   Deserializer<GetInvoiceDetailsForUrlData> dataDeserializer = (dynamic json)  => GetInvoiceDetailsForUrlData.fromJson(jsonDecode(json));
   Serializer<GetInvoiceDetailsForUrlVariables> varsSerializer = (GetInvoiceDetailsForUrlVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetInvoiceDetailsForUrlData, GetInvoiceDetailsForUrlVariables>> execute() {
-    return ref().execute();
+  Future<QueryResult<GetInvoiceDetailsForUrlData, GetInvoiceDetailsForUrlVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<GetInvoiceDetailsForUrlData, GetInvoiceDetailsForUrlVariables> ref() {

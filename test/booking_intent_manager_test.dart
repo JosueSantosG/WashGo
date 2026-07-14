@@ -9,7 +9,6 @@ BookingIntent createTestIntent({
   String serviceId = 'service-1',
   String serviceName = 'Lavado Completo',
   String vehicleCategory = 'Mediano',
-  String? plate = 'ABC-1234',
   bool scheduleNow = true,
   DateTime? selectedDate,
   DateTime? selectedTimeSlot,
@@ -21,11 +20,10 @@ BookingIntent createTestIntent({
     serviceId: serviceId,
     serviceName: serviceName,
     vehicleCategory: vehicleCategory,
-    plate: plate,
     scheduleNow: scheduleNow,
     selectedDate: selectedDate ?? DateTime(2026, 7, 8),
     selectedTimeSlot: selectedTimeSlot,
-    savedAt: savedAt ?? DateTime(2026, 7, 8, 10, 0, 0),
+    savedAt: savedAt ?? DateTime.now(),
   );
 }
 
@@ -50,7 +48,6 @@ void main() {
       expect(restored.serviceId, equals('service-1'));
       expect(restored.serviceName, equals('Lavado Completo'));
       expect(restored.vehicleCategory, equals('Mediano'));
-      expect(restored.plate, equals('ABC-1234'));
       expect(restored.scheduleNow, isTrue);
       expect(restored.selectedDate, equals(DateTime(2026, 7, 8)));
       expect(restored.selectedTimeSlot, equals(DateTime(2026, 7, 8, 14, 30)));
@@ -59,7 +56,6 @@ void main() {
 
     test('null optional fields survive round-trip', () {
       final original = createTestIntent(
-        plate: null,
         selectedTimeSlot: null,
         selectedDate: DateTime(2026, 7, 8),
         savedAt: DateTime(2026, 7, 8, 10, 0, 0),
@@ -68,7 +64,6 @@ void main() {
       final json = original.toJson();
       final restored = BookingIntent.fromJson(json);
 
-      expect(restored.plate, isNull);
       expect(restored.selectedTimeSlot, isNull);
       expect(restored.laundryId, equals('test-laundry-1'));
       expect(restored.scheduleNow, isTrue);
@@ -94,7 +89,6 @@ void main() {
       expect(loaded.serviceId, equals('service-1'));
       expect(loaded.serviceName, equals('Lavado Completo'));
       expect(loaded.vehicleCategory, equals('Mediano'));
-      expect(loaded.plate, equals('ABC-1234'));
       expect(loaded.scheduleNow, isTrue);
     });
 

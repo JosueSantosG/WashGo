@@ -379,9 +379,17 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
     final double discount = 0.0;
     final double tax = price - subtotal;
     final double total = price;
-    final PaymentMethod pmVal = (paymentMethod.toUpperCase() == 'PAYPAL')
-        ? PaymentMethod.PAYPAL
-        : PaymentMethod.CASH;
+    final String pmUpper = paymentMethod.toUpperCase();
+    final PaymentMethod pmVal;
+    if (pmUpper == 'PAYPAL') {
+      pmVal = PaymentMethod.PAYPAL;
+    } else if (pmUpper == 'PAYPHONE') {
+      pmVal = PaymentMethod.PAYPHONE;
+    } else if (pmUpper == 'TRANSFERENCIA_BANCARIA' || pmUpper == 'TRANSFERENCIA') {
+      pmVal = PaymentMethod.TRANSFERENCIA_BANCARIA;
+    } else {
+      pmVal = PaymentMethod.CASH;
+    }
 
     final String invoiceId = orderId;
 

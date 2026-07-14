@@ -68,10 +68,11 @@ class BankTransferRepository {
     return proofs;
   }
 
-  Future<List<PaymentProofModel>> getAllPendingProofs() async {
-    final result = await dc.ExampleConnector.instance
-        .getPendingPaymentProofs()
-        .execute();
+  Future<List<PaymentProofModel>> getAllPendingProofs({int? limit, int? offset}) async {
+    var builder = dc.ExampleConnector.instance.getPendingPaymentProofs();
+    if (limit != null) builder = builder.limit(limit);
+    if (offset != null) builder = builder.offset(offset);
+    final result = await builder.execute();
 
     final proofs = <PaymentProofModel>[];
     for (final proof in result.data.paymentProofs) {
@@ -120,12 +121,76 @@ class BankTransferRepository {
         clientName: order.client.nombreCompleto,
         clientPhone: order.client.telefono,
         serviceName: order.serviceName,
-        scheduledAt: reservation?.scheduledAt.toDateTime(),
+        scheduledAt: reservation?.scheduledAt.toDateTime() ?? order.createdAt?.toDateTime(),
         serviceDurationMinutos: reservation?.serviceDurationMinutos,
       ));
     }
     return proofs;
   }
+
+  Stream<List<PaymentProofModel>> watchAllPendingProofs({int? limit, int? offset}) {
+    var builder = dc.ExampleConnector.instance.getPendingPaymentProofs();
+    if (limit != null) builder = builder.limit(limit);
+    if (offset != null) builder = builder.offset(offset);
+    return builder
+        .ref()
+        .subscribe()
+        .map((result) {
+      final proofs = <PaymentProofModel>[];
+      for (final proof in result.data.paymentProofs) {
+        PaymentProofStatus status;
+        final rawStatus = proof.status is dc.Known<dc.PaymentProofStatus>
+            ? (proof.status as dc.Known<dc.PaymentProofStatus>).value
+            : dc.PaymentProofStatus.PENDING;
+        switch (rawStatus) {
+          case dc.PaymentProofStatus.APPROVED:
+            status = PaymentProofStatus.APPROVED;
+            break;
+          case dc.PaymentProofStatus.REJECTED:
+            status = PaymentProofStatus.REJECTED;
+            break;
+          case dc.PaymentProofStatus.PENDING:
+            status = PaymentProofStatus.PENDING;
+            break;
+        }
+
+        PaymentAccountType accountType;
+        final rawAccountType = proof.paymentAccountType is dc.Known<dc.PaymentAccountType>
+            ? (proof.paymentAccountType as dc.Known<dc.PaymentAccountType>).value
+            : dc.PaymentAccountType.GUAYAQUIL;
+        switch (rawAccountType) {
+          case dc.PaymentAccountType.PICHINCHA:
+            accountType = PaymentAccountType.PICHINCHA;
+            break;
+          case dc.PaymentAccountType.GUAYAQUIL:
+            accountType = PaymentAccountType.GUAYAQUIL;
+            break;
+        }
+
+        final order = proof.order;
+        final reservation = order.orderReservation_on_order;
+
+        proofs.add(PaymentProofModel(
+          orderId: order.id,
+          imageUrl: proof.imageUrl,
+          status: status,
+          accountType: accountType,
+          referenceNumber: proof.referenceNumber,
+          amount: proof.declaredAmount,
+          createdAt: proof.createdAt.toDateTime(),
+          rejectionReason: proof.observations,
+          businessName: order.business.nombre,
+          clientName: order.client.nombreCompleto,
+          clientPhone: order.client.telefono,
+          serviceName: order.serviceName,
+          scheduledAt: reservation?.scheduledAt.toDateTime() ?? order.createdAt?.toDateTime(),
+          serviceDurationMinutos: reservation?.serviceDurationMinutos,
+        ));
+      }
+      return proofs;
+    });
+  }
+
 
 
   Future<PaymentProofModel> uploadProof({

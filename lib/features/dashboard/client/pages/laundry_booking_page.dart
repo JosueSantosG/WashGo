@@ -3,10 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:washgo/config/theme/app_colors.dart';
 import 'package:washgo/features/dashboard/client/models/laundry_item.dart';
-import 'package:washgo/features/dashboard/client/models/vehicle_item.dart';
 import 'package:washgo/features/dashboard/client/widgets/payment_selection_page.dart';
-import 'package:washgo/features/profile/repositories/vehicle_repository.dart';
-import 'package:washgo/features/profile/repositories/firebase_vehicle_repository.dart';
 import 'package:washgo/features/laundries/repositories/laundry_repository.dart';
 import 'package:washgo/features/laundries/repositories/firebase_laundry_repository.dart';
 import 'package:washgo/features/orders/repositories/order_repository.dart';
@@ -42,18 +39,13 @@ class LaundryBookingPage extends StatefulWidget {
 }
 
 class _LaundryBookingPageState extends State<LaundryBookingPage> {
-  final VehicleRepository _vehicleRepository = FirebaseVehicleRepository();
   final LaundryRepository _laundryRepository = FirebaseLaundryRepository();
   final OrderRepository _orderRepository = FirebaseOrderRepository();
   final ReservationConfigRepository _reservationConfigRepository = FirebaseReservationConfigRepository();
   final ReservationMetadataRepository _reservationMetadataRepository = FirebaseReservationMetadataRepository();
 
-  List<VehicleItem> _myVehicles = [];
-  bool _loadingVehicles = true;
-
-  bool get _isGuest => FirebaseAuth.instance.currentUser == null;
-  String _guestVehicleCategory = 'Pequeño';
-  static const List<Map<String, String>> _guestCategories = [
+  String _selectedVehicleCategory = 'Pequeño';
+  static const List<Map<String, String>> _vehicleCategories = [
     {'value': 'Moto', 'label': 'Moto'},
     {'value': 'Pequeño', 'label': 'Pequeño / Hatchback'},
     {'value': 'Mediano', 'label': 'Mediano / Sedan'},
@@ -63,7 +55,6 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
   Future<List<Map<String, dynamic>>>? _servicesFuture;
   Map<String, dynamic>? _selectedService;
 
-  VehicleItem? _selectedVehicle;
   bool _scheduleNow = true;
   DateTime? _selectedScheduleDateTime;
   String? _waitTime;
@@ -75,11 +66,12 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
   DateTime _selectedDate = DateTime.now();
   DateTime? _selectedTimeSlot;
 
+  bool get _isGuest => FirebaseAuth.instance.currentUser == null;
+
   @override
   void initState() {
     super.initState();
     _servicesFuture = _loadServicesForBusiness(widget.laundry.id, widget.laundry.price);
-    _fetchMyVehicles();
     _loadWaitTime();
     _loadReservationData();
     _scheduleNow = _isValidBusinessDateTime(widget.laundry, DateTime.now());
@@ -90,18 +82,14 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
     final intent = BookingIntentManager.instance.getIntent();
     if (intent != null && intent.laundryId == widget.laundry.id) {
       // Restore vehicle category selection (for guests and post-login fallback)
-      _guestVehicleCategory = intent.vehicleCategory;
+      _selectedVehicleCategory = intent.vehicleCategory;
       // Restore schedule preference
       _scheduleNow = intent.scheduleNow;
       if (!intent.scheduleNow) {
         _selectedDate = intent.selectedDate;
         _selectedTimeSlot = intent.selectedTimeSlot;
       }
-      // For guests the restoration is complete; for logged-in users,
-      // _autoSelectVehicleFromIntent will run after vehicles load
-      if (_isGuest) {
-        BookingIntentManager.instance.clearIntent();
-      }
+      BookingIntentManager.instance.clearIntent();
     }
   }
 
@@ -128,68 +116,6 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
     double basePrice,
   ) async {
     return _laundryRepository.getBusinessServices(businessId, basePrice);
-  }
-
-  Future<void> _fetchMyVehicles() async {
-    if (_isGuest) {
-      if (mounted) {
-        setState(() {
-          _myVehicles = [];
-          _loadingVehicles = false;
-        });
-        _autoSelectVehicleFromIntent();
-      }
-      return;
-    }
-    try {
-      final vehicles = await _vehicleRepository.getMyVehicles();
-      if (mounted) {
-        setState(() {
-          _myVehicles = vehicles;
-          if (_myVehicles.isNotEmpty) {
-            _selectedVehicle = _myVehicles.first;
-          } else {
-            _selectedVehicle = null;
-          }
-          _loadingVehicles = false;
-        });
-        // After loading vehicles, try to auto-select one matching the intent
-        _autoSelectVehicleFromIntent();
-      }
-    } catch (e) {
-      debugPrint('Error fetching vehicles: $e');
-      if (mounted) {
-        setState(() {
-          _loadingVehicles = false;
-        });
-        _autoSelectVehicleFromIntent();
-      }
-    }
-  }
-
-  void _autoSelectVehicleFromIntent() {
-    final intent = BookingIntentManager.instance.getIntent();
-    if (intent == null) return;
-
-    // For logged-in users, try to match the intent category to a real vehicle
-    if (!_isGuest && _myVehicles.isNotEmpty) {
-      final normalized = intent.vehicleCategory.trim().toLowerCase();
-      for (final v in _myVehicles) {
-        final vCat = v.type.trim().toLowerCase();
-        if (vCat == normalized ||
-            (normalized == 'pequeño' && (vCat == 'pequeño' || vCat == 'hatchback')) ||
-            (normalized == 'mediano' && (vCat == 'mediano' || vCat == 'sedan')) ||
-            (normalized == 'grande' && (vCat == 'grande' || vCat == 'suv'))) {
-          setState(() {
-            _selectedVehicle = v;
-          });
-          break;
-        }
-      }
-    }
-
-    // Clear intent — fully consumed
-    BookingIntentManager.instance.clearIntent();
   }
 
   static bool _isValidBusinessDateTime(LaundryItem laundry, DateTime dateTime) {
@@ -256,12 +182,7 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
   }
 
   String _getVehicleCategory() {
-    if (_isGuest) return _guestVehicleCategory;
-    if (_selectedVehicle != null) {
-      return _selectedVehicle!.type;
-    }
-    // Post-login fallback: usar la categoría que venía del BookingIntent
-    return _guestVehicleCategory;
+    return _selectedVehicleCategory;
   }
 
   double _getServicePriceForCategory(Map<String, dynamic> service, String category) {
@@ -361,7 +282,6 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
                   _isValidBusinessDateTime(laundry, _selectedTimeSlot!));
 
           final bool canConfirm = _selectedService != null &&
-              (_isGuest || _selectedVehicle != null || _myVehicles.isEmpty) &&
               ((_scheduleNow && currentlyOpen) || (!_scheduleNow && isScheduleValid));
 
           return Stack(
@@ -666,81 +586,7 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            _loadingVehicles
-                                ? const Center(child: CircularProgressIndicator())
-                                : _isGuest || _myVehicles.isEmpty
-                                    ? _buildGuestVehicleCategoryDropdown()
-                                    : Column(
-                                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius: BorderRadius.circular(16),
-                                              border: Border.all(color: Colors.grey.shade200, width: 1.5),
-                                            ),
-                                            child: DropdownButtonHideUnderline(
-                                              child: DropdownButton<VehicleItem>(
-                                                value: _selectedVehicle,
-                                                isExpanded: true,
-                                                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
-                                                borderRadius: BorderRadius.circular(16),
-                                                style: GoogleFonts.inter(
-                                                  color: AppColors.textPrimary,
-                                                  fontSize: 14,
-                                                ),
-                                                items: _myVehicles.map((car) {
-                                                  return DropdownMenuItem<VehicleItem>(
-                                                    value: car,
-                                                    child: Row(
-                                                      children: [
-                                                        const Icon(Icons.directions_car_rounded, color: AppColors.textSecondary, size: 20),
-                                                        const SizedBox(width: 12),
-                                                        Text(
-                                                          '${car.categoryDisplayName} (${car.plate})',
-                                                          style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                }).toList(),
-                                                onChanged: (VehicleItem? val) {
-                                                  if (val != null) {
-                                                    setState(() {
-                                                      _selectedVehicle = val;
-                                                    });
-                                                  }
-                                                },
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                                            child: Row(
-                                              children: [
-                                                const Icon(
-                                                  Icons.info_outline_rounded,
-                                                  size: 14,
-                                                  color: AppColors.primary,
-                                                ),
-                                                const SizedBox(width: 6),
-                                                Expanded(
-                                                  child: Text(
-                                                    'El precio se ajusta de acuerdo a tu vehículo (${_getVehicleCategory()})',
-                                                    style: GoogleFonts.inter(
-                                                      color: AppColors.primary,
-                                                      fontSize: 12,
-                                                      fontWeight: FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                            _buildVehicleCategoryDropdown(),
                           ],
                         ),
                       ),
@@ -1457,11 +1303,11 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
                           currentName: _selectedService?['nombre'] ?? 'Servicio',
                           currentPrice: _getServicePriceForCategory(
                             _selectedService ?? {},
-                            _selectedVehicle?.type ?? 'Sedan',
+                            _getVehicleCategory(),
                           ),
                           currentCosto: _getServicePriceForCategory(
                             _selectedService ?? {},
-                            _selectedVehicle?.type ?? 'Sedan',
+                            _getVehicleCategory(),
                           ),
                           currentTipo: _selectedService?['tipo'] ?? 'LOCAL',
                         );
@@ -1745,7 +1591,7 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
         laundryName: widget.laundry.name,
         serviceId: _selectedService?['id'] ?? '',
         serviceName: currentName,
-        vehicleCategory: _guestVehicleCategory,
+        vehicleCategory: _selectedVehicleCategory,
         scheduleNow: _scheduleNow,
         selectedDate: _selectedDate,
         selectedTimeSlot: _selectedTimeSlot,
@@ -1885,13 +1731,13 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
           serviceName: currentName,
           servicePrice: currentPrice,
           serviceType: serviceType,
-          selectedVehicle: _selectedVehicle,
+          selectedCategory: _getVehicleCategory(),
           scheduleNow: _scheduleNow,
           scheduledDateTime: _selectedScheduleDateTime,
           serviceDuration: _selectedService != null
               ? (_selectedService!['duracionMinutos'] as num?)?.toInt() ?? 30
               : 30,
-          onPaymentCompleted: (paymentMethod) async {
+          onPaymentCompleted: (paymentMethod, {transactionId, phoneNumber}) async {
             String businessId = widget.laundry.id;
             if (businessId.startsWith('fallback_')) {
               LaundryItem? realBiz;
@@ -1927,15 +1773,7 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
 
             final schedulePrefix = actualScheduleNow ? 'Ahora mismo ($dateStr)' : 'Programado ($dateStr)';
 
-            String obs = '$schedulePrefix - Vehículo: ';
-            if (_selectedVehicle != null) {
-              obs += _selectedVehicle!.categoryDisplayName;
-              if (_selectedVehicle!.plate.isNotEmpty) {
-                obs += ' - Placa: ${_selectedVehicle!.plate}';
-              }
-            } else {
-              obs += _getVehicleCategory();
-            }
+            final obs = '$schedulePrefix - Categoría de Vehículo: ${_getVehicleCategory()}';
 
             final result = await _orderRepository.createOrder(
               businessId: businessId,
@@ -1985,7 +1823,11 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
               );
             }
 
-            if (!routeContext.mounted) return;
+            if (paymentMethod == PaymentMethod.PAYPHONE) {
+              return orderId;
+            }
+
+            if (!routeContext.mounted) return orderId;
 
             Navigator.pop(routeContext);
 
@@ -2009,13 +1851,14 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
             } else {
               _showOrderCreatedSuccess(orderId);
             }
+            return orderId;
           },
         ),
       ),
     );
   }
 
-  Widget _buildGuestVehicleCategoryDropdown() {
+  Widget _buildVehicleCategoryDropdown() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -2028,7 +1871,7 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
-              value: _guestVehicleCategory,
+              value: _selectedVehicleCategory,
               isExpanded: true,
               icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
               borderRadius: BorderRadius.circular(16),
@@ -2036,7 +1879,7 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
                 color: AppColors.textPrimary,
                 fontSize: 14,
               ),
-              items: _guestCategories.map((cat) {
+              items: _vehicleCategories.map((cat) {
                 return DropdownMenuItem<String>(
                   value: cat['value'],
                   child: Row(
@@ -2054,7 +1897,7 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
               onChanged: (String? val) {
                 if (val != null) {
                   setState(() {
-                    _guestVehicleCategory = val;
+                    _selectedVehicleCategory = val;
                   });
                 }
               },

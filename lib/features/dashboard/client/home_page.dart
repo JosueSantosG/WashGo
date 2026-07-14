@@ -11,25 +11,23 @@ import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:washgo/features/dashboard/client/models/laundry_item.dart';
-import 'package:washgo/features/dashboard/client/models/vehicle_item.dart';
 import 'package:washgo/features/dashboard/client/pages/laundry_booking_page.dart';
 import 'package:washgo/features/dashboard/client/widgets/tabs/bookings_tab.dart';
 import 'package:washgo/features/dashboard/client/widgets/tabs/profile_tab.dart';
 import 'package:washgo/features/invoices/pages/client_invoice_history_page.dart';
-import 'package:washgo/features/dashboard/client/widgets/vehicles/vehicle_dialogs.dart';
 import 'package:washgo/core/session/booking_intent_manager.dart';
-import 'package:washgo/features/payments/pages/proof_status_page.dart';
 
 import 'package:washgo/features/auth/models/washgo_user.dart';
 import 'package:washgo/features/auth/repositories/auth_repository.dart';
 import 'package:washgo/features/auth/repositories/firebase_auth_repository.dart';
-import 'package:washgo/features/profile/repositories/vehicle_repository.dart';
-import 'package:washgo/features/profile/repositories/firebase_vehicle_repository.dart';
 import 'package:washgo/features/laundries/repositories/laundry_repository.dart';
 import 'package:washgo/features/laundries/repositories/firebase_laundry_repository.dart';
+import 'package:washgo/features/laundries/repositories/firebase_business_repository.dart';
+import 'package:washgo/features/laundries/repositories/firebase_reservation_config_repository.dart';
 import 'package:washgo/features/orders/repositories/order_repository.dart';
 import 'package:washgo/features/orders/repositories/firebase_order_repository.dart';
 import 'package:washgo/features/orders/models/client_order.dart';
+import 'package:washgo/features/orders/widgets/reschedule_slots_sheet.dart';
 import 'package:washgo/core/utils/observations_parser.dart';
 
 class HomePage extends StatefulWidget {
@@ -58,7 +56,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   StreamSubscription<Position>? _positionSubscription;
 
   final AuthRepository _authRepository = FirebaseAuthRepository();
-  final VehicleRepository _vehicleRepository = FirebaseVehicleRepository();
   final LaundryRepository _laundryRepository = FirebaseLaundryRepository();
   final OrderRepository _orderRepository = FirebaseOrderRepository();
 
@@ -83,10 +80,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   // Continue booking banner state
   bool _showContinueBanner = false;
-
-  // Active user vehicles
-  List<VehicleItem> _myVehicles = [];
-  bool _loadingVehicles = false;
 
   // Map category filters
   final List<String> _categories = [
@@ -152,45 +145,172 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _cancelOrder(BuildContext context, ClientOrder order) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          'Cancelar Reserva',
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-        ),
-        content: Text(
-          '¿Estás seguro de que deseas cancelar esta reserva? Esta acción no se puede deshacer.',
-          style: GoogleFonts.inter(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              'No, mantener',
-              style: GoogleFonts.inter(color: AppColors.outline),
-            ),
+    final isPaid = order.paymentMethod != 'CASH';
+    bool shouldProceedWithCancellation = false;
+
+    if (isPaid) {
+      final result = await showDialog<String>(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+          title: Row(
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.amber,
+                size: 28,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Aviso Importante',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Esta reserva ya cuenta con un pago realizado.',
+                style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Si cancelas esta reserva, no habrá reembolso de tu dinero.\n\nTe recomendamos reprogramar o cambiar de horario en lugar de cancelar.',
+                style: GoogleFonts.inter(),
+              ),
+            ],
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.pop(context, 'reschedule'),
+                  icon: const Icon(Icons.edit_calendar_rounded, size: 18),
+                  label: Text(
+                    'Postergar / Cambiar horario',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context, 'keep'),
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          side: const BorderSide(color: AppColors.outline),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                        child: Text(
+                          'No, mantener',
+                          style: GoogleFonts.inter(color: AppColors.outline),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context, 'cancel'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.error,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                        child: Text(
+                          'Cancelar de todas formas',
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+
+      if (result == 'reschedule') {
+        if (!context.mounted) return;
+        _rescheduleOrder(context, order);
+        return;
+      }
+
+      if (result == 'cancel') {
+        shouldProceedWithCancellation = true;
+      }
+    } else {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            'Cancelar Reserva',
+            style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            '¿Estás seguro de que deseas cancelar esta reserva? Esta acción no se puede deshacer.',
+            style: GoogleFonts.inter(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(
+                'No, mantener',
+                style: GoogleFonts.inter(color: AppColors.outline),
               ),
             ),
-            child: Text(
-              'Sí, cancelar',
-              style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Text(
+                'Sí, cancelar',
+                style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
 
-    if (confirmed == true) {
+      if (confirmed == true) {
+        shouldProceedWithCancellation = true;
+      }
+    }
+
+    if (shouldProceedWithCancellation) {
       if (!context.mounted) return;
       showDialog(
         context: context,
@@ -241,57 +361,75 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _rescheduleOrder(BuildContext context, ClientOrder order) async {
     final parsed = ParsedObservations.parse(order.observations);
-    final initialDate = DateTime.now();
-    final selectedDate = await showDatePicker(
+
+    // Show loading indicator while fetching configurations
+    showDialog(
       context: context,
-      initialDate: initialDate,
-      firstDate: initialDate,
-      lastDate: initialDate.add(const Duration(days: 30)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              onSurface: AppColors.onSurface,
-            ),
-          ),
-          child: child!,
-        );
-      },
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+        ),
+      ),
     );
 
-    if (selectedDate == null) return;
+    List<Map<String, dynamic>> businessHours;
+    int anticipationMinutes = 0;
+
+    try {
+      final businessRepo = FirebaseBusinessRepository();
+      final configRepo = FirebaseReservationConfigRepository();
+
+      businessHours = await businessRepo.getBusinessHours(order.businessId);
+      final config = await configRepo.getConfig(order.businessId);
+      if (config != null) {
+        anticipationMinutes = config.tiempoAnticipacionMinutos;
+      }
+
+      if (!context.mounted) return;
+      Navigator.pop(context); // Pop loading dialog
+    } catch (e) {
+      if (!context.mounted) return;
+      Navigator.pop(context); // Pop loading dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Error al obtener horarios del local: $e',
+            style: GoogleFonts.inter(),
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
 
     if (!context.mounted) return;
-    final selectedTime = await showTimePicker(
+
+    final selectedDateTime = await showModalBottomSheet<DateTime>(
       context: context,
-      initialTime: TimeOfDay.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              onSurface: AppColors.onSurface,
-            ),
-          ),
-          child: child!,
-        );
-      },
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => RescheduleSlotsSheet(
+        businessHours: businessHours,
+        anticipationMinutes: anticipationMinutes,
+      ),
     );
 
-    if (selectedTime == null) return;
+    if (selectedDateTime == null) return;
 
-    final day = selectedDate.day.toString().padLeft(2, '0');
-    final month = selectedDate.month.toString().padLeft(2, '0');
-    final year = selectedDate.year.toString();
-    final hour = selectedTime.hour.toString().padLeft(2, '0');
-    final minute = selectedTime.minute.toString().padLeft(2, '0');
+    final day = selectedDateTime.day.toString().padLeft(2, '0');
+    final month = selectedDateTime.month.toString().padLeft(2, '0');
+    final year = selectedDateTime.year.toString();
+    final hour = selectedDateTime.hour.toString().padLeft(2, '0');
+    final minute = selectedDateTime.minute.toString().padLeft(2, '0');
     final rescheduledDateTime = '$day/$month/$year $hour:$minute';
 
+    final currentHistory = parsed.rescheduleHistory;
+    final List<String> updatedHistory = List.from(currentHistory);
+    updatedHistory.add(parsed.dateTime);
+
     final newObservations =
-        'Programado ($rescheduledDateTime) - Vehículo: ${parsed.vehicleDetails}';
+        'Programado ($rescheduledDateTime) - Vehículo: ${parsed.vehicleDetails} | Historial: ${updatedHistory.join(' -> ')}';
 
     if (!context.mounted) return;
 
@@ -382,42 +520,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _fetchMyVehicles() async {
-    if (!mounted) return;
-    if (FirebaseAuth.instance.currentUser == null) {
-      setState(() {
-        _myVehicles = [];
-        _loadingVehicles = false;
-      });
-      return;
-    }
-    setState(() {
-      _loadingVehicles = true;
-    });
-    try {
-      final vehicles = await _vehicleRepository.getMyVehicles();
-      if (mounted) {
-        setState(() {
-          _myVehicles = vehicles;
-          if (_myVehicles.isNotEmpty) {
-          } else {}
-          _loadingVehicles = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error fetching vehicles: $e');
-      if (mounted) {
-        setState(() {
-          _loadingVehicles = false;
-        });
-      }
-    }
-  }
-
-  void _confirmDeleteVehicle(VehicleItem vehicle) {
-    VehicleDialogs.confirmDeleteVehicle(context, vehicle, _fetchMyVehicles);
-  }
-
   Future<void> _makePhoneCall(String phoneNumber) async {
     final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
     try {
@@ -450,11 +552,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _initLocationTracking();
     _fetchSavedBusinesses();
 
-    _authStateSubscription = FirebaseAuth.instance.authStateChanges().listen((user) {
+    _authStateSubscription = FirebaseAuth.instance.authStateChanges().listen((
+      user,
+    ) {
       if (user != null) {
         _loadCurrentUser();
         _subscribeToClientOrders();
-        _fetchMyVehicles();
       } else {
         BookingIntentManager.instance.clearIntent();
         BookingIntentManager.instance.clearPendingPaymentIntent();
@@ -463,7 +566,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             _showContinueBanner = false;
             _washGoUser = null;
             _userRoles = [];
-            _myVehicles = [];
             _clientOrders = [];
             _isRolesLoading = false;
           });
@@ -649,7 +751,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       barrierDismissible: false,
       builder: (dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Row(
             children: [
               const Icon(Icons.error_outline, color: AppColors.error),
@@ -657,14 +761,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               Expanded(
                 child: Text(
                   'Lavandería no disponible',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
                 ),
               ),
             ],
           ),
           content: Text(
             'La lavandería "${intent.laundryName}" de tu reserva pendiente ya no está disponible.',
-            style: const TextStyle(fontSize: 14, color: AppColors.onSurfaceVariant),
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.onSurfaceVariant,
+            ),
           ),
           actions: [
             ElevatedButton(
@@ -695,6 +805,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _recalculateDistances() {
+    debugPrint(
+      'RecalculateDistances: _allLaundries runtimeType = ${_allLaundries.runtimeType}',
+    );
+    for (var i = 0; i < _allLaundries.length; i++) {
+      debugPrint(
+        'RecalculateDistances Element $i: Type = ${_allLaundries[i].runtimeType}, Value = ${_allLaundries[i]}',
+      );
+    }
     setState(() {
       _allLaundries = _allLaundries.map((laundry) {
         final distMeters = Geolocator.distanceBetween(
@@ -753,11 +871,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _updateProfile({required String name, required String phone}) async {
-    final email = _washGoUser?.email ?? FirebaseAuth.instance.currentUser?.email ?? '';
+  Future<void> _updateProfile({
+    required String name,
+    required String phone,
+  }) async {
+    final email =
+        _washGoUser?.email ?? FirebaseAuth.instance.currentUser?.email ?? '';
     final roles = _washGoUser?.roles ?? _userRoles;
     final address = _washGoUser?.direccion;
-    
+
     await _authRepository.upsertUser(
       nombreCompleto: name,
       email: email,
@@ -771,7 +893,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _deleteAccount() async {
     await _authRepository.deleteAccount();
   }
-
 
   void _updateCarouselFor(LaundryItem centerItem) {
     final sorted = List<LaundryItem>.from(_filteredLaundries);
@@ -798,7 +919,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void _filterLaundries({bool resetCarousel = false}) {
     // Save the ID of the currently selected laundry, if any
     final String? selectedLaundryId =
-        (!resetCarousel && _activeCarouselIndex != null && _carouselLaundries.isNotEmpty)
+        (!resetCarousel &&
+            _activeCarouselIndex != null &&
+            _carouselLaundries.isNotEmpty)
         ? _carouselLaundries[_activeCarouselIndex!].id
         : null;
 
@@ -1095,15 +1218,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         return ProfileTab(
           user: user,
           washGoUser: _washGoUser,
-          loadingVehicles: _loadingVehicles,
-          myVehicles: _myVehicles,
           isRolesLoading: _isRolesLoading,
           userRoles: _userRoles.map((role) => role.name).toList(),
-          onAddVehicle: _showAddVehicleDialog,
-          onEditVehicle: _showEditVehicleDialog,
-          onDeleteVehicle: _confirmDeleteVehicle,
           onUpdateProfile: _updateProfile,
           onDeleteAccount: _deleteAccount,
+          hasActiveReservations: _clientOrders.any(
+            (order) =>
+                order.status != 'COMPLETADO' && order.status != 'CANCELADO',
+          ),
         );
       default:
         return _buildMapSection();
@@ -1910,14 +2032,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ),
       ),
     );
-  }
-
-  void _showAddVehicleDialog() {
-    VehicleDialogs.showAddVehicleDialog(context, _fetchMyVehicles);
-  }
-
-  void _showEditVehicleDialog(VehicleItem vehicle) {
-    VehicleDialogs.showEditVehicleDialog(context, vehicle, _fetchMyVehicles);
   }
 
   void _showContactSuccessSnackBar(BuildContext context, String msg) {

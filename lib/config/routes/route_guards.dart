@@ -40,7 +40,9 @@ String? authRedirect(BuildContext context, GoRouterState state) {
       state.matchedLocation == AppRoutes.paypalSuccess ||
       state.matchedLocation == AppRoutes.paypalCancel ||
       state.matchedLocation == AppRoutes.paypalSuccessScheme ||
-      state.matchedLocation == AppRoutes.paypalCancelScheme;
+      state.matchedLocation == AppRoutes.paypalCancelScheme ||
+      state.matchedLocation == AppRoutes.payphoneSuccess ||
+      state.matchedLocation == AppRoutes.payphoneCancel;
 
   if (isPublicRoute) {
     return null;

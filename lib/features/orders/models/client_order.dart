@@ -25,6 +25,8 @@ class ClientOrder {
   final String paymentMethod;
   final String? invoiceUrl;
   final bool hasReview;
+  final DateTime? createdAt;
+  final String? type;
 
   const ClientOrder({
     required this.id,
@@ -39,5 +41,7 @@ class ClientOrder {
     required this.paymentMethod,
     this.invoiceUrl,
     this.hasReview = false,
+    this.createdAt,
+    this.type,
   });
 }

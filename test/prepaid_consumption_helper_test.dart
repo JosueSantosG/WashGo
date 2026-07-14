@@ -209,9 +209,9 @@ void main() {
           prepaidHistories: [
             GetPrepaidHistoryByOrderIdPrepaidHistories(
               id: 'hist_1',
-              business: GetPrepaidHistoryByOrderIdPrepaidHistoriesBusiness(
-                owner: GetPrepaidHistoryByOrderIdPrepaidHistoriesBusinessOwner(id: 'owner_1'),
-              ),
+              serviceName: 'Lavado Rapido',
+              costoConsumido: 0.0,
+              saldoResultante: 500.0,
             ),
           ],
         ))),

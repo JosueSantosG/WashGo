@@ -148,7 +148,7 @@ class _BankTransferInstructionsPageState
           ),
           const SizedBox(height: 8),
           Text(
-            'Sigue las instrucciones y luego sube tu comprobante para validar el pago.',
+            'Puedes elegir a qué banco realizar la transferencia, copiar los datos de la cuenta y luego seguir los pasos indicados abajo para validar tu pago.',
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
               fontSize: 13,
@@ -248,7 +248,7 @@ class _BankTransferInstructionsPageState
                         Icon(Icons.copy_rounded, size: 14, color: bankColor),
                         const SizedBox(width: 4),
                         Text(
-                          'Copiar',
+                          'Copiar número de cuenta',
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -296,7 +296,6 @@ class _BankTransferInstructionsPageState
       'Abre tu aplicación bancaria.',
       'Selecciona la opción de transferencia.',
       'Ingresa el monto exacto de \$${widget.amount.toStringAsFixed(2)}.',
-      'Usa como referencia tu número de orden: ${widget.orderId.substring(0, 8)}...',
       'Confirma la transferencia.',
       'Toma una captura de pantalla del comprobante.',
       'Toca "Ya hice la transferencia" y sube la imagen.',
@@ -352,10 +351,10 @@ class _BankTransferInstructionsPageState
                         steps[i],
                         style: GoogleFonts.inter(
                           fontSize: 13,
-                          color: i < 5
+                          color: i < 4
                               ? const Color(0xFF475569)
                               : AppColors.primary,
-                          fontWeight: i >= 5 ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: i >= 4 ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
                     ),
@@ -436,8 +435,8 @@ class _BankTransferInstructionsPageState
         width: double.infinity,
         height: 52,
         child: ElevatedButton.icon(
-          onPressed: () {
-            context.pushNamed(
+          onPressed: () async {
+            final result = await context.pushNamed(
               AppRoutes.proofUpload,
               extra: {
                 'orderId': widget.orderId,
@@ -446,6 +445,18 @@ class _BankTransferInstructionsPageState
                 'businessName': widget.businessName,
               },
             );
+            if (result != null && mounted) {
+              context.pushReplacementNamed(
+                AppRoutes.proofStatus,
+                extra: {
+                  'orderId': widget.orderId,
+                  'proofStatus': 'PENDIENTE',
+                  'amount': widget.amount,
+                  'serviceName': widget.serviceName,
+                  'businessName': widget.businessName,
+                },
+              );
+            }
           },
           icon: const Icon(Icons.file_upload_rounded, size: 20),
           label: Text(

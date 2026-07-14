@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:washgo/config/theme/app_colors.dart';
 
 class PaypalCancelPage extends StatelessWidget {
-  const PaypalCancelPage({super.key});
+  final String paymentMethod;
+  const PaypalCancelPage({super.key, this.paymentMethod = 'PayPal'});
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +58,7 @@ class PaypalCancelPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Has cancelado la transacción en PayPal. No se ha realizado ningún cobro en tu cuenta.',
+                  'Has cancelado la transacción en $paymentMethod. No se ha realizado ningún cobro en tu cuenta.',
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     color: AppColors.textSecondary,

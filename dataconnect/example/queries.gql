@@ -111,6 +111,7 @@ query GetClientOrders @auth(level: USER) {
     paymentMethod
     status
     invoiceUrl
+    createdAt
     business {
       id
       nombre
@@ -859,15 +860,7 @@ query GetPrepaidServiceMetrics($businessId: UUID!) @auth(level: USER) {
   }
 }
 
-query GetPrepaidServiceMetricByServiceName($businessId: UUID!, $serviceName: String!) @auth(level: USER) {
-  business(key: { id: $businessId }) @redact {
-    owner {
-      id
-    }
-  }
-  user(key: { id_expr: "auth.uid" }) @redact @check(expr: "'SUPER_ADMIN' in this.roles || (response.business != null && response.business.owner != null && response.business.owner.id == auth.uid)", message: "No tienes permiso para ver las métricas de prepago") {
-    roles
-  }
+query GetPrepaidServiceMetricByServiceName($businessId: UUID!, $serviceName: String!) @auth(level: NO_ACCESS) {
   prepaidServiceMetrics(where: { businessId: { eq: $businessId }, serviceName: { eq: $serviceName } }, limit: 1) {
     id
     serviceName
@@ -947,14 +940,12 @@ query ServerGetOrderById($id: UUID!) @auth(level: NO_ACCESS) {
   }
 }
 
-query GetPrepaidHistoryByOrderId($orderId: String!) @auth(level: USER) {
+query GetPrepaidHistoryByOrderId($orderId: String!) @auth(level: NO_ACCESS) {
   prepaidHistories(where: { orderId: { eq: $orderId } }, limit: 1) {
     id
-    business {
-      owner {
-        id @check(expr: "this == auth.uid", message: "No tienes permiso para ver este registro")
-      }
-    }
+    serviceName
+    costoConsumido
+    saldoResultante
   }
 }
 
@@ -1219,7 +1210,7 @@ query GetExpiredPendingTransferOrders @auth(level: NO_ACCESS) {
 }
 
 # Get all pending payment proofs across all businesses (for SuperAdmin review)
-query GetPendingPaymentProofs @auth(level: USER) {
+query GetPendingPaymentProofs($limit: Int, $offset: Int) @auth(level: USER) {
   user(key: { id_expr: "auth.uid" }) @redact @check(expr: "'SUPER_ADMIN' in this.roles", message: "No tienes permiso para ver los comprobantes pendientes") {
     id
     roles
@@ -1229,6 +1220,8 @@ query GetPendingPaymentProofs @auth(level: USER) {
       status: { eq: PENDING }
     }
     orderBy: [{ createdAt: ASC }]
+    limit: $limit
+    offset: $offset
   ) {
     id
     imageUrl
@@ -1245,6 +1238,7 @@ query GetPendingPaymentProofs @auth(level: USER) {
       paymentMethod
       status
       serviceName
+      observations
       createdAt
       client {
         id
@@ -1266,4 +1260,117 @@ query GetPendingPaymentProofs @auth(level: USER) {
     }
   }
 }
+
+query GetOrderLogs($orderId: UUID!) @auth(level: USER) {
+  order(key: { id: $orderId }) @redact {
+    clientId
+    employeeId
+    business {
+      owner {
+        id
+      }
+    }
+  }
+  user(key: { id_expr: "auth.uid" }) @redact @check(
+    expr: "'SUPER_ADMIN' in this.roles || (response.order != null && (response.order.clientId == auth.uid || response.order.employeeId == auth.uid || response.order.business.owner.id == auth.uid))",
+    message: "No tienes permiso para ver el historial de esta orden"
+  ) {
+    roles
+  }
+  orderLogs(where: { orderId: { eq: $orderId } }, orderBy: [{ createdAt: ASC }]) {
+    id
+    actionType
+    createdAt
+    previousValue
+    newValue
+  }
+}
+
+# Queries for SuperAdmin Accounting Dashboard (filtered by month)
+query SuperAdminGetCompletedOrders($startOfMonth: Timestamp!, $endOfMonth: Timestamp!) @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) @redact @check(
+    expr: "auth.token.email == 'root@washgo.com' || 'SUPER_ADMIN' in this.roles",
+    message: "No tienes permiso para ver la contabilidad"
+  ) {
+    roles
+  }
+  orders(
+    where: {
+      status: { eq: COMPLETADO }
+      createdAt: { ge: $startOfMonth, le: $endOfMonth }
+    }
+  ) {
+    id
+    price
+    paymentMethod
+  }
+}
+
+query SuperAdminGetCancelledPaidOrders($startOfMonth: Timestamp!, $endOfMonth: Timestamp!) @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) @redact @check(
+    expr: "auth.token.email == 'root@washgo.com' || 'SUPER_ADMIN' in this.roles",
+    message: "No tienes permiso para ver la contabilidad"
+  ) {
+    roles
+  }
+  paymentProofs(
+    where: {
+      status: { eq: APPROVED }
+      order: {
+        status: { eq: CANCELADO }
+        paymentMethod: { eq: TRANSFERENCIA_BANCARIA }
+        createdAt: { ge: $startOfMonth, le: $endOfMonth }
+      }
+    }
+  ) {
+    declaredAmount
+    order {
+      id
+      price
+      paymentMethod
+      status
+    }
+  }
+}
+
+query SuperAdminGetCancelledOrdersSummary($startOfMonth: Timestamp!, $endOfMonth: Timestamp!) @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) @redact @check(
+    expr: "auth.token.email == 'root@washgo.com' || 'SUPER_ADMIN' in this.roles",
+    message: "No tienes permiso para ver la contabilidad"
+  ) {
+    roles
+  }
+  orders(
+    where: {
+      status: { eq: CANCELADO }
+      createdAt: { ge: $startOfMonth, le: $endOfMonth }
+    }
+  ) {
+    id
+    price
+    paymentMethod
+  }
+}
+
+# Get all pending electronic (PayPhone/PayPal) orders across all businesses (NO_ACCESS — for scheduled cleanup function)
+query GetPendingElectronicOrders @auth(level: NO_ACCESS) {
+  orders(
+    where: {
+      status: { eq: PENDIENTE_PAGO }
+    }
+    orderBy: [{ id: DESC }]
+    limit: 100
+  ) {
+    id
+    clientId
+    price
+    paymentMethod
+    serviceName
+    businessId
+    createdAt
+  }
+}
+
+
+
 

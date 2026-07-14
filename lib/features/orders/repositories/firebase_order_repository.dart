@@ -1,9 +1,11 @@
 // ignore_for_file: avoid_print
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_data_connect/firebase_data_connect.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
 import 'package:washgo/features/orders/models/client_order.dart';
 import 'package:washgo/features/orders/models/washgo_order.dart';
+import 'package:washgo/features/orders/models/order_audit_log.dart';
 import 'package:washgo/core/utils/observations_parser.dart';
 import 'package:washgo/core/utils/prepaid_consumption_helper.dart';
 import 'package:uuid/uuid.dart';
@@ -78,6 +80,8 @@ class FirebaseOrderRepository implements OrderRepository {
         paymentMethod: o.paymentMethod.stringValue,
         invoiceUrl: o.invoiceUrl,
         hasReview: o.review_on_order != null,
+        createdAt: o.createdAt?.toDateTime(),
+        type: o.type.stringValue,
       );
     }).toList();
     final result = mapped.reversed.toList();
@@ -96,7 +100,8 @@ class FirebaseOrderRepository implements OrderRepository {
     required String observations,
   }) async {
     final status = (paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA ||
-            paymentMethod == PaymentMethod.PAYPAL)
+            paymentMethod == PaymentMethod.PAYPAL ||
+            paymentMethod == PaymentMethod.PAYPHONE)
         ? OrderStatus.PENDIENTE_PAGO
         : OrderStatus.EN_COLA;
 
@@ -113,10 +118,24 @@ class FirebaseOrderRepository implements OrderRepository {
         .observations(observations)
         .execute();
 
+    final orderId = result.data.order_insert.id;
+    final parsed = ParsedObservations.parse(observations);
+    try {
+      await _connector
+          .createOrderLog(
+            orderId: orderId,
+            actionType: 'CREACION',
+          )
+          .newValue(parsed.dateTime)
+          .execute();
+    } catch (e) {
+      debugPrint('Error creating order log for CREACION: $e');
+    }
+
     _notifyClientControllers();
     _notifyBusinessControllers(businessId);
 
-    return result.data.order_insert.id;
+    return orderId;
   }
 
   @override
@@ -404,6 +423,8 @@ class FirebaseOrderRepository implements OrderRepository {
                   paymentMethod: o.paymentMethod.stringValue,
                   invoiceUrl: o.invoiceUrl,
                   hasReview: o.review_on_order != null,
+                  createdAt: o.createdAt?.toDateTime(),
+                  type: o.type.stringValue,
                 );
               }).toList();
 
@@ -522,13 +543,73 @@ class FirebaseOrderRepository implements OrderRepository {
   }
 
   @override
+  Future<void> updateOrderPaymentMethodAndStatus({
+    required String orderId,
+    required PaymentMethod paymentMethod,
+    required OrderStatus status,
+  }) async {
+    await _connector
+        .updateOrderPaymentMethodAndStatus(
+          orderId: orderId,
+          paymentMethod: paymentMethod,
+          status: status,
+        )
+        .execute();
+
+    if (status == OrderStatus.COMPLETADO) {
+      await PrepaidConsumptionHelper.consumePrepaidBalanceForOrder(orderId);
+    }
+
+    if (status == OrderStatus.CANCELADO || status == OrderStatus.COMPLETADO) {
+      try {
+        final metadataRepo = FirebaseReservationMetadataRepository();
+        await metadataRepo.deleteReservation(orderId);
+      } catch (e) {
+        print('Error deleting reservation: $e');
+      }
+    }
+
+    _notifyClientControllers();
+    for (final businessId in _businessStreamsCache.keys) {
+      _notifyBusinessControllers(businessId);
+    }
+  }
+
+  @override
   Future<void> rescheduleOrder({
     required String orderId,
     required String observations,
   }) async {
+    String? previousValue;
+    try {
+      final orderRes = await _connector.getOrderById(id: orderId).ref().execute();
+      if (orderRes.data.order != null) {
+        final prevParsed = ParsedObservations.parse(orderRes.data.order!.observations);
+        previousValue = prevParsed.dateTime;
+      }
+    } catch (e) {
+      debugPrint('Error fetching previous order observations for log: $e');
+    }
+
+    final parsed = ParsedObservations.parse(observations);
+    final newValue = parsed.dateTime;
+
     await _connector
         .rescheduleOrder(orderId: orderId, observations: observations)
         .execute();
+
+    try {
+      await _connector
+          .createOrderLog(
+            orderId: orderId,
+            actionType: 'REPROGRAMACION',
+          )
+          .previousValue(previousValue)
+          .newValue(newValue)
+          .execute();
+    } catch (e) {
+      debugPrint('Error creating order log for REPROGRAMACION: $e');
+    }
 
     _notifyClientControllers();
     for (final businessId in _businessStreamsCache.keys) {
@@ -782,10 +863,46 @@ class FirebaseOrderRepository implements OrderRepository {
         .observations(observations)
         .execute();
 
+    final orderId = response.data.order_insert.id;
+    final parsed = ParsedObservations.parse(observations);
+    try {
+      await _connector
+          .createOrderLog(
+            orderId: orderId,
+            actionType: 'CREACION',
+          )
+          .newValue(parsed.dateTime)
+          .execute();
+    } catch (e) {
+      debugPrint('Error creating order log for walk-in CREACION: $e');
+    }
+
     _notifyClientControllers();
     _notifyBusinessControllers(businessId);
 
-    return response.data.order_insert.id;
+    return orderId;
+  }
+
+  @override
+  Future<List<OrderAuditLog>> getOrderLogs(String orderId) async {
+    try {
+      final response = await _connector
+          .getOrderLogs(orderId: orderId)
+          .ref()
+          .execute(fetchPolicy: QueryFetchPolicy.serverOnly);
+      return response.data.orderLogs.map((log) {
+        return OrderAuditLog(
+          id: log.id,
+          actionType: log.actionType,
+          createdAt: log.createdAt.toDateTime(),
+          previousValue: log.previousValue,
+          newValue: log.newValue,
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('Error fetching order logs: $e');
+      return [];
+    }
   }
 
   Future<void> _checkAndExpireOrders(List<dynamic> orders) async {
@@ -803,6 +920,31 @@ class FirebaseOrderRepository implements OrderRepository {
               order.status == OrderStatus.EN_SERVICIO);
 
       if (isTerminal) continue;
+
+      final String status = order is ClientOrder ? order.status.toUpperCase() : order.status.name.toUpperCase();
+      if (status == 'PENDIENTE_PAGO') {
+        final paymentMethod = order is ClientOrder ? order.paymentMethod.toUpperCase() : order.paymentMethod.name.toUpperCase();
+        if (paymentMethod == 'PAYPHONE' || paymentMethod == 'PAYPAL') {
+          DateTime? orderCreatedAt;
+          if (order is ClientOrder) {
+            orderCreatedAt = order.createdAt;
+          }
+          if (orderCreatedAt != null) {
+            final diff = now.difference(orderCreatedAt);
+            if (diff.inMinutes >= 30) {
+              try {
+                await updateOrderStatus(orderId: orderId, status: OrderStatus.CANCELADO);
+                final metadataRepo = FirebaseReservationMetadataRepository();
+                await metadataRepo.deleteReservation(orderId);
+                print('Lazy expired order $orderId due to stale payment (created at $orderCreatedAt)');
+              } catch (e) {
+                print('Error expiring order $orderId: $e');
+              }
+              continue;
+            }
+          }
+        }
+      }
 
       final parsed = ParsedObservations.parse(observations);
       if (parsed.scheduleType == 'Programado') {

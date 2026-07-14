@@ -7,11 +7,18 @@ import 'package:washgo/features/orders/repositories/order_repository.dart';
 import 'package:washgo/features/invoices/utils/invoice_cache_manager.dart';
 import 'package:washgo/features/orders/widgets/review_bottom_sheet.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:washgo/config/routes/app_routes.dart';
 import 'package:washgo/features/payments/repositories/bank_transfer_repository.dart';
 import 'package:washgo/features/payments/models/payment_proof_model.dart';
+import 'package:washgo/features/dashboard/client/widgets/payment_selection_page.dart';
+import 'package:washgo/features/dashboard/client/models/laundry_item.dart';
+import 'package:washgo/core/session/booking_intent_manager.dart';
+import 'package:washgo/features/orders/repositories/firebase_order_repository.dart';
+import 'package:washgo/dataconnect-generated/example.dart' hide PaymentProofStatus;
+import 'package:latlong2/latlong.dart';
 
 class BookingsTab extends StatefulWidget {
   final List<ClientOrder> orders;
@@ -49,6 +56,121 @@ class _BookingsTabState extends State<BookingsTab> {
   @override
   void initState() {
     super.initState();
+  }
+
+  DateTime? _parseOrderDateTime(String dtStr) {
+    try {
+      final parts = dtStr.trim().split(' ');
+      if (parts.length != 2) return null;
+      final dateParts = parts[0].split('/');
+      final timeParts = parts[1].split(':');
+      if (dateParts.length != 3 || timeParts.length != 2) return null;
+
+      final day = int.parse(dateParts[0]);
+      final month = int.parse(dateParts[1]);
+      final year = int.parse(dateParts[2]);
+      final hour = int.parse(timeParts[0]);
+      final minute = int.parse(timeParts[1]);
+
+      return DateTime(year, month, day, hour, minute);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _showPaymentSelectionForExistingOrder(BuildContext context, ClientOrder order) {
+    final parsed = ParsedObservations.parse(order.observations);
+    final serviceType = order.type == 'DELIVERY' ? OrderType.DELIVERY : OrderType.LOCAL;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (routeContext) => PaymentSelectionPage(
+          laundry: LaundryItem(
+            id: order.businessId,
+            name: order.businessName,
+            type: '',
+            rating: 0.0,
+            reviewsCount: 0,
+            distance: '',
+            distanceInMeters: 0,
+            price: order.price,
+            location: const LatLng(0, 0),
+            isEco: false,
+            isOpen: true,
+            waitTime: '',
+            phone: order.businessPhone ?? '',
+          ),
+          serviceName: order.serviceName ?? 'Servicio',
+          servicePrice: order.price,
+          serviceType: serviceType,
+          selectedCategory: parsed.vehicleDetails,
+          scheduleNow: parsed.scheduleType == 'Ahora mismo',
+          scheduledDateTime: _parseOrderDateTime(parsed.dateTime) ?? DateTime.now(),
+          serviceDuration: 30,
+          onPaymentCompleted: (paymentMethod, {transactionId, phoneNumber}) async {
+            final status = (paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA ||
+                    paymentMethod == PaymentMethod.PAYPHONE ||
+                    paymentMethod == PaymentMethod.PAYPAL)
+                ? OrderStatus.PENDIENTE_PAGO
+                : OrderStatus.EN_COLA;
+
+            final repository = FirebaseOrderRepository();
+            await repository.updateOrderPaymentMethodAndStatus(
+              orderId: order.id,
+              paymentMethod: paymentMethod,
+              status: status,
+            );
+
+            if (paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA) {
+              BookingIntentManager.instance.savePendingPaymentIntent(
+                PendingPaymentIntent(
+                  orderId: order.id,
+                  paymentMethod: 'TRANSFERENCIA_BANCARIA',
+                  amount: order.price,
+                  serviceName: order.serviceName ?? 'Servicio',
+                  businessName: order.businessName,
+                  businessId: order.businessId,
+                  createdAt: DateTime.now(),
+                ),
+              );
+            }
+
+            if (paymentMethod == PaymentMethod.PAYPHONE) {
+              return order.id;
+            }
+
+            if (!routeContext.mounted) return order.id;
+
+            Navigator.pop(routeContext);
+
+            if (paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA) {
+              if (context.mounted) {
+                context.pushNamed(
+                  AppRoutes.proofUpload,
+                  extra: {
+                    'orderId': order.id,
+                    'amount': order.price,
+                    'serviceName': order.serviceName ?? 'Servicio',
+                    'businessName': order.businessName,
+                  },
+                );
+              }
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('¡Pago completado exitosamente!'),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+              widget.onRefresh();
+            }
+
+            return order.id;
+          },
+        ),
+      ),
+    );
   }
 
   void _showInvoiceOptions(BuildContext context, String orderId, String pdfUrl) {
@@ -609,8 +731,8 @@ class _BookingsTabState extends State<BookingsTab> {
                       color: Colors.blue.shade50,
                       borderRadius: BorderRadius.circular(12),
                       child: InkWell(
-                        onTap: () {
-                          context.pushNamed(
+                        onTap: () async {
+                          final result = await context.pushNamed(
                             AppRoutes.proofUpload,
                             extra: {
                               'orderId': order.id,
@@ -619,6 +741,21 @@ class _BookingsTabState extends State<BookingsTab> {
                               'businessName': order.businessName,
                             },
                           );
+                          if (result != null && context.mounted) {
+                            await context.pushNamed(
+                              AppRoutes.proofStatus,
+                              extra: {
+                                'orderId': order.id,
+                                'proofStatus': 'PENDIENTE',
+                                'amount': order.price.toDouble(),
+                                'serviceName': order.serviceName ?? "Lavado Completo",
+                                'businessName': order.businessName,
+                              },
+                            );
+                          }
+                          if (context.mounted) {
+                            widget.onRefresh();
+                          }
                         },
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
@@ -678,9 +815,9 @@ class _BookingsTabState extends State<BookingsTab> {
                     color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                     child: InkWell(
-                      onTap: () {
+                      onTap: () async {
                         if (isRejected) {
-                          context.pushNamed(
+                          final result = await context.pushNamed(
                             AppRoutes.proofUpload,
                             extra: {
                               'orderId': order.id,
@@ -689,8 +826,20 @@ class _BookingsTabState extends State<BookingsTab> {
                               'businessName': order.businessName,
                             },
                           );
+                          if (result != null && context.mounted) {
+                            await context.pushNamed(
+                              AppRoutes.proofStatus,
+                              extra: {
+                                'orderId': order.id,
+                                'proofStatus': 'PENDIENTE',
+                                'amount': order.price.toDouble(),
+                                'serviceName': order.serviceName ?? "Lavado Completo",
+                                'businessName': order.businessName,
+                              },
+                            );
+                          }
                         } else {
-                          context.pushNamed(
+                          await context.pushNamed(
                             AppRoutes.proofStatus,
                             extra: {
                               'orderId': order.id,
@@ -700,6 +849,9 @@ class _BookingsTabState extends State<BookingsTab> {
                               'businessName': order.businessName,
                             },
                           );
+                        }
+                        if (context.mounted) {
+                          widget.onRefresh();
                         }
                       },
                       borderRadius: BorderRadius.circular(12),
@@ -728,6 +880,57 @@ class _BookingsTabState extends State<BookingsTab> {
                   ),
                 );
               },
+            ),
+          ],
+
+          // Advertencia de expiración de pago para PayPhone/PayPal
+          if (statusStr == 'PENDIENTE_PAGO' &&
+              (order.paymentMethod == 'PAYPHONE' || order.paymentMethod == 'PAYPAL') &&
+              order.createdAt != null) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.shade100),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Pago pendiente',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red.shade900,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Completa el pago dentro de los 30 minutos de la reserva o será cancelada.',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: Colors.red.shade700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        PaymentCountdownText(
+                          createdAt: order.createdAt!,
+                          onExpired: () {
+                            widget.onRefresh();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
 
@@ -1091,8 +1294,7 @@ class _BookingsTabState extends State<BookingsTab> {
             const Divider(height: 32),
             Row(
               children: [
-                if ((order.paymentMethod == 'CASH' || order.paymentMethod == 'TRANSFERENCIA_BANCARIA') &&
-                    (statusStr == 'PENDIENTE_PAGO' || statusStr == 'EN_COLA')) ...[
+                if (statusStr == 'PENDIENTE_PAGO' || statusStr == 'EN_COLA') ...[
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () => widget.onCancelOrder(context, order),
@@ -1133,6 +1335,64 @@ class _BookingsTabState extends State<BookingsTab> {
             ),
           ],
 
+          // Botón Pagar ahora para PayPhone y PayPal
+          if (statusStr == 'PENDIENTE_PAGO' &&
+              (order.paymentMethod == 'PAYPHONE' || order.paymentMethod == 'PAYPAL')) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _showPaymentSelectionForExistingOrder(context, order),
+                icon: const Icon(Icons.payment_rounded, color: Colors.white, size: 18),
+                label: const Text('Pagar ahora'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+
+          // Botón alternativo de pago en línea para transferencia bancaria (si no hay comprobante subido o fue rechazado)
+          if (statusStr == 'PENDIENTE_PAGO' && order.paymentMethod == 'TRANSFERENCIA_BANCARIA') ...[
+            FutureBuilder<PaymentProofModel?>(
+              future: BankTransferRepository().getProofStatus(order.id),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox.shrink();
+                }
+                final proof = snapshot.data;
+                if (proof == null || proof.status == PaymentProofStatus.REJECTED) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showPaymentSelectionForExistingOrder(context, order),
+                        icon: const Icon(Icons.payment_rounded, color: AppColors.primary, size: 18),
+                        label: const Text('Pagar con otros medios'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          side: const BorderSide(color: AppColors.primary, width: 1.5),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ],
+
           // Bank transfer action button
           if (order.paymentMethod == 'TRANSFERENCIA_BANCARIA' &&
               statusStr == 'PENDIENTE_PAGO') ...[
@@ -1151,13 +1411,31 @@ class _BookingsTabState extends State<BookingsTab> {
                   return SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () {
-                        context.push(AppRoutes.proofUpload, extra: {
-                          'orderId': order.id,
-                          'amount': order.price,
-                          'serviceName': order.serviceName ?? 'Servicio',
-                          'businessName': order.businessName,
-                        });
+                      onPressed: () async {
+                        final result = await context.pushNamed(
+                          AppRoutes.proofUpload,
+                          extra: {
+                            'orderId': order.id,
+                            'amount': order.price.toDouble(),
+                            'serviceName': order.serviceName ?? 'Servicio',
+                            'businessName': order.businessName,
+                          },
+                        );
+                        if (result != null && context.mounted) {
+                          await context.pushNamed(
+                            AppRoutes.proofStatus,
+                            extra: {
+                              'orderId': order.id,
+                              'proofStatus': 'PENDIENTE',
+                              'amount': order.price.toDouble(),
+                              'serviceName': order.serviceName ?? 'Servicio',
+                              'businessName': order.businessName,
+                            },
+                          );
+                        }
+                        if (context.mounted) {
+                          widget.onRefresh();
+                        }
                       },
                       icon: const Icon(Icons.cloud_upload_outlined, color: Colors.white, size: 18),
                       label: Text(proof == null ? 'Subir Comprobante' : 'Subir nuevo comprobante'),
@@ -1176,14 +1454,20 @@ class _BookingsTabState extends State<BookingsTab> {
                   return SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: () {
-                        context.push(AppRoutes.proofStatus, extra: {
-                          'orderId': order.id,
-                          'proofStatus': 'PENDING',
-                          'amount': order.price,
-                          'serviceName': order.serviceName ?? 'Servicio',
-                          'businessName': order.businessName,
-                        });
+                      onPressed: () async {
+                        await context.pushNamed(
+                          AppRoutes.proofStatus,
+                          extra: {
+                            'orderId': order.id,
+                            'proofStatus': 'PENDING',
+                            'amount': order.price.toDouble(),
+                            'serviceName': order.serviceName ?? 'Servicio',
+                            'businessName': order.businessName,
+                          },
+                        );
+                        if (context.mounted) {
+                          widget.onRefresh();
+                        }
                       },
                       icon: const Icon(Icons.visibility_outlined, color: AppColors.primary, size: 18),
                       label: const Text('Ver Estado de Pago'),
@@ -1732,6 +2016,68 @@ class _BookingsTabState extends State<BookingsTab> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class PaymentCountdownText extends StatefulWidget {
+  final DateTime createdAt;
+  final VoidCallback onExpired;
+
+  const PaymentCountdownText({
+    super.key,
+    required this.createdAt,
+    required this.onExpired,
+  });
+
+  @override
+  State<PaymentCountdownText> createState() => _PaymentCountdownTextState();
+}
+
+class _PaymentCountdownTextState extends State<PaymentCountdownText> {
+  Timer? _timer;
+  int _remainingMinutes = 30;
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateRemainingTime();
+    _timer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted) {
+        _calculateRemainingTime();
+      }
+    });
+  }
+
+  void _calculateRemainingTime() {
+    final now = DateTime.now();
+    final difference = now.difference(widget.createdAt);
+    final remaining = 30 - difference.inMinutes;
+    if (remaining <= 0) {
+      _timer?.cancel();
+      widget.onExpired();
+    } else {
+      setState(() {
+        _remainingMinutes = remaining;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'Tiempo restante: $_remainingMinutes ${_remainingMinutes == 1 ? 'minuto' : 'minutos'}',
+      style: GoogleFonts.inter(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: AppColors.error,
       ),
     );
   }

@@ -162,10 +162,11 @@ class _RegisterPageState extends State<RegisterPage> {
                               alignment: Alignment.centerLeft,
                               child: Row(
                                 children: [
-                                  const Icon(
-                                    Icons.local_car_wash,
-                                    size: 32,
-                                    color: AppColors.primary,
+                                  Image.asset(
+                                    'assets/images/logo.png',
+                                    height: 32,
+                                    width: 32,
+                                    fit: BoxFit.contain,
                                   ),
                                   const SizedBox(width: 8),
                                   Text(

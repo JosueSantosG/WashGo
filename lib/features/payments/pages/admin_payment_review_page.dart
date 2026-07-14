@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:washgo/config/theme/app_colors.dart';
@@ -13,30 +14,116 @@ class AdminPaymentReviewPage extends StatefulWidget {
 
 class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
   final BankTransferRepository _repository = BankTransferRepository();
+  final ScrollController _scrollController = ScrollController();
+
   List<PaymentProofModel> _pendingProofs = [];
   bool _isLoading = true;
+  bool _isLoadingMore = false;
   String? _error;
+  StreamSubscription<List<PaymentProofModel>>? _subscription;
+
+  int _currentLimit = 15;
 
   @override
   void initState() {
     super.initState();
-    _loadPendingProofs();
+    _scrollController.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadPendingProofs();
+    });
   }
 
-  Future<void> _loadPendingProofs() async {
-    if (!mounted) return;
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _subscription?.cancel();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    
+    // Si el usuario llega al 90% del scroll, cargamos más
+    if (maxScroll - currentScroll <= 200) {
+      _loadMoreProofs();
+    }
+  }
+
+  void _subscribeToPendingProofs({bool isLoadMore = false}) {
+    _subscription?.cancel();
+    if (!isLoadMore) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
+    _subscription = _repository.watchAllPendingProofs(limit: _currentLimit).listen(
+      (proofs) {
+        if (!mounted) return;
+        setState(() {
+          _pendingProofs = proofs;
+          _isLoading = false;
+          _isLoadingMore = false;
+        });
+      },
+      onError: (e) {
+        if (!mounted) return;
+        setState(() {
+          if (_pendingProofs.isEmpty) {
+            _error = e.toString();
+          } else {
+            debugPrint("Error watching pending proofs: $e");
+          }
+          _isLoading = false;
+          _isLoadingMore = false;
+        });
+      },
+    );
+  }
+
+  Future<void> _loadMoreProofs() async {
+    final hasMore = _pendingProofs.length == _currentLimit;
+    if (_isLoading || _isLoadingMore || !hasMore) return;
+
     setState(() {
-      _isLoading = true;
-      _error = null;
+      _isLoadingMore = true;
+      _currentLimit += 15;
     });
 
     try {
-      final proofs = await _repository.getAllPendingProofs();
+      final proofs = await _repository.getAllPendingProofs(limit: _currentLimit);
+      if (!mounted) return;
+      setState(() {
+        _pendingProofs = proofs;
+        _isLoadingMore = false;
+      });
+      _subscribeToPendingProofs(isLoadMore: true);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingMore = false;
+          debugPrint("Error loading more proofs: $e");
+        });
+      }
+    }
+  }
+
+  Future<void> _loadPendingProofs() async {
+    try {
+      setState(() {
+        _currentLimit = 15;
+        _error = null;
+      });
+      final proofs = await _repository.getAllPendingProofs(limit: _currentLimit);
       if (!mounted) return;
       setState(() {
         _pendingProofs = proofs;
         _isLoading = false;
       });
+      _subscribeToPendingProofs(isLoadMore: true);
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -47,8 +134,11 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
     }
   }
 
-  Future<void> _reviewProof(PaymentProofModel proof, PaymentProofStatus status,
-      {String? reason}) async {
+  Future<void> _reviewProof(
+    PaymentProofModel proof,
+    PaymentProofStatus status, {
+    String? reason,
+  }) async {
     try {
       setState(() => _isLoading = true);
       await _repository.reviewProof(
@@ -56,8 +146,11 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
         status: status,
         rejectionReason: reason,
       );
-      await _loadPendingProofs();
+      if (mounted) {
+        await _loadPendingProofs();
+      }
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -93,15 +186,42 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
 
   String _formatDateTime(DateTime? dt) {
     if (dt == null) return 'No programada';
+    final localDt = dt.toLocal();
     final months = [
-      'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
-      'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic',
     ];
-    final day = dt.day.toString().padLeft(2, '0');
-    final month = months[dt.month - 1];
-    final hour = dt.hour.toString().padLeft(2, '0');
-    final minute = dt.minute.toString().padLeft(2, '0');
-    return '$day $month ${dt.year}, $hour:$minute';
+    final day = localDt.day.toString().padLeft(2, '0');
+    final month = months[localDt.month - 1];
+    final hour = localDt.hour.toString().padLeft(2, '0');
+    final minute = localDt.minute.toString().padLeft(2, '0');
+    return '$day $month ${localDt.year}, $hour:$minute';
+  }
+
+  String _formatTimeAgo(DateTime dateTime) {
+    final localDt = dateTime.toLocal();
+    final difference = DateTime.now().difference(localDt);
+    if (difference.inDays > 7) {
+      return _formatDateTime(dateTime);
+    } else if (difference.inDays >= 1) {
+      return 'Hace ${difference.inDays} ${difference.inDays == 1 ? "día" : "días"}';
+    } else if (difference.inHours >= 1) {
+      return 'Hace ${difference.inHours} ${difference.inHours == 1 ? "hora" : "horas"}';
+    } else if (difference.inMinutes >= 1) {
+      return 'Hace ${difference.inMinutes} ${difference.inMinutes == 1 ? "minuto" : "minutos"}';
+    } else {
+      return 'Hace unos segundos';
+    }
   }
 
   void _showImagePreviewDialog(PaymentProofModel proof) {
@@ -149,7 +269,9 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
                             if (loadingProgress == null) return child;
                             return const Center(
                               child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             );
                           },
@@ -168,7 +290,10 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
                           child: CircleAvatar(
                             backgroundColor: Colors.black54,
                             child: IconButton(
-                              icon: const Icon(Icons.close, color: Colors.white),
+                              icon: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                              ),
                               onPressed: () => Navigator.pop(dialogContext),
                             ),
                           ),
@@ -192,12 +317,13 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           'Rechazar Comprobante',
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF1E293B),
+          ),
         ),
         content: Form(
           key: formKey,
@@ -217,15 +343,22 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
                 controller: controller,
                 maxLines: 4,
                 decoration: InputDecoration(
-                  hintText: 'Ej. El número de referencia no coincide con el estado de cuenta.',
-                  hintStyle: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF94A3B8)),
+                  hintText:
+                      'Ej. El número de referencia no coincide con el estado de cuenta.',
+                  hintStyle: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: const Color(0xFF94A3B8),
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 2,
+                    ),
                   ),
                   contentPadding: const EdgeInsets.all(12),
                 ),
@@ -245,15 +378,21 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Cancelar',
-              style: GoogleFonts.inter(color: const Color(0xFF64748B), fontWeight: FontWeight.w600),
+              style: GoogleFonts.inter(
+                color: const Color(0xFF64748B),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           ElevatedButton(
             onPressed: () {
               if (formKey.currentState?.validate() ?? false) {
                 Navigator.pop(ctx);
-                _reviewProof(proof, PaymentProofStatus.REJECTED,
-                    reason: controller.text.trim());
+                _reviewProof(
+                  proof,
+                  PaymentProofStatus.REJECTED,
+                  reason: controller.text.trim(),
+                );
               }
             },
             style: ElevatedButton.styleFrom(
@@ -293,7 +432,7 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
               ),
             ),
             Text(
-              'Módulo exclusivo de SuperAdministrador',
+              'Módulo exclusivo de WashGo',
               style: GoogleFonts.inter(
                 fontSize: 12,
                 color: const Color(0xFF64748B),
@@ -317,7 +456,9 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
               ),
               child: Center(
                 child: Text(
-                  '${_pendingProofs.length} pendientes',
+                  _pendingProofs.length == _currentLimit
+                      ? '${_pendingProofs.length}+ pendientes'
+                      : '${_pendingProofs.length} pendientes',
                   style: GoogleFonts.inter(
                     color: const Color(0xFF1D4ED8),
                     fontWeight: FontWeight.bold,
@@ -329,28 +470,38 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: const Color(0xFFE2E8F0),
-            height: 1,
-          ),
+          child: Container(color: const Color(0xFFE2E8F0), height: 1),
         ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? _buildErrorState()
-              : _pendingProofs.isEmpty
-                  ? _buildEmptyState()
-                  : RefreshIndicator(
-                      onRefresh: _loadPendingProofs,
-                      child: ListView.builder(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        itemCount: _pendingProofs.length,
-                        itemBuilder: (context, i) =>
-                            _buildProofCard(_pendingProofs[i]),
+          ? _buildErrorState()
+          : _pendingProofs.isEmpty
+          ? _buildEmptyState()
+          : RefreshIndicator(
+              onRefresh: _loadPendingProofs,
+              child: ListView.builder(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                itemCount: _pendingProofs.length + (_pendingProofs.length == _currentLimit ? 1 : 0),
+                itemBuilder: (context, i) {
+                  if (i == _pendingProofs.length) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24.0),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                        ),
                       ),
-                    ),
+                    );
+                  }
+                  return _buildProofCard(_pendingProofs[i]);
+                },
+              ),
+            ),
     );
   }
 
@@ -365,7 +516,10 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
             const SizedBox(height: 16),
             Text(
               'Ocurrió un error',
-              style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold),
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -494,7 +648,11 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
                 Expanded(
                   child: Row(
                     children: [
-                      const Icon(Icons.storefront_rounded, color: Color(0xFF475569), size: 20),
+                      const Icon(
+                        Icons.storefront_rounded,
+                        color: Color(0xFF475569),
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -512,7 +670,10 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFEF3C7),
                     borderRadius: BorderRadius.circular(6),
@@ -541,10 +702,18 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildDetailRow(
+                        icon: Icons.tag,
+                        label: 'ID de Orden',
+                        value: '#WASH-${proof.orderId.length > 8 ? proof.orderId.substring(0, 8).toUpperCase() : proof.orderId.toUpperCase()}',
+                      ),
+                      const SizedBox(height: 12),
+                      _buildDetailRow(
                         icon: Icons.person_outline,
                         label: 'Cliente',
                         value: proof.clientName ?? 'N/A',
-                        subValue: proof.clientPhone != null ? 'Tel: ${proof.clientPhone}' : null,
+                        subValue: proof.clientPhone != null
+                            ? 'Tel: ${proof.clientPhone}'
+                            : null,
                       ),
                       const SizedBox(height: 12),
                       _buildDetailRow(
@@ -560,6 +729,12 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
                         icon: Icons.calendar_today_outlined,
                         label: 'Fecha Reserva',
                         value: _formatDateTime(proof.scheduledAt),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildDetailRow(
+                        icon: Icons.access_time_rounded,
+                        label: 'Fecha de Envío',
+                        value: '${_formatDateTime(proof.createdAt)} (${_formatTimeAgo(proof.createdAt)})',
                       ),
                       const SizedBox(height: 12),
                       _buildDetailRow(
@@ -663,25 +838,35 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFFEF4444)),
                     foregroundColor: const Color(0xFFEF4444),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                   child: Text(
                     'Rechazar',
-                    style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton(
-                  onPressed: () => _reviewProof(proof, PaymentProofStatus.APPROVED),
+                  onPressed: () =>
+                      _reviewProof(proof, PaymentProofStatus.APPROVED),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF10B981),
                     foregroundColor: Colors.white,
                     elevation: 0,
                     minimumSize: const Size(80, 40),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 10,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -693,7 +878,10 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
                       const SizedBox(width: 6),
                       Text(
                         'Aprobar',
-                        style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
@@ -713,6 +901,7 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
     String? subValue,
     Color? valueColor,
     FontWeight? valueFontWeight,
+    Widget? trailing,
   }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -732,13 +921,24 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
                 ),
               ),
               const SizedBox(height: 2),
-              Text(
-                value,
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: valueFontWeight ?? FontWeight.w600,
-                  color: valueColor ?? const Color(0xFF334155),
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      value,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: valueFontWeight ?? FontWeight.w600,
+                        color: valueColor ?? const Color(0xFF334155),
+                      ),
+                    ),
+                  ),
+                  if (trailing != null) ...[
+                    const SizedBox(width: 4),
+                    trailing,
+                  ],
+                ],
               ),
               if (subValue != null) ...[
                 const SizedBox(height: 1),

@@ -6,8 +6,8 @@ class GetCurrentUserVariablesBuilder {
   GetCurrentUserVariablesBuilder(this._dataConnect, );
   Deserializer<GetCurrentUserData> dataDeserializer = (dynamic json)  => GetCurrentUserData.fromJson(jsonDecode(json));
   
-  Future<QueryResult<GetCurrentUserData, void>> execute() {
-    return ref().execute();
+  Future<QueryResult<GetCurrentUserData, void>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<GetCurrentUserData, void> ref() {

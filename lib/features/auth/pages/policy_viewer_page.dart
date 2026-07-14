@@ -86,7 +86,7 @@ class PolicyViewerPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Última actualización: 5 de Julio, 2026',
+                        'Última actualización: 12 de Julio, 2026',
                         style: textTheme.labelSmall?.copyWith(
                           color: AppColors.outline,
                           fontWeight: FontWeight.w500,
@@ -134,7 +134,7 @@ class PolicyViewerPage extends StatelessWidget {
           'Para acceder a ciertas funciones, debe registrarse y mantener una cuenta activa. Usted es responsable de mantener la confidencialidad de sus credenciales y de toda la actividad que ocurra bajo su cuenta. WashGo se reserva el derecho de rechazar el registro o cancelar cuentas que violen nuestras políticas.'),
       _sectionHeader(textTheme, '4. Tarifas, Pagos y Saldos Prepago'),
       _sectionBody(textTheme,
-          'Los clientes pagan los servicios a través de los medios autorizados en la plataforma (Efectivo, PayPal, etc.). Para los negocios asociados, WashGo opera bajo un modelo de saldo prepago prepagado. Los negocios deben mantener un saldo prepago positivo en su cuenta para recibir reservas de clientes. El saldo prepago se debitará automáticamente al procesar o confirmar cada pedido de acuerdo con las tarifas vigentes.'),
+          'Los clientes pagan los servicios a través de los medios autorizados en la plataforma (Efectivo, PayPal, Transferencia Bancaria, etc.). Para los negocios asociados, WashGo opera bajo un modelo de saldo prepago prepagado. Los negocios deben mantener un saldo prepago positivo en su cuenta para recibir reservas de clientes. El saldo prepago se debitará automáticamente al procesar o confirmar cada pedido de acuerdo con las tarifas vigentes.'),
       _sectionHeader(textTheme, '5. Obligaciones y Conducta del Usuario'),
       _sectionBody(textTheme,
           'Tanto los clientes como los negocios y empleados se comprometen a interactuar de manera respetuosa y honesta. Queda estrictamente prohibido utilizar la plataforma para fines ilícitos, suplantación de identidad, proporcionar información falsa (incluyendo RUCs de negocios) o intentar vulnerar la seguridad del sistema.'),
@@ -143,7 +143,7 @@ class PolicyViewerPage extends StatelessWidget {
           'WashGo no se hace responsable por daños directos, indirectos, incidentales o consecuentes derivados del uso del servicio, de la calidad del lavado realizado por los negocios asociados, o de altercados entre usuarios en los establecimientos.'),
       _sectionHeader(textTheme, '7. Modificaciones a los Términos'),
       _sectionBody(textTheme,
-          'Nos reservamos el derecho de modificar estos términos en cualquier momento. La notificación de cambios se realizará publicando los nuevos términos en la aplicación. El uso continuado de la plataforma después de dichas modificaciones constituirá su consentimiento a los nuevos términos.'),
+          'Nos reservamos el derecho de modificar estos términos en any momento. La notificación de cambios se realizará publicando los nuevos términos en la aplicación. El uso continuado de la plataforma después de dichas modificaciones constituirá su consentimiento a los nuevos términos.'),
     ];
   }
 
@@ -153,19 +153,21 @@ class PolicyViewerPage extends StatelessWidget {
       _sectionBody(textTheme,
           'Recopilamos información necesaria para proporcionar y mejorar nuestros servicios, incluyendo:\n'
           '• Datos de Registro: Nombre completo, dirección de correo electrónico y número de teléfono.\n'
+          '• Información del Vehículo: Tipo de vehículo (o categoría), necesario para cotizar los servicios correctos.\n'
           '• Información del Negocio: Nombre comercial, dirección física, RUC (Registro Único de Contribuyentes) y datos de contacto.\n'
           '• Ubicación: Datos de geolocalización en tiempo real para sugerir lavanderías cercanas (solo con su consentimiento explícito).\n'
-          '• Información de Uso: Historial de pedidos, reservas, comprobantes de pago y valoraciones del servicio.'),
+          '• Archivos y Acceso a Dispositivo: Acceso a la cámara y galería de imágenes para la captura y carga de comprobantes de transferencia bancaria.\n'
+          '• Información de Uso y Pagos: Historial de pedidos, reservas, transacciones mediante pasarelas de pago externas (PayPal) y comprobantes de transferencias bancarias cargados por el usuario, así como valoraciones del servicio.'),
       _sectionHeader(textTheme, '2. Uso de la Información'),
       _sectionBody(textTheme,
           'Utilizamos la información recopilada para:\n'
           '• Facilitar la conexión entre clientes y negocios asociados.\n'
-          '• Procesar y validar transacciones de pago y deducción de saldos prepago.\n'
+          '• Procesar, validar y registrar transacciones de pago, transferencias y deducción de saldos prepago.\n'
           '• Optimizar la experiencia del usuario y ofrecer soporte técnico.\n'
           '• Cumplir con requerimientos legales y fiscales aplicables en Ecuador.'),
       _sectionHeader(textTheme, '3. Compartición de Datos'),
       _sectionBody(textTheme,
-          'No vendemos ni alquilamos su información personal a terceros. Sus datos se comparten únicamente entre las partes involucradas en una reserva (por ejemplo, proporcionar el nombre del cliente y placa del vehículo al negocio de lavado) o con proveedores de infraestructura esenciales (como Firebase y pasarelas de pago autorizadas como PayPal) bajo estrictas medidas de confidencialidad.'),
+          'No vendemos ni alquilamos su información personal a terceros. Sus datos se comparten únicamente entre las partes involucradas en una reserva (por ejemplo, proporcionar el nombre del cliente y tipo de vehículo al negocio de lavado) o con proveedores de infraestructura esenciales (como Firebase y pasarelas de pago autorizadas como PayPal) bajo estrictas medidas de confidencialidad.'),
       _sectionHeader(textTheme, '4. Seguridad de los Datos'),
       _sectionBody(textTheme,
           'Implementamos medidas de seguridad técnicas y organizativas para proteger su información contra accesos no autorizados, pérdida o alteración. Esto incluye encriptación SSL/TLS, políticas estrictas de autenticación mediante Firebase Auth y reglas robustas de base de datos a nivel de servidor.'),

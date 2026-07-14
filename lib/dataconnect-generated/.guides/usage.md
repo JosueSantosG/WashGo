@@ -10,7 +10,7 @@ ExampleConnector.instance.UpdateBusiness(updateBusinessVariables).execute();
 ExampleConnector.instance.CreateOrder(createOrderVariables).execute();
 ExampleConnector.instance.AcceptOrder(acceptOrderVariables).execute();
 ExampleConnector.instance.UpdateOrderStatus(updateOrderStatusVariables).execute();
-ExampleConnector.instance.RescheduleOrder(rescheduleOrderVariables).execute();
+ExampleConnector.instance.UpdateOrderPaymentMethodAndStatus(updateOrderPaymentMethodAndStatusVariables).execute();
 
 ```
 
@@ -23,7 +23,7 @@ Optional fields can be discovered based on classes that have `Optional` object t
 This is an example of a mutation with an optional field:
 
 ```dart
-await ExampleConnector.instance.GetBusinessInvoices({ ... })
+await ExampleConnector.instance.GetPendingPaymentProofs({ ... })
 .limit(...)
 .execute();
 ```

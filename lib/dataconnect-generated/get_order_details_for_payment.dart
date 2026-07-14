@@ -7,8 +7,8 @@ class GetOrderDetailsForPaymentVariablesBuilder {
   GetOrderDetailsForPaymentVariablesBuilder(this._dataConnect, {required  this.orderId,});
   Deserializer<GetOrderDetailsForPaymentData> dataDeserializer = (dynamic json)  => GetOrderDetailsForPaymentData.fromJson(jsonDecode(json));
   Serializer<GetOrderDetailsForPaymentVariables> varsSerializer = (GetOrderDetailsForPaymentVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetOrderDetailsForPaymentData, GetOrderDetailsForPaymentVariables>> execute() {
-    return ref().execute();
+  Future<QueryResult<GetOrderDetailsForPaymentData, GetOrderDetailsForPaymentVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<GetOrderDetailsForPaymentData, GetOrderDetailsForPaymentVariables> ref() {

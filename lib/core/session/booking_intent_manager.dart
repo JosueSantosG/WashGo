@@ -8,7 +8,6 @@ class BookingIntent {
   final String serviceId;
   final String serviceName;
   final String vehicleCategory; // 'Moto', 'Pequeño', 'Mediano', 'Grande'
-  final String? plate;
   final bool scheduleNow;
   final DateTime selectedDate;
   final DateTime? selectedTimeSlot;
@@ -20,7 +19,6 @@ class BookingIntent {
     required this.serviceId,
     required this.serviceName,
     required this.vehicleCategory,
-    this.plate,
     required this.scheduleNow,
     required this.selectedDate,
     this.selectedTimeSlot,
@@ -33,7 +31,6 @@ class BookingIntent {
         'serviceId': serviceId,
         'serviceName': serviceName,
         'vehicleCategory': vehicleCategory,
-        'plate': plate,
         'scheduleNow': scheduleNow,
         'selectedDate': selectedDate.toIso8601String(),
         'selectedTimeSlot': selectedTimeSlot?.toIso8601String(),
@@ -46,7 +43,6 @@ class BookingIntent {
         serviceId: json['serviceId'] as String,
         serviceName: json['serviceName'] as String,
         vehicleCategory: json['vehicleCategory'] as String,
-        plate: json['plate'] as String?,
         scheduleNow: json['scheduleNow'] as bool,
         selectedDate: DateTime.parse(json['selectedDate'] as String),
         selectedTimeSlot: json['selectedTimeSlot'] != null
@@ -64,6 +60,8 @@ class PendingPaymentIntent {
   final String businessName;
   final String? businessId;
   final DateTime createdAt;
+  final String? transactionId;
+  final String? phoneNumber;
 
   PendingPaymentIntent({
     required this.orderId,
@@ -73,6 +71,8 @@ class PendingPaymentIntent {
     required this.businessName,
     this.businessId,
     required this.createdAt,
+    this.transactionId,
+    this.phoneNumber,
   });
 
   Map<String, dynamic> toJson() => {
@@ -83,6 +83,8 @@ class PendingPaymentIntent {
         'businessName': businessName,
         'businessId': businessId,
         'createdAt': createdAt.toIso8601String(),
+        'transactionId': transactionId,
+        'phoneNumber': phoneNumber,
       };
 
   factory PendingPaymentIntent.fromJson(Map<String, dynamic> json) =>
@@ -94,6 +96,8 @@ class PendingPaymentIntent {
         businessName: json['businessName'] as String,
         businessId: json['businessId'] as String?,
         createdAt: DateTime.parse(json['createdAt'] as String),
+        transactionId: json['transactionId'] as String?,
+        phoneNumber: json['phoneNumber'] as String?,
       );
 }
 

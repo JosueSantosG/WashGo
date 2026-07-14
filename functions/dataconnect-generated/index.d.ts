@@ -44,6 +44,7 @@ export enum PaymentMethod {
   PAYPAL = "PAYPAL",
   CASH = "CASH",
   TRANSFERENCIA_BANCARIA = "TRANSFERENCIA_BANCARIA",
+  PAYPHONE = "PAYPHONE",
 }
 export enum PaymentProofStatus {
   PENDING = "PENDING",
@@ -62,9 +63,7 @@ export enum UserRole {
 }
 
 export interface AcceptOrderData {
-  order_update?: {
-    id: UUIDString;
-  };
+  order_update?: Order_Key | null;
 }
 
 export interface AcceptOrderVariables {
@@ -73,9 +72,7 @@ export interface AcceptOrderVariables {
 }
 
 export interface AddVehicleData {
-  vehicle_insert: {
-    id: UUIDString;
-  };
+  vehicle_insert: Vehicle_Key;
 }
 
 export interface AddVehicleVariables {
@@ -85,15 +82,9 @@ export interface AddVehicleVariables {
 }
 
 export interface ApproveEmployeeRequestData {
-  employeeRequest_update?: {
-    id: UUIDString;
-  };
-    user_update?: {
-      id: string;
-    };
-      businessEmployee_insert: {
-        id: UUIDString;
-      };
+  employeeRequest_update?: EmployeeRequest_Key | null;
+  user_update?: User_Key | null;
+  businessEmployee_insert: BusinessEmployee_Key;
 }
 
 export interface ApproveEmployeeRequestVariables {
@@ -126,9 +117,9 @@ export interface CheckBusinessEmployeeAdminData {
   businessEmployees: ({
     id: UUIDString;
   } & BusinessEmployee_Key)[];
-    user?: {
-      roles: UserRole[];
-    };
+  user?: {
+    roles: UserRole[];
+  };
 }
 
 export interface CheckBusinessEmployeeAdminVariables {
@@ -137,12 +128,8 @@ export interface CheckBusinessEmployeeAdminVariables {
 }
 
 export interface CompleteOrderWithInvoiceOnlyData {
-  order_update?: {
-    id: UUIDString;
-  };
-    invoice_insert: {
-      id: UUIDString;
-    };
+  order_update?: Order_Key | null;
+  invoice_insert: Invoice_Key;
 }
 
 export interface CompleteOrderWithInvoiceOnlyVariables {
@@ -160,21 +147,11 @@ export interface CompleteOrderWithInvoiceOnlyVariables {
 }
 
 export interface CompleteOrderWithPrepaidAndCreateMetricData {
-  order_update?: {
-    id: UUIDString;
-  };
-    invoice_insert: {
-      id: UUIDString;
-    };
-      business_update?: {
-        id: UUIDString;
-      };
-        prepaidHistory_insert: {
-          id: UUIDString;
-        };
-          prepaidServiceMetric_insert: {
-            id: UUIDString;
-          };
+  order_update?: Order_Key | null;
+  invoice_insert: Invoice_Key;
+  business_update?: Business_Key | null;
+  prepaidHistory_insert: PrepaidHistory_Key;
+  prepaidServiceMetric_insert: PrepaidServiceMetric_Key;
 }
 
 export interface CompleteOrderWithPrepaidAndCreateMetricVariables {
@@ -202,21 +179,11 @@ export interface CompleteOrderWithPrepaidAndCreateMetricVariables {
 }
 
 export interface CompleteOrderWithPrepaidAndUpdateMetricData {
-  order_update?: {
-    id: UUIDString;
-  };
-    invoice_insert: {
-      id: UUIDString;
-    };
-      business_update?: {
-        id: UUIDString;
-      };
-        prepaidHistory_insert: {
-          id: UUIDString;
-        };
-          prepaidServiceMetric_update?: {
-            id: UUIDString;
-          };
+  order_update?: Order_Key | null;
+  invoice_insert: Invoice_Key;
+  business_update?: Business_Key | null;
+  prepaidHistory_insert: PrepaidHistory_Key;
+  prepaidServiceMetric_update?: PrepaidServiceMetric_Key | null;
 }
 
 export interface CompleteOrderWithPrepaidAndUpdateMetricVariables {
@@ -245,12 +212,8 @@ export interface CompleteOrderWithPrepaidAndUpdateMetricVariables {
 }
 
 export interface CompleteOrderWithTransferAndInvoiceData {
-  order_update?: {
-    id: UUIDString;
-  };
-    invoice_insert: {
-      id: UUIDString;
-    };
+  order_update?: Order_Key | null;
+  invoice_insert: Invoice_Key;
 }
 
 export interface CompleteOrderWithTransferAndInvoiceVariables {
@@ -268,15 +231,9 @@ export interface CompleteOrderWithTransferAndInvoiceVariables {
 }
 
 export interface ConsumePrepaidAndCreateMetricData {
-  business_update?: {
-    id: UUIDString;
-  };
-    prepaidHistory_insert: {
-      id: UUIDString;
-    };
-      prepaidServiceMetric_insert: {
-        id: UUIDString;
-      };
+  business_update?: Business_Key | null;
+  prepaidHistory_insert: PrepaidHistory_Key;
+  prepaidServiceMetric_insert: PrepaidServiceMetric_Key;
 }
 
 export interface ConsumePrepaidAndCreateMetricVariables {
@@ -293,15 +250,9 @@ export interface ConsumePrepaidAndCreateMetricVariables {
 }
 
 export interface ConsumePrepaidAndUpdateMetricData {
-  business_update?: {
-    id: UUIDString;
-  };
-    prepaidHistory_insert: {
-      id: UUIDString;
-    };
-      prepaidServiceMetric_update?: {
-        id: UUIDString;
-      };
+  business_update?: Business_Key | null;
+  prepaidHistory_insert: PrepaidHistory_Key;
+  prepaidServiceMetric_update?: PrepaidServiceMetric_Key | null;
 }
 
 export interface ConsumePrepaidAndUpdateMetricVariables {
@@ -319,18 +270,12 @@ export interface ConsumePrepaidAndUpdateMetricVariables {
 }
 
 export interface CreateBusinessData {
-  business_insert: {
-    id: UUIDString;
-  };
-    user_update?: {
-      id: string;
-    };
+  business_insert: Business_Key;
+  user_update?: User_Key | null;
 }
 
 export interface CreateBusinessHourData {
-  businessHour_insert: {
-    id: UUIDString;
-  };
+  businessHour_insert: BusinessHour_Key;
 }
 
 export interface CreateBusinessHourVariables {
@@ -342,9 +287,7 @@ export interface CreateBusinessHourVariables {
 }
 
 export interface CreateBusinessReservationConfigData {
-  businessReservationConfig_insert: {
-    id: UUIDString;
-  };
+  businessReservationConfig_insert: BusinessReservationConfig_Key;
 }
 
 export interface CreateBusinessReservationConfigVariables {
@@ -366,15 +309,11 @@ export interface CreateBusinessVariables {
 }
 
 export interface CreateInvoiceData {
-  invoice_insert: {
-    id: UUIDString;
-  };
+  invoice_insert: Invoice_Key;
 }
 
 export interface CreateInvoiceItemData {
-  invoiceItem_insert: {
-    id: UUIDString;
-  };
+  invoiceItem_insert: InvoiceItem_Key;
 }
 
 export interface CreateInvoiceItemVariables {
@@ -399,9 +338,7 @@ export interface CreateInvoiceVariables {
 }
 
 export interface CreateNotificationData {
-  notification_insert: {
-    id: UUIDString;
-  };
+  notification_insert: Notification_Key;
 }
 
 export interface CreateNotificationVariables {
@@ -411,15 +348,22 @@ export interface CreateNotificationVariables {
 }
 
 export interface CreateOrderData {
-  order_insert: {
-    id: UUIDString;
-  };
+  order_insert: Order_Key;
+}
+
+export interface CreateOrderLogData {
+  orderLog_insert: OrderLog_Key;
+}
+
+export interface CreateOrderLogVariables {
+  orderId: UUIDString;
+  actionType: string;
+  previousValue?: string | null;
+  newValue?: string | null;
 }
 
 export interface CreateOrderReservationData {
-  orderReservation_insert: {
-    id: UUIDString;
-  };
+  orderReservation_insert: OrderReservation_Key;
 }
 
 export interface CreateOrderReservationVariables {
@@ -443,9 +387,7 @@ export interface CreateOrderVariables {
 }
 
 export interface CreatePaymentProofData {
-  paymentProof_insert: {
-    id: UUIDString;
-  };
+  paymentProof_insert: PaymentProof_Key;
 }
 
 export interface CreatePaymentProofVariables {
@@ -458,9 +400,7 @@ export interface CreatePaymentProofVariables {
 }
 
 export interface CreatePrepaidHistoryData {
-  prepaidHistory_insert: {
-    id: UUIDString;
-  };
+  prepaidHistory_insert: PrepaidHistory_Key;
 }
 
 export interface CreatePrepaidHistoryVariables {
@@ -472,9 +412,7 @@ export interface CreatePrepaidHistoryVariables {
 }
 
 export interface CreatePrepaidServiceMetricData {
-  prepaidServiceMetric_insert: {
-    id: UUIDString;
-  };
+  prepaidServiceMetric_insert: PrepaidServiceMetric_Key;
 }
 
 export interface CreatePrepaidServiceMetricVariables {
@@ -486,9 +424,7 @@ export interface CreatePrepaidServiceMetricVariables {
 }
 
 export interface CreateReviewData {
-  review_insert: {
-    id: UUIDString;
-  };
+  review_insert: Review_Key;
 }
 
 export interface CreateReviewVariables {
@@ -502,9 +438,7 @@ export interface CreateReviewVariables {
 }
 
 export interface CreateServiceData {
-  service_insert: {
-    id: UUIDString;
-  };
+  service_insert: Service_Key;
 }
 
 export interface CreateServiceVariables {
@@ -520,9 +454,7 @@ export interface CreateServiceVariables {
 }
 
 export interface CreateSystemNotificationData {
-  notification_insert: {
-    id: UUIDString;
-  };
+  notification_insert: Notification_Key;
 }
 
 export interface CreateSystemNotificationVariables {
@@ -532,9 +464,7 @@ export interface CreateSystemNotificationVariables {
 }
 
 export interface CreateWalkInOrderData {
-  order_insert: {
-    id: UUIDString;
-  };
+  order_insert: Order_Key;
 }
 
 export interface CreateWalkInOrderVariables {
@@ -549,9 +479,7 @@ export interface CreateWalkInOrderVariables {
 }
 
 export interface CreateWalkInUserData {
-  user_insert: {
-    id: string;
-  };
+  user_insert: User_Key;
 }
 
 export interface CreateWalkInUserVariables {
@@ -570,9 +498,7 @@ export interface DeleteBusinessHoursVariables {
 }
 
 export interface DeleteCurrentUserData {
-  user_delete?: {
-    id: string;
-  };
+  user_delete?: User_Key | null;
 }
 
 export interface DeleteOrderReservationData {
@@ -584,9 +510,7 @@ export interface DeleteOrderReservationVariables {
 }
 
 export interface DeleteServiceData {
-  service_delete?: {
-    id: UUIDString;
-  };
+  service_delete?: Service_Key | null;
 }
 
 export interface DeleteServiceVariables {
@@ -594,9 +518,7 @@ export interface DeleteServiceVariables {
 }
 
 export interface DeleteVehicleData {
-  vehicle_delete?: {
-    id: UUIDString;
-  };
+  vehicle_delete?: Vehicle_Key | null;
 }
 
 export interface DeleteVehicleVariables {
@@ -635,14 +557,14 @@ export interface GetActiveBusinessOrdersData {
       id: string;
       nombreCompleto: string;
     } & User_Key;
-      employee?: {
-        id: string;
-        nombreCompleto: string;
-      } & User_Key;
-        service?: {
-          id: UUIDString;
-          duracionMinutos: number;
-        } & Service_Key;
+    employee?: {
+      id: string;
+      nombreCompleto: string;
+    } & User_Key;
+    service?: {
+      id: UUIDString;
+      duracionMinutos: number;
+    } & Service_Key;
   } & Order_Key)[];
 }
 
@@ -660,8 +582,8 @@ export interface GetActiveEmployeesData {
       telefono?: string | null;
       fotoPerfil?: string | null;
     } & User_Key;
-      estadoDisponibilidad: boolean;
-      joinedAt: TimestampString;
+    estadoDisponibilidad: boolean;
+    joinedAt: TimestampString;
   } & BusinessEmployee_Key)[];
 }
 
@@ -697,23 +619,23 @@ export interface GetAllBusinessesData {
     owner: {
       nombreCompleto: string;
     };
-      businessHours_on_business: ({
-        diaDeLaSemana: number;
-        horaApertura?: string | null;
-        horaCierre?: string | null;
-        esDiaDescanso: boolean;
-      })[];
-        services_on_business: ({
-          precioPequeno: number;
-          precioMediano: number;
-          precioGrande: number;
-          precioMoto: number;
-          activo?: boolean | null;
-          precioPendiente: boolean;
-        })[];
-          reviews_on_business: ({
-            calificacion: number;
-          })[];
+    businessHours_on_business: ({
+      diaDeLaSemana: number;
+      horaApertura?: string | null;
+      horaCierre?: string | null;
+      esDiaDescanso: boolean;
+    })[];
+    services_on_business: ({
+      precioPequeno: number;
+      precioMediano: number;
+      precioGrande: number;
+      precioMoto: number;
+      activo?: boolean | null;
+      precioPendiente: boolean;
+    })[];
+    reviews_on_business: ({
+      calificacion: number;
+    })[];
   } & Business_Key)[];
 }
 
@@ -783,18 +705,18 @@ export interface GetBusinessInvoicesData {
         email: string;
         telefono?: string | null;
       };
-        employee?: {
-          nombreCompleto: string;
-          telefono?: string | null;
-        };
+      employee?: {
+        nombreCompleto: string;
+        telefono?: string | null;
+      };
     } & Order_Key;
-      invoiceItems_on_invoice: ({
-        id: UUIDString;
-        serviceName: string;
-        quantity: number;
-        unitPrice: number;
-        total: number;
-      } & InvoiceItem_Key)[];
+    invoiceItems_on_invoice: ({
+      id: UUIDString;
+      serviceName: string;
+      quantity: number;
+      unitPrice: number;
+      total: number;
+    } & InvoiceItem_Key)[];
   } & Invoice_Key)[];
 }
 
@@ -826,21 +748,21 @@ export interface GetBusinessOrdersData {
       fotoPerfil?: string | null;
       telefono?: string | null;
     } & User_Key;
-      employee?: {
-        id: string;
-        nombreCompleto: string;
-        fotoPerfil?: string | null;
-        telefono?: string | null;
-      } & User_Key;
-        paymentProof_on_order?: {
-          id: UUIDString;
-          imageUrl: string;
-          declaredAmount: number;
-          paymentAccountType: PaymentAccountType;
-          referenceNumber?: string | null;
-          observations?: string | null;
-          status: PaymentProofStatus;
-        } & PaymentProof_Key;
+    employee?: {
+      id: string;
+      nombreCompleto: string;
+      fotoPerfil?: string | null;
+      telefono?: string | null;
+    } & User_Key;
+    paymentProof_on_order?: {
+      id: UUIDString;
+      imageUrl: string;
+      declaredAmount: number;
+      paymentAccountType: PaymentAccountType;
+      referenceNumber?: string | null;
+      observations?: string | null;
+      status: PaymentProofStatus;
+    } & PaymentProof_Key;
   } & Order_Key)[];
 }
 
@@ -922,17 +844,17 @@ export interface GetClientHistoryOrdersPagedData {
       latitud?: number | null;
       longitud?: number | null;
     } & Business_Key;
-      employee?: {
-        id: string;
-        nombreCompleto: string;
-        fotoPerfil?: string | null;
-        telefono?: string | null;
-      } & User_Key;
-        review_on_order?: {
-          id: UUIDString;
-          calificacion: number;
-          comentario?: string | null;
-        } & Review_Key;
+    employee?: {
+      id: string;
+      nombreCompleto: string;
+      fotoPerfil?: string | null;
+      telefono?: string | null;
+    } & User_Key;
+    review_on_order?: {
+      id: UUIDString;
+      calificacion: number;
+      comentario?: string | null;
+    } & Review_Key;
   } & Order_Key)[];
 }
 
@@ -963,18 +885,18 @@ export interface GetClientInvoicesData {
       business: {
         nombre: string;
       };
-        employee?: {
-          nombreCompleto: string;
-          telefono?: string | null;
-        };
+      employee?: {
+        nombreCompleto: string;
+        telefono?: string | null;
+      };
     } & Order_Key;
-      invoiceItems_on_invoice: ({
-        id: UUIDString;
-        serviceName: string;
-        quantity: number;
-        unitPrice: number;
-        total: number;
-      } & InvoiceItem_Key)[];
+    invoiceItems_on_invoice: ({
+      id: UUIDString;
+      serviceName: string;
+      quantity: number;
+      unitPrice: number;
+      total: number;
+    } & InvoiceItem_Key)[];
   } & Invoice_Key)[];
 }
 
@@ -999,6 +921,7 @@ export interface GetClientOrdersData {
     paymentMethod: PaymentMethod;
     status: OrderStatus;
     invoiceUrl?: string | null;
+    createdAt?: TimestampString | null;
     business: {
       id: UUIDString;
       nombre: string;
@@ -1006,26 +929,26 @@ export interface GetClientOrdersData {
       longitud?: number | null;
       telefono?: string | null;
     } & Business_Key;
-      employee?: {
-        id: string;
-        nombreCompleto: string;
-        fotoPerfil?: string | null;
-        telefono?: string | null;
-      } & User_Key;
-        review_on_order?: {
-          id: UUIDString;
-          calificacion: number;
-          comentario?: string | null;
-        } & Review_Key;
-          paymentProof_on_order?: {
-            id: UUIDString;
-            imageUrl: string;
-            declaredAmount: number;
-            paymentAccountType: PaymentAccountType;
-            referenceNumber?: string | null;
-            observations?: string | null;
-            status: PaymentProofStatus;
-          } & PaymentProof_Key;
+    employee?: {
+      id: string;
+      nombreCompleto: string;
+      fotoPerfil?: string | null;
+      telefono?: string | null;
+    } & User_Key;
+    review_on_order?: {
+      id: UUIDString;
+      calificacion: number;
+      comentario?: string | null;
+    } & Review_Key;
+    paymentProof_on_order?: {
+      id: UUIDString;
+      imageUrl: string;
+      declaredAmount: number;
+      paymentAccountType: PaymentAccountType;
+      referenceNumber?: string | null;
+      observations?: string | null;
+      status: PaymentProofStatus;
+    } & PaymentProof_Key;
   } & Order_Key)[];
 }
 
@@ -1083,12 +1006,12 @@ export interface GetEmployeeHistoryOrdersPagedData {
       fotoPerfil?: string | null;
       telefono?: string | null;
     } & User_Key;
-      employee?: {
-        id: string;
-        nombreCompleto: string;
-        fotoPerfil?: string | null;
-        telefono?: string | null;
-      } & User_Key;
+    employee?: {
+      id: string;
+      nombreCompleto: string;
+      fotoPerfil?: string | null;
+      telefono?: string | null;
+    } & User_Key;
   } & Order_Key)[];
 }
 
@@ -1122,19 +1045,19 @@ export interface GetEmployeeInvoicesData {
       business: {
         nombre: string;
       };
-        client: {
-          nombreCompleto: string;
-          email: string;
-          telefono?: string | null;
-        };
+      client: {
+        nombreCompleto: string;
+        email: string;
+        telefono?: string | null;
+      };
     } & Order_Key;
-      invoiceItems_on_invoice: ({
-        id: UUIDString;
-        serviceName: string;
-        quantity: number;
-        unitPrice: number;
-        total: number;
-      } & InvoiceItem_Key)[];
+    invoiceItems_on_invoice: ({
+      id: UUIDString;
+      serviceName: string;
+      quantity: number;
+      unitPrice: number;
+      total: number;
+    } & InvoiceItem_Key)[];
   } & Invoice_Key)[];
 }
 
@@ -1203,23 +1126,23 @@ export interface GetInvoiceByIdData {
           id: string;
         } & User_Key;
       } & Business_Key;
-        client: {
-          nombreCompleto: string;
-          email: string;
-          telefono?: string | null;
-        };
-          employee?: {
-            nombreCompleto: string;
-            telefono?: string | null;
-          };
+      client: {
+        nombreCompleto: string;
+        email: string;
+        telefono?: string | null;
+      };
+      employee?: {
+        nombreCompleto: string;
+        telefono?: string | null;
+      };
     } & Order_Key;
-      invoiceItems_on_invoice: ({
-        id: UUIDString;
-        serviceName: string;
-        quantity: number;
-        unitPrice: number;
-        total: number;
-      } & InvoiceItem_Key)[];
+    invoiceItems_on_invoice: ({
+      id: UUIDString;
+      serviceName: string;
+      quantity: number;
+      unitPrice: number;
+      total: number;
+    } & InvoiceItem_Key)[];
   } & Invoice_Key;
 }
 
@@ -1282,13 +1205,13 @@ export interface GetInvoicesByDateRangeData {
         nombreCompleto: string;
       };
     } & Order_Key;
-      invoiceItems_on_invoice: ({
-        id: UUIDString;
-        serviceName: string;
-        quantity: number;
-        unitPrice: number;
-        total: number;
-      } & InvoiceItem_Key)[];
+    invoiceItems_on_invoice: ({
+      id: UUIDString;
+      serviceName: string;
+      quantity: number;
+      unitPrice: number;
+      total: number;
+    } & InvoiceItem_Key)[];
   } & Invoice_Key)[];
 }
 
@@ -1343,23 +1266,23 @@ export interface GetOrderByIdData {
         id: string;
       } & User_Key;
     } & Business_Key;
-      costo: number;
-      serviceName?: string | null;
-      status: OrderStatus;
-      observations?: string | null;
-      price: number;
-      paymentMethod: PaymentMethod;
-      type: OrderType;
-      client: {
-        id: string;
-        nombreCompleto: string;
-        telefono?: string | null;
-        email: string;
-      } & User_Key;
-        employee?: {
-          id: string;
-          nombreCompleto: string;
-        } & User_Key;
+    costo: number;
+    serviceName?: string | null;
+    status: OrderStatus;
+    observations?: string | null;
+    price: number;
+    paymentMethod: PaymentMethod;
+    type: OrderType;
+    client: {
+      id: string;
+      nombreCompleto: string;
+      telefono?: string | null;
+      email: string;
+    } & User_Key;
+    employee?: {
+      id: string;
+      nombreCompleto: string;
+    } & User_Key;
   } & Order_Key;
 }
 
@@ -1385,6 +1308,20 @@ export interface GetOrderDetailsForPaymentData {
 }
 
 export interface GetOrderDetailsForPaymentVariables {
+  orderId: UUIDString;
+}
+
+export interface GetOrderLogsData {
+  orderLogs: ({
+    id: UUIDString;
+    actionType: string;
+    createdAt: TimestampString;
+    previousValue?: string | null;
+    newValue?: string | null;
+  } & OrderLog_Key)[];
+}
+
+export interface GetOrderLogsVariables {
   orderId: UUIDString;
 }
 
@@ -1438,6 +1375,18 @@ export interface GetPaymentProofVariables {
   orderId: UUIDString;
 }
 
+export interface GetPendingElectronicOrdersData {
+  orders: ({
+    id: UUIDString;
+    clientId: string;
+    price: number;
+    paymentMethod: PaymentMethod;
+    serviceName?: string | null;
+    businessId: UUIDString;
+    createdAt?: TimestampString | null;
+  } & Order_Key)[];
+}
+
 export interface GetPendingEmployeeRequestsData {
   employeeRequests: ({
     id: UUIDString;
@@ -1446,7 +1395,7 @@ export interface GetPendingEmployeeRequestsData {
       nombreCompleto: string;
       email: string;
     } & User_Key;
-      createdAt: TimestampString;
+    createdAt: TimestampString;
   } & EmployeeRequest_Key)[];
 }
 
@@ -1471,26 +1420,32 @@ export interface GetPendingPaymentProofsData {
       paymentMethod: PaymentMethod;
       status: OrderStatus;
       serviceName?: string | null;
+      observations?: string | null;
       createdAt?: TimestampString | null;
       client: {
         id: string;
         nombreCompleto: string;
         telefono?: string | null;
       } & User_Key;
-        business: {
+      business: {
+        id: UUIDString;
+        nombre: string;
+      } & Business_Key;
+      orderReservation_on_order?: {
+        scheduledAt: TimestampString;
+        serviceDurationMinutos: number;
+        service: {
           id: UUIDString;
           nombre: string;
-        } & Business_Key;
-          orderReservation_on_order?: {
-            scheduledAt: TimestampString;
-            serviceDurationMinutos: number;
-            service: {
-              id: UUIDString;
-              nombre: string;
-            } & Service_Key;
-          };
+        } & Service_Key;
+      };
     } & Order_Key;
   } & PaymentProof_Key)[];
+}
+
+export interface GetPendingPaymentProofsVariables {
+  limit?: number | null;
+  offset?: number | null;
 }
 
 export interface GetPendingTransferOrdersData {
@@ -1506,17 +1461,17 @@ export interface GetPendingTransferOrdersData {
       nombreCompleto: string;
       telefono?: string | null;
     } & User_Key;
-      paymentProof_on_order?: {
-        id: UUIDString;
-        imageUrl: string;
-        declaredAmount: number;
-        paymentAccountType: PaymentAccountType;
-        referenceNumber?: string | null;
-        observations?: string | null;
-        status: PaymentProofStatus;
-        createdAt: TimestampString;
-        updatedAt: TimestampString;
-      } & PaymentProof_Key;
+    paymentProof_on_order?: {
+      id: UUIDString;
+      imageUrl: string;
+      declaredAmount: number;
+      paymentAccountType: PaymentAccountType;
+      referenceNumber?: string | null;
+      observations?: string | null;
+      status: PaymentProofStatus;
+      createdAt: TimestampString;
+      updatedAt: TimestampString;
+    } & PaymentProof_Key;
   } & Order_Key)[];
 }
 
@@ -1527,11 +1482,9 @@ export interface GetPendingTransferOrdersVariables {
 export interface GetPrepaidHistoryByOrderIdData {
   prepaidHistories: ({
     id: UUIDString;
-    business: {
-      owner: {
-        id: string;
-      } & User_Key;
-    };
+    serviceName: string;
+    costoConsumido: number;
+    saldoResultante: number;
   } & PrepaidHistory_Key)[];
 }
 
@@ -1596,9 +1549,9 @@ export interface GetReservationByOrderIdData {
         id: string;
       } & User_Key;
     };
-      order: {
-        clientId: string;
-      };
+    order: {
+      clientId: string;
+    };
   })[];
 }
 
@@ -1673,9 +1626,7 @@ export interface Invoice_Key {
 }
 
 export interface MarkNotificationAsReadData {
-  notification_update?: {
-    id: UUIDString;
-  };
+  notification_update?: Notification_Key | null;
 }
 
 export interface MarkNotificationAsReadVariables {
@@ -1685,6 +1636,11 @@ export interface MarkNotificationAsReadVariables {
 export interface Notification_Key {
   id: UUIDString;
   __typename?: 'Notification_Key';
+}
+
+export interface OrderLog_Key {
+  id: UUIDString;
+  __typename?: 'OrderLog_Key';
 }
 
 export interface OrderReservation_Key {
@@ -1713,12 +1669,8 @@ export interface PrepaidServiceMetric_Key {
 }
 
 export interface RejectEmployeeRequestData {
-  employeeRequest_update?: {
-    id: UUIDString;
-  };
-    user_update?: {
-      id: string;
-    };
+  employeeRequest_update?: EmployeeRequest_Key | null;
+  user_update?: User_Key | null;
 }
 
 export interface RejectEmployeeRequestVariables {
@@ -1727,12 +1679,8 @@ export interface RejectEmployeeRequestVariables {
 }
 
 export interface RequestEmployeeAccessData {
-  user_update?: {
-    id: string;
-  };
-    employeeRequest_insert: {
-      id: UUIDString;
-    };
+  user_update?: User_Key | null;
+  employeeRequest_insert: EmployeeRequest_Key;
 }
 
 export interface RequestEmployeeAccessVariables {
@@ -1740,9 +1688,7 @@ export interface RequestEmployeeAccessVariables {
 }
 
 export interface RescheduleOrderData {
-  order_update?: {
-    id: UUIDString;
-  };
+  order_update?: Order_Key | null;
 }
 
 export interface RescheduleOrderVariables {
@@ -1756,9 +1702,7 @@ export interface Review_Key {
 }
 
 export interface ServerCreateOrderWithPendingPaymentData {
-  order_insert: {
-    id: UUIDString;
-  };
+  order_insert: Order_Key;
 }
 
 export interface ServerCreateOrderWithPendingPaymentVariables {
@@ -1793,16 +1737,16 @@ export interface ServerGetOrderByIdData {
         id: string;
       } & User_Key;
     } & Business_Key;
-      client: {
-        id: string;
-        nombreCompleto: string;
-        telefono?: string | null;
-        email: string;
-      } & User_Key;
-        employee?: {
-          id: string;
-          nombreCompleto: string;
-        } & User_Key;
+    client: {
+      id: string;
+      nombreCompleto: string;
+      telefono?: string | null;
+      email: string;
+    } & User_Key;
+    employee?: {
+      id: string;
+      nombreCompleto: string;
+    } & User_Key;
   } & Order_Key;
 }
 
@@ -1811,9 +1755,7 @@ export interface ServerGetOrderByIdVariables {
 }
 
 export interface ServerUpdateOrderStatusData {
-  order_update?: {
-    id: UUIDString;
-  };
+  order_update?: Order_Key | null;
 }
 
 export interface ServerUpdateOrderStatusVariables {
@@ -1822,15 +1764,11 @@ export interface ServerUpdateOrderStatusVariables {
 }
 
 export interface ServerUpdatePaymentProofData {
-  paymentProof_update?: {
-    id: UUIDString;
-  };
+  paymentProof_update?: PaymentProof_Key | null;
 }
 
 export interface ServerUpdatePaymentProofStatusData {
-  paymentProof_update?: {
-    id: UUIDString;
-  };
+  paymentProof_update?: PaymentProof_Key | null;
 }
 
 export interface ServerUpdatePaymentProofStatusVariables {
@@ -1855,9 +1793,7 @@ export interface Service_Key {
 }
 
 export interface SuperAdminApproveServicePriceData {
-  service_update?: {
-    id: UUIDString;
-  };
+  service_update?: Service_Key | null;
 }
 
 export interface SuperAdminApproveServicePriceVariables {
@@ -1885,31 +1821,72 @@ export interface SuperAdminGetBusinessesData {
       id: string;
       nombreCompleto: string;
     } & User_Key;
-      services_on_business: ({
-        id: UUIDString;
-        nombre: string;
-        descripcion?: string | null;
-        precioPequeno: number;
-        precioMediano: number;
-        precioGrande: number;
-        precioMoto: number;
-        precioOwnerPequeno: number;
-        precioOwnerMediano: number;
-        precioOwnerGrande: number;
-        precioOwnerMoto: number;
-        precioPendiente: boolean;
-        costo: number;
-        duracionMinutos: number;
-        tipo: ServiceType;
-        activo?: boolean | null;
-      } & Service_Key)[];
+    services_on_business: ({
+      id: UUIDString;
+      nombre: string;
+      descripcion?: string | null;
+      precioPequeno: number;
+      precioMediano: number;
+      precioGrande: number;
+      precioMoto: number;
+      precioOwnerPequeno: number;
+      precioOwnerMediano: number;
+      precioOwnerGrande: number;
+      precioOwnerMoto: number;
+      precioPendiente: boolean;
+      costo: number;
+      duracionMinutos: number;
+      tipo: ServiceType;
+      activo?: boolean | null;
+    } & Service_Key)[];
   } & Business_Key)[];
 }
 
-export interface SuperAdminUpdateBusinessPrepaidData {
-  business_update?: {
+export interface SuperAdminGetCancelledOrdersSummaryData {
+  orders: ({
     id: UUIDString;
-  };
+    price: number;
+    paymentMethod: PaymentMethod;
+  } & Order_Key)[];
+}
+
+export interface SuperAdminGetCancelledOrdersSummaryVariables {
+  startOfMonth: TimestampString;
+  endOfMonth: TimestampString;
+}
+
+export interface SuperAdminGetCancelledPaidOrdersData {
+  paymentProofs: ({
+    declaredAmount: number;
+    order: {
+      id: UUIDString;
+      price: number;
+      paymentMethod: PaymentMethod;
+      status: OrderStatus;
+    } & Order_Key;
+  })[];
+}
+
+export interface SuperAdminGetCancelledPaidOrdersVariables {
+  startOfMonth: TimestampString;
+  endOfMonth: TimestampString;
+}
+
+export interface SuperAdminGetCompletedOrdersData {
+  orders: ({
+    id: UUIDString;
+    price: number;
+    paymentMethod: PaymentMethod;
+  } & Order_Key)[];
+}
+
+export interface SuperAdminGetCompletedOrdersVariables {
+  startOfMonth: TimestampString;
+  endOfMonth: TimestampString;
+}
+
+export interface SuperAdminUpdateBusinessPrepaidData {
+  business_update?: Business_Key | null;
 }
 
 export interface SuperAdminUpdateBusinessPrepaidVariables {
@@ -1919,9 +1896,7 @@ export interface SuperAdminUpdateBusinessPrepaidVariables {
 }
 
 export interface SuperAdminUpdateBusinessStatusData {
-  business_update?: {
-    id: UUIDString;
-  };
+  business_update?: Business_Key | null;
 }
 
 export interface SuperAdminUpdateBusinessStatusVariables {
@@ -1930,9 +1905,7 @@ export interface SuperAdminUpdateBusinessStatusVariables {
 }
 
 export interface SwitchCurrentBusinessData {
-  user_update?: {
-    id: string;
-  };
+  user_update?: User_Key | null;
 }
 
 export interface SwitchCurrentBusinessVariables {
@@ -1940,9 +1913,7 @@ export interface SwitchCurrentBusinessVariables {
 }
 
 export interface ToggleServiceActiveData {
-  service_update?: {
-    id: UUIDString;
-  };
+  service_update?: Service_Key | null;
 }
 
 export interface ToggleServiceActiveVariables {
@@ -1951,15 +1922,11 @@ export interface ToggleServiceActiveVariables {
 }
 
 export interface UpdateBusinessData {
-  business_update?: {
-    id: UUIDString;
-  };
+  business_update?: Business_Key | null;
 }
 
 export interface UpdateBusinessPrepaidBalanceData {
-  business_update?: {
-    id: UUIDString;
-  };
+  business_update?: Business_Key | null;
 }
 
 export interface UpdateBusinessPrepaidBalanceVariables {
@@ -1969,9 +1936,7 @@ export interface UpdateBusinessPrepaidBalanceVariables {
 }
 
 export interface UpdateBusinessReservationConfigData {
-  businessReservationConfig_update?: {
-    id: UUIDString;
-  };
+  businessReservationConfig_update?: BusinessReservationConfig_Key | null;
 }
 
 export interface UpdateBusinessReservationConfigVariables {
@@ -1992,9 +1957,7 @@ export interface UpdateBusinessVariables {
 }
 
 export interface UpdateEmployeeAvailabilityData {
-  businessEmployee_update?: {
-    id: UUIDString;
-  };
+  businessEmployee_update?: BusinessEmployee_Key | null;
 }
 
 export interface UpdateEmployeeAvailabilityVariables {
@@ -2003,9 +1966,7 @@ export interface UpdateEmployeeAvailabilityVariables {
 }
 
 export interface UpdateInvoicePdfData {
-  invoice_update?: {
-    id: UUIDString;
-  };
+  invoice_update?: Invoice_Key | null;
 }
 
 export interface UpdateInvoicePdfVariables {
@@ -2015,9 +1976,7 @@ export interface UpdateInvoicePdfVariables {
 }
 
 export interface UpdateOrderCompletionData {
-  order_update?: {
-    id: UUIDString;
-  };
+  order_update?: Order_Key | null;
 }
 
 export interface UpdateOrderCompletionVariables {
@@ -2026,10 +1985,18 @@ export interface UpdateOrderCompletionVariables {
   invoiceUrl?: string | null;
 }
 
+export interface UpdateOrderPaymentMethodAndStatusData {
+  order_update?: Order_Key | null;
+}
+
+export interface UpdateOrderPaymentMethodAndStatusVariables {
+  orderId: UUIDString;
+  paymentMethod: PaymentMethod;
+  status: OrderStatus;
+}
+
 export interface UpdateOrderStatusData {
-  order_update?: {
-    id: UUIDString;
-  };
+  order_update?: Order_Key | null;
 }
 
 export interface UpdateOrderStatusVariables {
@@ -2038,9 +2005,7 @@ export interface UpdateOrderStatusVariables {
 }
 
 export interface UpdatePrepaidServiceMetricData {
-  prepaidServiceMetric_update?: {
-    id: UUIDString;
-  };
+  prepaidServiceMetric_update?: PrepaidServiceMetric_Key | null;
 }
 
 export interface UpdatePrepaidServiceMetricVariables {
@@ -2050,15 +2015,11 @@ export interface UpdatePrepaidServiceMetricVariables {
 }
 
 export interface UpdateServiceData {
-  service_update?: {
-    id: UUIDString;
-  };
+  service_update?: Service_Key | null;
 }
 
 export interface UpdateServiceDetailsData {
-  service_update?: {
-    id: UUIDString;
-  };
+  service_update?: Service_Key | null;
 }
 
 export interface UpdateServiceDetailsVariables {
@@ -2082,9 +2043,7 @@ export interface UpdateServiceVariables {
 }
 
 export interface UpdateUserPhoneData {
-  user_update?: {
-    id: string;
-  };
+  user_update?: User_Key | null;
 }
 
 export interface UpdateUserPhoneVariables {
@@ -2092,9 +2051,7 @@ export interface UpdateUserPhoneVariables {
 }
 
 export interface UpdateVehicleData {
-  vehicle_update?: {
-    id: UUIDString;
-  };
+  vehicle_update?: Vehicle_Key | null;
 }
 
 export interface UpdateVehicleVariables {
@@ -2105,9 +2062,7 @@ export interface UpdateVehicleVariables {
 }
 
 export interface UpsertUserData {
-  user_upsert: {
-    id: string;
-  };
+  user_upsert: User_Key;
 }
 
 export interface UpsertUserVariables {
@@ -2120,9 +2075,7 @@ export interface UpsertUserVariables {
 }
 
 export interface UpsertVehicleBrandData {
-  vehicleBrand_upsert: {
-    id: UUIDString;
-  };
+  vehicleBrand_upsert: VehicleBrand_Key;
 }
 
 export interface UpsertVehicleBrandVariables {
@@ -2131,9 +2084,7 @@ export interface UpsertVehicleBrandVariables {
 }
 
 export interface UpsertVehicleModelData {
-  vehicleModel_upsert: {
-    id: UUIDString;
-  };
+  vehicleModel_upsert: VehicleModel_Key;
 }
 
 export interface UpsertVehicleModelVariables {
@@ -2207,6 +2158,11 @@ export function acceptOrder(vars: AcceptOrderVariables, options?: OperationOptio
 export function updateOrderStatus(dc: DataConnect, vars: UpdateOrderStatusVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<UpdateOrderStatusData>>;
 /** Generated Node Admin SDK operation action function for the 'UpdateOrderStatus' Mutation. Allow users to pass in custom DataConnect instances. */
 export function updateOrderStatus(vars: UpdateOrderStatusVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<UpdateOrderStatusData>>;
+
+/** Generated Node Admin SDK operation action function for the 'UpdateOrderPaymentMethodAndStatus' Mutation. Allow users to execute without passing in DataConnect. */
+export function updateOrderPaymentMethodAndStatus(dc: DataConnect, vars: UpdateOrderPaymentMethodAndStatusVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<UpdateOrderPaymentMethodAndStatusData>>;
+/** Generated Node Admin SDK operation action function for the 'UpdateOrderPaymentMethodAndStatus' Mutation. Allow users to pass in custom DataConnect instances. */
+export function updateOrderPaymentMethodAndStatus(vars: UpdateOrderPaymentMethodAndStatusVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<UpdateOrderPaymentMethodAndStatusData>>;
 
 /** Generated Node Admin SDK operation action function for the 'RescheduleOrder' Mutation. Allow users to execute without passing in DataConnect. */
 export function rescheduleOrder(dc: DataConnect, vars: RescheduleOrderVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<RescheduleOrderData>>;
@@ -2453,6 +2409,11 @@ export function completeOrderWithTransferAndInvoice(dc: DataConnect, vars: Compl
 /** Generated Node Admin SDK operation action function for the 'CompleteOrderWithTransferAndInvoice' Mutation. Allow users to pass in custom DataConnect instances. */
 export function completeOrderWithTransferAndInvoice(vars: CompleteOrderWithTransferAndInvoiceVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<CompleteOrderWithTransferAndInvoiceData>>;
 
+/** Generated Node Admin SDK operation action function for the 'CreateOrderLog' Mutation. Allow users to execute without passing in DataConnect. */
+export function createOrderLog(dc: DataConnect, vars: CreateOrderLogVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<CreateOrderLogData>>;
+/** Generated Node Admin SDK operation action function for the 'CreateOrderLog' Mutation. Allow users to pass in custom DataConnect instances. */
+export function createOrderLog(vars: CreateOrderLogVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<CreateOrderLogData>>;
+
 /** Generated Node Admin SDK operation action function for the 'GetUsers' Query. Allow users to execute without passing in DataConnect. */
 export function getUsers(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetUsersData>>;
 /** Generated Node Admin SDK operation action function for the 'GetUsers' Query. Allow users to pass in custom DataConnect instances. */
@@ -2689,7 +2650,32 @@ export function getExpiredPendingTransferOrders(dc: DataConnect, options?: Opera
 export function getExpiredPendingTransferOrders(options?: OperationOptions): Promise<ExecuteOperationResponse<GetExpiredPendingTransferOrdersData>>;
 
 /** Generated Node Admin SDK operation action function for the 'GetPendingPaymentProofs' Query. Allow users to execute without passing in DataConnect. */
-export function getPendingPaymentProofs(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPendingPaymentProofsData>>;
+export function getPendingPaymentProofs(dc: DataConnect, vars?: GetPendingPaymentProofsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPendingPaymentProofsData>>;
 /** Generated Node Admin SDK operation action function for the 'GetPendingPaymentProofs' Query. Allow users to pass in custom DataConnect instances. */
-export function getPendingPaymentProofs(options?: OperationOptions): Promise<ExecuteOperationResponse<GetPendingPaymentProofsData>>;
+export function getPendingPaymentProofs(vars?: GetPendingPaymentProofsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPendingPaymentProofsData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetOrderLogs' Query. Allow users to execute without passing in DataConnect. */
+export function getOrderLogs(dc: DataConnect, vars: GetOrderLogsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetOrderLogsData>>;
+/** Generated Node Admin SDK operation action function for the 'GetOrderLogs' Query. Allow users to pass in custom DataConnect instances. */
+export function getOrderLogs(vars: GetOrderLogsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetOrderLogsData>>;
+
+/** Generated Node Admin SDK operation action function for the 'SuperAdminGetCompletedOrders' Query. Allow users to execute without passing in DataConnect. */
+export function superAdminGetCompletedOrders(dc: DataConnect, vars: SuperAdminGetCompletedOrdersVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<SuperAdminGetCompletedOrdersData>>;
+/** Generated Node Admin SDK operation action function for the 'SuperAdminGetCompletedOrders' Query. Allow users to pass in custom DataConnect instances. */
+export function superAdminGetCompletedOrders(vars: SuperAdminGetCompletedOrdersVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<SuperAdminGetCompletedOrdersData>>;
+
+/** Generated Node Admin SDK operation action function for the 'SuperAdminGetCancelledPaidOrders' Query. Allow users to execute without passing in DataConnect. */
+export function superAdminGetCancelledPaidOrders(dc: DataConnect, vars: SuperAdminGetCancelledPaidOrdersVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<SuperAdminGetCancelledPaidOrdersData>>;
+/** Generated Node Admin SDK operation action function for the 'SuperAdminGetCancelledPaidOrders' Query. Allow users to pass in custom DataConnect instances. */
+export function superAdminGetCancelledPaidOrders(vars: SuperAdminGetCancelledPaidOrdersVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<SuperAdminGetCancelledPaidOrdersData>>;
+
+/** Generated Node Admin SDK operation action function for the 'SuperAdminGetCancelledOrdersSummary' Query. Allow users to execute without passing in DataConnect. */
+export function superAdminGetCancelledOrdersSummary(dc: DataConnect, vars: SuperAdminGetCancelledOrdersSummaryVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<SuperAdminGetCancelledOrdersSummaryData>>;
+/** Generated Node Admin SDK operation action function for the 'SuperAdminGetCancelledOrdersSummary' Query. Allow users to pass in custom DataConnect instances. */
+export function superAdminGetCancelledOrdersSummary(vars: SuperAdminGetCancelledOrdersSummaryVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<SuperAdminGetCancelledOrdersSummaryData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetPendingElectronicOrders' Query. Allow users to execute without passing in DataConnect. */
+export function getPendingElectronicOrders(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetPendingElectronicOrdersData>>;
+/** Generated Node Admin SDK operation action function for the 'GetPendingElectronicOrders' Query. Allow users to pass in custom DataConnect instances. */
+export function getPendingElectronicOrders(options?: OperationOptions): Promise<ExecuteOperationResponse<GetPendingElectronicOrdersData>>;
 

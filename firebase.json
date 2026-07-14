@@ -20,6 +20,14 @@
         "destination": "/paypal-callback/cancel.html"
       },
       {
+        "source": "/payphone-callback/success",
+        "destination": "/payphone-callback/success.html"
+      },
+      {
+        "source": "/payphone-callback/cancel",
+        "destination": "/payphone-callback/cancel.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

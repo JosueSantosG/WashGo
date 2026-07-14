@@ -31,6 +31,7 @@ enum PaymentMethod {
   PAYPAL
   CASH
   TRANSFERENCIA_BANCARIA
+  PAYPHONE
 }
 
 enum ServiceType {
@@ -289,6 +290,17 @@ type PaymentProof @table {
   reviewedBy: String
   reviewedAt: Timestamp
 }
+
+# Order Log History
+type OrderLog @table {
+  id: UUID! @default(expr: "uuidV4()")
+  order: Order!
+  actionType: String!
+  createdAt: Timestamp! @default(expr: "request.time")
+  previousValue: String
+  newValue: String
+}
+
 
 
 
