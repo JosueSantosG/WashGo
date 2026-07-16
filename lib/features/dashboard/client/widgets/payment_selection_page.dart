@@ -153,10 +153,6 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                       // Fall through to Data Connect check
                                     }
 
-                                    // 2. If in emulator and no transaction found, generate mock
-                                    if (transactionId == null && Environment.useEmulators) {
-                                      transactionId = 'mock-${DateTime.now().millisecondsSinceEpoch}';
-                                    }
 
                                     // 3. If we have a transactionId, verify with PayPhone first
                                     if (transactionId != null && transactionId.isNotEmpty) {
