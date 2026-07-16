@@ -199,7 +199,8 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                     if (order == null) {
                                       throw Exception('No se encontró el pedido.');
                                     }
-                                    if (order.status.stringValue == 'COMPLETADO') {
+                                    final orderStatus = order.status.stringValue;
+                                    if (orderStatus == 'COMPLETADO' || orderStatus == 'EN_COLA') {
                                       if (!mounted) return;
                                       Navigator.pop(context);
                                       Navigator.pop(context);
@@ -761,6 +762,9 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                   }
                                 }
                                 setState(() {
+                                  _payphoneWaiting = true;
+                                  _payphoneOrderId = orderId;
+                                  _payphonePaymentUrl = payWithCardUrl;
                                   _isProcessing = false;
                                 });
                               } else {
