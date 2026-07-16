@@ -37,7 +37,7 @@ class _OwnerInvoiceDetailPageState extends State<OwnerInvoiceDetailPage> {
     });
 
     try {
-      final updatedInvoice = await _invoiceRepository.regenerateInvoicePdf(_currentInvoice.id);
+      final updatedInvoice = await _invoiceRepository.regenerateInvoicePdf(_currentInvoice);
       if (mounted) {
         setState(() {
           _currentInvoice = updatedInvoice;

@@ -4,7 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
 const crypto = require("crypto");
-const { getOrderById, serverGetOrderById, completeOrderWithInvoiceOnly, getInvoiceById, getPaymentProof, getExpiredPendingTransferOrders, getPendingElectronicOrders, createPaymentProof, serverUpdatePaymentProof, serverUpdatePaymentProofStatus, serverUpdateOrderStatus, createSystemNotification, completeOrderWithTransferAndInvoice, completeOrderWithPrepaidAndUpdateMetric, completeOrderWithPrepaidAndCreateMetric, getPrepaidServiceMetricByServiceName, getPrepaidHistoryByOrderId } = require("@washgo/db-admin");
+const { getOrderById, serverGetOrderById, completeOrderWithInvoiceOnly, getInvoiceById, getPaymentProof, getExpiredPendingTransferOrders, getPendingElectronicOrders, createPaymentProof, serverUpdatePaymentProof, serverUpdatePaymentProofStatus, serverUpdateOrderStatus, createSystemNotification, completeOrderWithTransferAndInvoice, completeOrderWithPrepaidAndUpdateMetric, completeOrderWithPrepaidAndCreateMetric, getPrepaidServiceMetricByServiceName, getPrepaidHistoryByOrderId, updateInvoicePdf, updateOrderCompletion } = require("@washgo/db-admin");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 
 // Initialize Firebase Admin SDK
@@ -788,6 +788,77 @@ app.get("/invoices/:invoiceId/url", authenticate, async (req, res) => {
     });
   } catch (error) {
     console.error("Get Invoice URL Error:", error.message);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// 6. Regenerate Invoice PDF
+app.post("/invoices/:invoiceId/regenerate-pdf", authenticate, async (req, res) => {
+  const { invoiceId } = req.params;
+  const { base64Pdf } = req.body;
+
+  if (!invoiceId || !base64Pdf) {
+    return res.status(400).json({ error: "Missing invoiceId or base64Pdf" });
+  }
+
+  try {
+    // Fetch invoice using admin SDK context (no auth options = admin bypass)
+    // This avoids @auth(level: USER) issues in emulators
+    const invoiceResult = await getInvoiceById({ id: invoiceId });
+    const invoice = invoiceResult.data.invoice;
+    if (!invoice) {
+      return res.status(404).json({ error: "Invoice not found" });
+    }
+
+    // Permission check: allow if the caller is the client, the assigned employee,
+    // the business owner, or a SUPER_ADMIN
+    const isClient = invoice.order?.clientId === req.user.uid;
+    const isEmployee = invoice.order?.employeeId === req.user.uid;
+    const isOwner = invoice.order?.business?.owner?.id === req.user.uid;
+    const isSuperAdmin = req.user.token?.roles?.includes("SUPER_ADMIN");
+
+    if (!isClient && !isEmployee && !isOwner && !isSuperAdmin) {
+      return res.status(403).json({ error: "Forbidden: You do not have permission to regenerate this invoice" });
+    }
+
+    const orderId = invoice.order?.id;
+    if (!orderId) {
+      return res.status(400).json({ error: "Invoice has no associated order" });
+    }
+
+    // Upload PDF to Storage via admin SDK (bypasses storage.rules)
+    const bucket = admin.storage().bucket();
+    const file = bucket.file(`invoices/${invoiceId}.pdf`);
+    const buffer = Buffer.from(base64Pdf, "base64");
+    await file.save(buffer, {
+      metadata: {
+        contentType: "application/pdf",
+      },
+    });
+
+    // Get downloadable URL (resilient to emulator environment)
+    const pdfUrl = await getDownloadUrlSafe(file);
+
+    // Update invoice record with pdfUrl and GENERATED status
+    await updateInvoicePdf({
+      id: invoiceId,
+      pdfUrl,
+      invoiceStatus: "GENERATED",
+    });
+
+    // Update order with invoice URL
+    await updateOrderCompletion({
+      orderId,
+      invoiceUrl: pdfUrl,
+    });
+
+    return res.json({
+      success: true,
+      pdfUrl,
+      invoiceStatus: "GENERATED",
+    });
+  } catch (error) {
+    console.error("Regenerate Invoice PDF Error:", error.message);
     return res.status(500).json({ error: error.message });
   }
 });
