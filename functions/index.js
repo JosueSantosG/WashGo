@@ -685,7 +685,85 @@ app.post("/orders/complete-cash-payment", authenticate, async (req, res) => {
   }
 });
 
-// 4. Get Invoice Signed URL
+// 4b. Complete Prepaid Payment (PayPhone, PayPal, Transferencia — employee completion)
+app.post("/orders/complete-prepaid-payment", authenticate, async (req, res) => {
+  const { orderId, base64Pdf, paymentMethod, observations } = req.body;
+  if (!orderId || !base64Pdf || !paymentMethod) {
+    return res.status(400).json({ error: "Missing required fields: orderId, base64Pdf, paymentMethod" });
+  }
+
+  try {
+    // Fetch order details using server/admin context
+    const orderResult = await serverGetOrderById({ id: orderId });
+    const order = orderResult.data.order;
+    if (!order) {
+      return res.status(404).json({ error: "Order not found or unauthorized to access" });
+    }
+
+    // Verify that the caller is either the employee assigned to the order or the business owner
+    const isEmployee = order.employeeId === req.user.uid;
+    const isOwner = order.business?.owner?.id === req.user.uid;
+    const isSuperAdmin = req.user.token?.roles?.includes("SUPER_ADMIN");
+
+    if (!isEmployee && !isOwner && !isSuperAdmin) {
+      return res.status(403).json({ error: "Forbidden: You are not authorized to complete this order" });
+    }
+
+    // Ensure order is in a valid status for employee completion
+    if (order.status !== "EN_COLA" && order.status !== "ACEPTADO") {
+      return res.status(400).json({ error: `Order cannot be completed. Current status: ${order.status}. Expected EN_COLA or ACEPTADO.` });
+    }
+
+    // Generate invoice database details
+    const invoiceId = crypto.randomUUID();
+    const numeroUnico = generateNumeroUnico();
+
+    // Secure calculation on backend (18% VAT for non-cash payments)
+    const subtotal = parseFloat((order.price / 1.18).toFixed(2));
+    const tax = parseFloat((order.price - subtotal).toFixed(2));
+
+    // Upload PDF to Storage
+    const bucket = admin.storage().bucket();
+    const file = bucket.file(`invoices/${invoiceId}.pdf`);
+    const buffer = Buffer.from(base64Pdf, "base64");
+    await file.save(buffer, {
+      metadata: {
+        contentType: "application/pdf",
+      },
+    });
+
+    // Generate Signed URL / Download URL (resilient to emulator environment)
+    const signedUrl = await getDownloadUrlSafe(file);
+
+    // Complete order with prepaid helper (handles NO_ACCESS mutations via admin SDK)
+    await completeOrderWithPrepaid({
+      req,
+      order,
+      invoiceParams: {
+        signedUrl,
+        invoiceId,
+        numeroUnico,
+        subtotal,
+        tax,
+      },
+      paymentMethod,
+      observations: observations || "Pago completado",
+    });
+
+    return res.json({
+      success: true,
+      invoiceId,
+      numeroUnico,
+      invoiceUrl: signedUrl,
+      orderStatus: "COMPLETADO",
+    });
+  } catch (error) {
+    console.error("Complete Prepaid Payment Error:", error.message);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// 5. Get Invoice Signed URL
 app.get("/invoices/:invoiceId/url", authenticate, async (req, res) => {
   const { invoiceId } = req.params;
   if (!invoiceId) {
