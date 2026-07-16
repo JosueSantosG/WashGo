@@ -258,6 +258,46 @@ app.post("/payphone/prepare", authenticate, async (req, res) => {
   }
 });
 
+// 1b-2. Verify PayPhone Transaction Status (read-only, no side effects)
+app.get("/payphone/:transactionId/verify", authenticate, async (req, res) => {
+  const { transactionId } = req.params;
+  if (!transactionId) {
+    return res.status(400).json({ error: "Missing transactionId" });
+  }
+
+  try {
+    const token = process.env.PAYPHONE_TOKEN;
+
+    // Mock/simulated mode — mock transactions are always "approved"
+    if (!token || token === "mock" || transactionId.startsWith("mock-")) {
+      return res.json({ verified: true, status: "Approved", simulated: true });
+    }
+
+    // Call PayPhone Confirm API (read-only — no order mutation)
+    const response = await axios({
+      url: "https://pay.payphonetodoesposible.com/api/button/V2/Confirm",
+      method: "post",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      data: {
+        id: parseInt(transactionId) || transactionId,
+        clientTxId: req.query.orderId || "",
+      },
+    });
+
+    const data = response.data;
+    return res.json({
+      verified: data.transactionStatus === "Approved",
+      status: data.transactionStatus || "UNKNOWN",
+    });
+  } catch (error) {
+    console.error("PayPhone Verify Error:", error.response?.data || error.message);
+    return res.status(500).json({ error: error.response?.data || error.message });
+  }
+});
+
 // 1c. Cancel Pending Order (Client-Driven Cancellation)
 app.delete("/orders/:orderId/cancel-pending", authenticate, async (req, res) => {
   const { orderId } = req.params;

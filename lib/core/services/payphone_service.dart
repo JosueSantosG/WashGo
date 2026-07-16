@@ -73,6 +73,32 @@ class PayphoneService {
     return null;
   }
 
+  /// Calls the server-side PayPhone verify endpoint (read-only).
+  /// Returns a map with {verified: bool, status: string, simulated?: bool}.
+  /// Throws on network/server errors.
+  static Future<Map<String, dynamic>> verifyTransaction({
+    required String transactionId,
+    required String orderId,
+    required String idToken,
+    required String baseUrl,
+  }) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/payphone/$transactionId/verify?orderId=$orderId'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+    if (response.statusCode != 200) {
+      try {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Error al verificar transacción.');
+      } catch (_) {
+        throw Exception('Error del servidor: ${response.statusCode}');
+      }
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
   static Future<void> completePayment({
     required String orderId,
     required String transactionId,

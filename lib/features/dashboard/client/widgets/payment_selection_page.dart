@@ -134,7 +134,7 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                     if (user == null) {
                                       throw Exception('Usuario no autenticado.');
                                     }
-                                    final idToken = await user.getIdToken();
+                                    final idToken = await user.getIdToken(true);
                                     if (idToken == null) {
                                       throw Exception('No se pudo obtener token de autenticación.');
                                     }
@@ -158,15 +158,40 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                       transactionId = 'mock-${DateTime.now().millisecondsSinceEpoch}';
                                     }
 
-                                    // 3. If we have a transactionId, navigate to success page
+                                    // 3. If we have a transactionId, verify with PayPhone first
                                     if (transactionId != null && transactionId.isNotEmpty) {
-                                      if (!context.mounted) return;
-                                      await context.push(
-                                        '/payphone-callback/success'
-                                        '?transactionId=$transactionId'
-                                        '&orderId=$orderId',
-                                      );
-                                      return;
+                                      try {
+                                        final verification = await PayphoneService.verifyTransaction(
+                                          transactionId: transactionId,
+                                          orderId: orderId,
+                                          idToken: idToken,
+                                          baseUrl: baseUrl,
+                                        );
+                                        if (verification['verified'] == true) {
+                                          if (!context.mounted) return;
+                                          await context.push(
+                                            '/payphone-callback/success'
+                                            '?transactionId=$transactionId'
+                                            '&orderId=$orderId',
+                                          );
+                                          return;
+                                        }
+                                        // PayPhone says not approved — show message, don't navigate
+                                        if (!context.mounted) return;
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'PayPhone no ha confirmado el pago. Estado: ${verification['status'] ?? 'Desconocido'}. Si ya pagaste, espera unos segundos e intenta de nuevo.',
+                                              style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                                            ),
+                                            backgroundColor: Colors.orange.shade800,
+                                          ),
+                                        );
+                                        return;
+                                      } catch (_) {
+                                        // If verify endpoint fails (e.g. auth issue), fall through to original behavior
+                                        // so the user isn't locked out
+                                      }
                                     }
 
                                     // 4. Fallback: check Data Connect order status
@@ -284,7 +309,7 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                   try {
                                     final user = FirebaseAuth.instance.currentUser;
                                     if (user != null) {
-                                      final idToken = await user.getIdToken();
+                                      final idToken = await user.getIdToken(true);
                                       if (idToken != null) {
                                         await PayphoneService.cancelPendingOrder(
                                           orderId: _payphoneOrderId!,
@@ -708,16 +733,16 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                 throw Exception('No se pudo crear el pedido.');
                               }
                               
-                              // 2. Fetch the ID token for backend API authentication
+                              // 2. Fetch the ID token for backend API authentication (force refresh to avoid stale tokens)
                               final user = FirebaseAuth.instance.currentUser;
                               if (user == null) {
                                 throw Exception('Usuario no autenticado.');
                               }
-                              final idToken = await user.getIdToken();
+                              final idToken = await user.getIdToken(true);
                               if (idToken == null) {
                                 throw Exception('No se pudo obtener el token de autenticación.');
                               }
-                              
+
                               // 3. Prepare the payment URL from backend
                               final payWithCardUrl = await PayphoneService.preparePayment(
                                 orderId: orderId,
