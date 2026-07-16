@@ -5,6 +5,7 @@ const cors = require("cors");
 const axios = require("axios");
 const crypto = require("crypto");
 const { getOrderById, serverGetOrderById, completeOrderWithInvoiceOnly, getInvoiceById, getInvoiceByIdAdmin, getInvoiceByOrderId, getPaymentProof, getExpiredPendingTransferOrders, getPendingElectronicOrders, createPaymentProof, serverUpdatePaymentProof, serverUpdatePaymentProofStatus, serverUpdateOrderStatus, createSystemNotification, completeOrderWithTransferAndInvoice, completeOrderWithPrepaidAndUpdateMetric, completeOrderWithPrepaidAndCreateMetric, getPrepaidServiceMetricByServiceName, getPrepaidHistoryByOrderId, updateInvoicePdf, updateOrderCompletion } = require("@washgo/db-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 
 // Initialize Firebase Admin SDK
@@ -515,6 +516,12 @@ app.post("/orders/complete-payphone-payment", authenticate, async (req, res) => 
     }
 
     if (order.status !== "PENDIENTE_PAGO") {
+      // Idempotent: if order is already confirmed (EN_COLA or COMPLETADO),
+      // return success so the Verificar flow re-entry works correctly.
+      if (order.status === "EN_COLA" || order.status === "COMPLETADO") {
+        console.log(`[complete-payphone-payment] Order ${orderId} already ${order.status}. Returning success (idempotent).`);
+        return res.json({ success: true, orderStatus: order.status });
+      }
       return res.status(400).json({ error: `Order is not pending payment. Current status: ${order.status}` });
     }
 
@@ -623,7 +630,7 @@ app.post("/payphone/store-transaction", async (req, res) => {
   try {
     await admin.firestore().collection("payphone_transactions").doc(orderId).set({
       transactionId,
-      storedAt: admin.firestore.FieldValue.serverTimestamp(),
+      storedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
     console.log(`[PayPhone] Stored transactionId for order ${orderId}: ${transactionId}`);
     return res.json({ success: true });

@@ -110,7 +110,7 @@ class _PayphoneSuccessPageState extends State<PayphoneSuccessPage> {
       _serviceName = order.serviceName ?? 'Servicio de Lavandería';
 
       // 2. Complete PayPhone Payment with Backend
-      final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+      final idToken = await FirebaseAuth.instance.currentUser?.getIdToken(true);
       final baseUrl = _getFunctionsBaseUrl();
 
       final response = await http.post(
