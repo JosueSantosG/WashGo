@@ -27,6 +27,27 @@ class PayphoneService {
     return data['payWithCardUrl'] as String;
   }
 
+  static Future<void> cancelPendingOrder({
+    required String orderId,
+    required String idToken,
+    required String baseUrl,
+  }) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/orders/$orderId/cancel-pending'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+    if (response.statusCode != 200) {
+      try {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Error al cancelar la orden.');
+      } catch (_) {
+        throw Exception('Error del servidor al cancelar la orden: ${response.statusCode}');
+      }
+    }
+  }
+
   /// Retrieves the stored PayPhone transactionId for a given order.
   /// Returns the transactionId string, or null if not found.
   static Future<String?> getStoredTransaction({
@@ -52,50 +73,6 @@ class PayphoneService {
     return null;
   }
 
-  static Future<void> cancelPendingOrder({
-    required String orderId,
-    required String idToken,
-    required String baseUrl,
-  }) async {
-    final response = await http.delete(
-      Uri.parse('$baseUrl/orders/$orderId/cancel-pending'),
-      headers: {
-        'Authorization': 'Bearer $idToken',
-      },
-    );
-    if (response.statusCode != 200) {
-      try {
-        final errorData = jsonDecode(response.body);
-        throw Exception(errorData['error'] ?? 'Error al cancelar la orden.');
-      } catch (_) {
-        throw Exception('Error del servidor al cancelar la orden: ${response.statusCode}');
-      }
-    }
-  }
-
-  static Future<String?> getStoredTransaction({
-    required String orderId,
-    required String idToken,
-    required String baseUrl,
-  }) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/orders/$orderId/payphone-transaction'),
-      headers: {
-        'Authorization': 'Bearer $idToken',
-      },
-    );
-    if (response.statusCode != 200) {
-      try {
-        final errorData = jsonDecode(response.body);
-        throw Exception(errorData['error'] ?? 'Error al obtener la transacción.');
-      } catch (_) {
-        throw Exception('Error del servidor: ${response.statusCode}');
-      }
-    }
-    final data = jsonDecode(response.body);
-    return data['transactionId'] as String?;
-  }
-
   static Future<void> completePayment({
     required String orderId,
     required String transactionId,
@@ -119,7 +96,6 @@ class PayphoneService {
       try {
         final errorData = jsonDecode(response.body);
         final errorCode = errorData['error'] ?? '';
-        // 503 = Data Connect temporarily unavailable (emulator restart, etc.)
         if (response.statusCode == 503 || errorCode == 'DATA_CONNECT_UNAVAILABLE') {
           throw Exception('DB_UNAVAILABLE: ${errorData['message'] ?? 'Base de datos no disponible.'}');
         }

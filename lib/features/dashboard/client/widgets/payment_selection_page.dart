@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'package:washgo/config/theme/app_colors.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
 import 'package:washgo/features/dashboard/client/models/laundry_item.dart';
@@ -12,7 +10,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:washgo/config/env/environment.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
-import 'package:washgo/features/invoices/utils/pdf_generator.dart';
 
 class PaymentSelectionPage extends StatefulWidget {
   final LaundryItem laundry;
@@ -43,7 +40,7 @@ class PaymentSelectionPage extends StatefulWidget {
 }
 
 class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
-  PaymentMethod _selectedMethod = PaymentMethod.PAYPHONE;
+  PaymentMethod _selectedMethod = PaymentMethod.PAYPAL;
   bool _preferPaypalCard = false;
   bool _isProcessing = false;
   bool _payphoneWaiting = false;
@@ -133,168 +130,55 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                     _isProcessing = true;
                                   });
                                   try {
-                                    // Build functions base URL (same logic as PayphoneSuccessPage)
-                                    final user = FirebaseAuth.instance.currentUser;
-                                    if (user == null) {
-                                      throw Exception('Debes iniciar sesión.');
-                                    }
-                                    final idToken = await user.getIdToken();
-                                    var projectId = Firebase.apps.isNotEmpty
-                                        ? Firebase.app().options.projectId
-                                        : 'washgo-app-8392';
-                                    String baseUrl;
-                                    if (Environment.useEmulators) {
-                                      var emulatorProjectId = projectId;
-                                      if (emulatorProjectId.endsWith('-dev')) {
-                                        emulatorProjectId = emulatorProjectId.substring(
-                                            0, emulatorProjectId.length - 4);
-                                      } else if (emulatorProjectId.endsWith('-staging')) {
-                                        emulatorProjectId = emulatorProjectId.substring(
-                                            0, emulatorProjectId.length - 8);
-                                      }
-                                      baseUrl =
-                                          'http://${Environment.emulatorHost}:5001/$emulatorProjectId/us-central1/api';
-                                    } else {
-                                      baseUrl =
-                                          'https://us-central1-$projectId.cloudfunctions.net/api';
-                                    }
-
-                                    // 1. Try to get the stored transactionId from Firestore
-                                    String? transactionId;
-                                    try {
-                                      final http.Response response = await http.get(
-                                        Uri.parse(
-                                            '$baseUrl/orders/${_payphoneOrderId!}/payphone-transaction'),
-                                        headers: {
-                                          'Authorization': 'Bearer $idToken',
-                                          'Content-Type': 'application/json',
-                                        },
-                                      );
-                                      if (response.statusCode == 200) {
-                                        final data = jsonDecode(response.body);
-                                        transactionId = data['transactionId'] as String?;
-                                      }
-                                    } catch (_) {
-                                      // Ignore HTTP errors — fall through to fallback
-                                    }
-
-                                    // 2. If transactionId found, navigate to complete payment
-                                    if (transactionId != null &&
-                                        transactionId.isNotEmpty) {
-                                      if (!mounted) return;
-                                      await context.push(
-                                        '/payphone-callback/success',
-                                        extra: null,
-                                        queryParameters: {
-                                          'transactionId': transactionId,
-                                          'orderId': _payphoneOrderId,
-                                        },
-                                      );
-                                      return;
-                                    }
-
-                                    // 3. No stored transactionId found
-                                    // In local dev mode: generate a mock transactionId so
-                                    // we can test the complete-payphone-payment flow directly.
-                                    if (Environment.useEmulators) {
-                                      final mockTxId =
-                                          'mock-${DateTime.now().millisecondsSinceEpoch}';
-                                      if (!mounted) return;
-                                      await context.push(
-                                        '/payphone-callback/success',
-                                        extra: null,
-                                        queryParameters: {
-                                          'transactionId': mockTxId,
-                                          'orderId': _payphoneOrderId,
-                                        },
-                                      );
-                                      return;
-                                    }
-
-                                    // 4. Production — check Data Connect status as fallback
-                                    final connector = ExampleConnector.instance;
-                                    final orderResult = await connector
-                                        .getOrderById(id: _payphoneOrderId!)
-                                        .execute();
-                                    final order = orderResult.data.order;
-                                    if (order == null) {
-                                      throw Exception('No se encontró el pedido.');
-                                    }
-                                    if (order.status.stringValue == 'COMPLETADO') {
-                                      if (!mounted) return;
-                                      Navigator.pop(context);
-                                      Navigator.pop(context);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            '¡Pago verificado y reserva confirmada!',
-                                            style: GoogleFonts.inter(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          backgroundColor: Colors.green.shade600,
-                                        ),
-                                      );
-                                      return;
-                                    }
-
-                                    // Si no está completado en DB, consultar si se guardó el transactionId
                                     final user = FirebaseAuth.instance.currentUser;
                                     if (user == null) {
                                       throw Exception('Usuario no autenticado.');
                                     }
                                     final idToken = await user.getIdToken();
                                     if (idToken == null) {
-                                      throw Exception('No se pudo obtener el token de autenticación.');
+                                      throw Exception('No se pudo obtener token de autenticación.');
+                                    }
+                                    final baseUrl = _getFunctionsBaseUrl();
+                                    final orderId = _payphoneOrderId!;
+
+                                    // 1. Try fetching stored transactionId from Firestore bridge
+                                    String? transactionId;
+                                    try {
+                                      transactionId = await PayphoneService.getStoredTransaction(
+                                        orderId: orderId,
+                                        baseUrl: baseUrl,
+                                        idToken: idToken,
+                                      );
+                                    } catch (_) {
+                                      // Fall through to Data Connect check
                                     }
 
-                                    final transactionId = await PayphoneService.getStoredTransaction(
-                                      orderId: _payphoneOrderId!,
-                                      idToken: idToken,
-                                      baseUrl: _getFunctionsBaseUrl(),
-                                    );
+                                    // 2. If in emulator and no transaction found, generate mock
+                                    if (transactionId == null && Environment.useEmulators) {
+                                      transactionId = 'mock-${DateTime.now().millisecondsSinceEpoch}';
+                                    }
 
+                                    // 3. If we have a transactionId, navigate to success page
                                     if (transactionId != null && transactionId.isNotEmpty) {
-                                      // 1. Obtener detalles del negocio para RUC y descripción
-                                      final businessResult = await connector
-                                          .getBusinessDetails(id: order.business.id)
-                                          .execute();
-                                      final biz = businessResult.data.business;
-                                      final String ruc = biz?.ruc ?? '20123456789';
-                                      final String description = biz?.descripcion ?? 'Lavado Profesional';
-
-                                      // 2. Generar factura localmente
-                                      final now = DateTime.now();
-                                      final uniqueSuffix = (now.millisecondsSinceEpoch % 1000000).toString().padLeft(6, '0');
-                                      final tempInvoiceNumber = 'FAC-${now.year}-$uniqueSuffix';
-                                      final serviceName = order.serviceName ?? 'Servicio de Lavandería';
-
-                                      final pdfBytes = await PdfGenerator.generateInvoicePdf(
-                                        invoiceNumber: tempInvoiceNumber,
-                                        fechaEmision: now,
-                                        businessName: order.business.nombre,
-                                        ruc: ruc,
-                                        description: description,
-                                        clientName: order.client.nombreCompleto,
-                                        clientEmail: order.client.email,
-                                        clientPhone: order.client.telefono,
-                                        employeeName: order.employee?.nombreCompleto ?? 'Sin asignar',
-                                        serviceName: serviceName,
-                                        price: order.price,
-                                        paymentMethod: 'PAYPHONE',
-                                        observations: order.observations ?? '',
+                                      if (!context.mounted) return;
+                                      await context.push(
+                                        '/payphone-callback/success'
+                                        '?transactionId=$transactionId'
+                                        '&orderId=$orderId',
                                       );
+                                      return;
+                                    }
 
-                                      final base64Pdf = base64Encode(pdfBytes);
-
-                                      // 3. Completar el pago en el backend
-                                      await PayphoneService.completePayment(
-                                        orderId: _payphoneOrderId!,
-                                        transactionId: transactionId,
-                                        base64Pdf: base64Pdf,
-                                        idToken: idToken,
-                                        baseUrl: _getFunctionsBaseUrl(),
-                                      );
-
+                                    // 4. Fallback: check Data Connect order status
+                                    final connector = ExampleConnector.instance;
+                                    final orderResult = await connector
+                                        .getOrderById(id: orderId)
+                                        .execute();
+                                    final order = orderResult.data.order;
+                                    if (order == null) {
+                                      throw Exception('No se encontró el pedido.');
+                                    }
+                                    if (order.status.stringValue == 'COMPLETADO') {
                                       if (!mounted) return;
                                       Navigator.pop(context);
                                       Navigator.pop(context);
@@ -311,32 +195,20 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
                                           content: Text(
-                                            'El pago aún no ha sido reportado como completado. '
-                                            'Completa el pago en el navegador.',
-                                            style: GoogleFonts.inter(
-                                                fontWeight: FontWeight.w600),
+                                            'El pago aún no ha sido reportado como completado. Completa el pago en el navegador.',
+                                            style: GoogleFonts.inter(fontWeight: FontWeight.w600),
                                           ),
                                           backgroundColor: Colors.orange.shade800,
                                         ),
                                       );
                                     }
                                   } catch (e) {
-                                    final errStr = e.toString();
-                                    String message;
-                                    if (errStr.contains('DB_UNAVAILABLE')) {
-                                      message = 'La base de datos está temporalmente no disponible. '
-                                          'Tu pago fue registrado — por favor espera unos segundos y vuelve a presionar "Ya pagué – Verificar".';
-                                    } else {
-                                      message = 'Error al verificar: $e';
-                                    }
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text(message),
+                                        content: Text('Error al verificar: $e'),
                                         backgroundColor: AppColors.error,
-                                        duration: const Duration(seconds: 6),
                                       ),
                                     );
-
                                   } finally {
                                     setState(() {
                                       _isProcessing = false;
@@ -664,41 +536,6 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                     ),
                     const SizedBox(height: 12),
 
-                    // PayPhone Option Card
-                    _buildPaymentOptionCard(
-                      isSelected: _selectedMethod == PaymentMethod.PAYPHONE,
-                      title: 'PayPhone',
-                      subtitle: 'Pago con tarjeta de crédito/débito o saldo PayPhone',
-                      icon: Icons.phone_android_rounded,
-                      iconColor: const Color(0xFFFF6C00),
-                      bgColor: const Color(0xFFFF6C00).withValues(alpha: 0.08),
-                      isDisabled: false,
-                      onTap: () {
-                        setState(() {
-                          _selectedMethod = PaymentMethod.PAYPHONE;
-                          _preferPaypalCard = false;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Bank Transfer Option Card
-                    _buildPaymentOptionCard(
-                      isSelected: _selectedMethod == PaymentMethod.TRANSFERENCIA_BANCARIA,
-                      title: 'Transferencia Bancaria',
-                      subtitle: 'Paga mediante transferencia directa',
-                      icon: Icons.account_balance_rounded,
-                      iconColor: AppColors.primary,
-                      bgColor: AppColors.primary.withValues(alpha: 0.08),
-                      onTap: () {
-                        setState(() {
-                          _selectedMethod = PaymentMethod.TRANSFERENCIA_BANCARIA;
-                          _preferPaypalCard = false;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-
                     // PayPal Option Card
                     _buildPaymentOptionCard(
                       isSelected: _selectedMethod == PaymentMethod.PAYPAL && !_preferPaypalCard,
@@ -728,6 +565,61 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                         setState(() {
                           _selectedMethod = PaymentMethod.PAYPAL;
                           _preferPaypalCard = true;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
+                    /*
+                    // Cash Option Card
+                    _buildPaymentOptionCard(
+                      isSelected: _selectedMethod == PaymentMethod.CASH,
+                      title: 'Pago en Sitio',
+                      subtitle:
+                          'Pagar al llegar al local (Espera en fila normal)',
+                      icon: Icons.payments_rounded,
+                      iconColor: const Color(0xFF10B981),
+                      bgColor: const Color(0xFFECFDF5),
+                      onTap: () {
+                        setState(() {
+                          _selectedMethod = PaymentMethod.CASH;
+                          _preferPaypalCard = false;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    */
+
+                    // Bank Transfer Option Card
+                    _buildPaymentOptionCard(
+                      isSelected: _selectedMethod == PaymentMethod.TRANSFERENCIA_BANCARIA,
+                      title: 'Transferencia Bancaria',
+                      subtitle: 'Paga mediante transferencia directa',
+                      icon: Icons.account_balance_rounded,
+                      iconColor: AppColors.primary,
+                      bgColor: AppColors.primary.withValues(alpha: 0.08),
+                      onTap: () {
+                        setState(() {
+                          _selectedMethod = PaymentMethod.TRANSFERENCIA_BANCARIA;
+                          _preferPaypalCard = false;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
+                    // PayPhone Option Card
+                    _buildPaymentOptionCard(
+                      isSelected: _selectedMethod == PaymentMethod.PAYPHONE,
+                      title: 'PayPhone',
+                      subtitle: 'Pago con tarjeta de crédito/débito o saldo PayPhone',
+                      icon: Icons.phone_android_rounded,
+                      iconColor: const Color(0xFFFF6C00),
+                      bgColor: const Color(0xFFFF6C00).withValues(alpha: 0.08),
+                      isDisabled: false,
+                      onTap: () {
+                        setState(() {
+                          _selectedMethod = PaymentMethod.PAYPHONE;
+                          _preferPaypalCard = false;
                         });
                       },
                     ),
