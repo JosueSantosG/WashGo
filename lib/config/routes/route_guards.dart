@@ -63,7 +63,15 @@ String? authRedirect(BuildContext context, GoRouterState state) {
   }
 
   if (isLoggedIn && isLoggingIn) {
-    return AppRoutes.authGate;
+    // Si el usuario está logueado pero aterrizó en login/register, redirigir a auth-gate.
+    // NO redirigir si está en rutas de onboarding — está completando su registro
+    // y el authRedirect se dispara ANTES de que se limpien RegistrationDraft y se escriba el teléfono,
+    // causando un race condition que lo devuelve a onboarding (doble clic requerido).
+    if (state.matchedLocation == AppRoutes.login ||
+        state.matchedLocation == AppRoutes.register) {
+      return AppRoutes.authGate;
+    }
+    return null;
   }
 
   if (isLoggedIn) {

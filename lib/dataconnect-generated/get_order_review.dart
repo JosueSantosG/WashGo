@@ -7,8 +7,8 @@ class GetOrderReviewVariablesBuilder {
   GetOrderReviewVariablesBuilder(this._dataConnect, {required  this.orderId,});
   Deserializer<GetOrderReviewData> dataDeserializer = (dynamic json)  => GetOrderReviewData.fromJson(jsonDecode(json));
   Serializer<GetOrderReviewVariables> varsSerializer = (GetOrderReviewVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetOrderReviewData, GetOrderReviewVariables>> execute() {
-    return ref().execute();
+  Future<QueryResult<GetOrderReviewData, GetOrderReviewVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<GetOrderReviewData, GetOrderReviewVariables> ref() {

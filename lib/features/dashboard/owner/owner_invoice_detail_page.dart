@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:washgo/config/theme/app_colors.dart';
-import 'package:washgo/features/invoices/models/invoice.dart';
-import 'package:washgo/features/invoices/repositories/invoice_repository.dart';
-import 'package:washgo/features/invoices/utils/invoice_cache_manager.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
+import 'package:washgo/features/invoices/models/invoice.dart';
 
 class OwnerInvoiceDetailPage extends StatefulWidget {
   final InvoiceModel invoice;
@@ -20,51 +17,12 @@ class OwnerInvoiceDetailPage extends StatefulWidget {
 }
 
 class _OwnerInvoiceDetailPageState extends State<OwnerInvoiceDetailPage> {
-  final InvoiceRepository _invoiceRepository = FirebaseInvoiceRepository();
   late InvoiceModel _currentInvoice;
-  bool _isGenerating = false;
-  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
     _currentInvoice = widget.invoice;
-  }
-
-  Future<void> _handleRegeneratePdf() async {
-    setState(() {
-      _isGenerating = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final updatedInvoice = await _invoiceRepository.regenerateInvoicePdf(_currentInvoice);
-      if (mounted) {
-        setState(() {
-          _currentInvoice = updatedInvoice;
-          _isGenerating = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Factura generada exitosamente',
-              style: GoogleFonts.inter(fontWeight: FontWeight.w500),
-            ),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('Error regenerating invoice PDF: $e');
-      if (mounted) {
-        setState(() {
-          _isGenerating = false;
-          _errorMessage = 'Error al generar la factura. Inténtalo de nuevo.';
-        });
-      }
-    }
   }
 
   String _formatDate(DateTime dt) {
@@ -79,7 +37,6 @@ class _OwnerInvoiceDetailPageState extends State<OwnerInvoiceDetailPage> {
   @override
   Widget build(BuildContext context) {
     final status = _currentInvoice.invoiceStatus;
-    final bool hasPdf = _currentInvoice.pdfUrl != null && _currentInvoice.pdfUrl!.isNotEmpty;
 
     return PopScope(
       canPop: false,
@@ -129,29 +86,8 @@ class _OwnerInvoiceDetailPageState extends State<OwnerInvoiceDetailPage> {
                 _buildServiceDetailsCard(),
                 const SizedBox(height: 24),
 
-                // 5. Error Message (if any)
-                if (_errorMessage != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.error.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      _errorMessage!,
-                      style: GoogleFonts.inter(
-                        color: AppColors.error,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                // 6. Action Buttons
-                _buildActionButtons(status, hasPdf),
+                // 5. Action Buttons
+                _buildInvoiceInfoMessage(),
               ],
             ),
           ),
@@ -613,106 +549,29 @@ class _OwnerInvoiceDetailPageState extends State<OwnerInvoiceDetailPage> {
     );
   }
 
-  Widget _buildActionButtons(InvoiceStatus status, bool hasPdf) {
-    if (_isGenerating) {
-      return Column(
+  Widget _buildInvoiceInfoMessage() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(color: AppColors.primary),
-          const SizedBox(height: 12),
-          Text(
-            'Procesando factura...',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      );
-    }
-
-    if (status == InvoiceStatus.FAILED) {
-      return ElevatedButton.icon(
-        onPressed: _handleRegeneratePdf,
-        icon: const Icon(Icons.refresh_rounded),
-        label: const Text('Reintentar Generar Factura'),
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          elevation: 0,
-        ),
-      );
-    }
-
-    if (hasPdf) {
-      return Row(
-        children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () async {
-                final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
-                final baseUrl = InvoiceCacheManager.getFunctionsBaseUrl();
-                await InvoiceCacheManager.shareInvoice(
-                  _currentInvoice.orderId,
-                  _currentInvoice.pdfUrl!,
-                  invoiceId: _currentInvoice.id,
-                  baseUrl: baseUrl,
-                  idToken: idToken,
-                  subject: 'Factura ${_currentInvoice.numeroUnico}',
-                );
-              },
-              icon: const Icon(Icons.share_rounded),
-              label: const Text('Compartir'),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                side: const BorderSide(color: AppColors.primary, width: 1.5),
-                foregroundColor: AppColors.primary,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
-                final baseUrl = InvoiceCacheManager.getFunctionsBaseUrl();
-                await InvoiceCacheManager.printOrViewInvoice(
-                  _currentInvoice.orderId,
-                  _currentInvoice.pdfUrl!,
-                  invoiceId: _currentInvoice.id,
-                  baseUrl: baseUrl,
-                  idToken: idToken,
-                );
-              },
-              icon: const Icon(Icons.print_rounded),
-              label: const Text('Ver / Imprimir'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
+          Icon(Icons.receipt_long_rounded, color: AppColors.primary, size: 22),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              'Factura digital disponible — PDF deshabilitado',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primaryDark,
               ),
             ),
           ),
         ],
-      );
-    }
-
-    // Default fallback (e.g. status is PENDING but no URL yet)
-    return ElevatedButton.icon(
-      onPressed: _handleRegeneratePdf,
-      icon: const Icon(Icons.picture_as_pdf_rounded),
-      label: const Text('Generar PDF de Factura'),
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
       ),
     );
   }

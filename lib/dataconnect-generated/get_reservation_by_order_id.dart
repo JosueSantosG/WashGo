@@ -7,8 +7,8 @@ class GetReservationByOrderIdVariablesBuilder {
   GetReservationByOrderIdVariablesBuilder(this._dataConnect, {required  this.orderId,});
   Deserializer<GetReservationByOrderIdData> dataDeserializer = (dynamic json)  => GetReservationByOrderIdData.fromJson(jsonDecode(json));
   Serializer<GetReservationByOrderIdVariables> varsSerializer = (GetReservationByOrderIdVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetReservationByOrderIdData, GetReservationByOrderIdVariables>> execute() {
-    return ref().execute();
+  Future<QueryResult<GetReservationByOrderIdData, GetReservationByOrderIdVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<GetReservationByOrderIdData, GetReservationByOrderIdVariables> ref() {

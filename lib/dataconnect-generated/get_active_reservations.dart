@@ -7,8 +7,8 @@ class GetActiveReservationsVariablesBuilder {
   GetActiveReservationsVariablesBuilder(this._dataConnect, {required  this.businessId,});
   Deserializer<GetActiveReservationsData> dataDeserializer = (dynamic json)  => GetActiveReservationsData.fromJson(jsonDecode(json));
   Serializer<GetActiveReservationsVariables> varsSerializer = (GetActiveReservationsVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetActiveReservationsData, GetActiveReservationsVariables>> execute() {
-    return ref().execute();
+  Future<QueryResult<GetActiveReservationsData, GetActiveReservationsVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<GetActiveReservationsData, GetActiveReservationsVariables> ref() {

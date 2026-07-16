@@ -1,12 +1,9 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_data_connect/firebase_data_connect.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
 import 'package:washgo/features/invoices/models/invoice.dart';
-import 'package:washgo/features/invoices/utils/pdf_generator.dart';
 import 'package:washgo/config/env/environment.dart';
 import 'package:http/http.dart' as http;
 
@@ -264,12 +261,9 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
       final businessResponse = await _connector.getBusinessDetails(id: businessId).execute();
       final biz = businessResponse.data.business;
       final String businessName = biz?.nombre ?? 'WashGo';
-      final String ruc = biz?.ruc ?? '20123456789';
-      final String description = biz?.descripcion ?? 'Lavado Profesional';
 
       final now = DateTime.now();
       final uniqueSuffix = (now.millisecondsSinceEpoch % 1000000).toString().padLeft(6, '0');
-      final tempInvoiceNumber = 'FAC-${now.year}-$uniqueSuffix';
 
       // Combine observations safely
       String finalObservations = originalObservations;
@@ -281,23 +275,7 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
         }
       }
 
-      final pdfBytes = await PdfGenerator.generateInvoicePdf(
-        invoiceNumber: tempInvoiceNumber,
-        fechaEmision: now,
-        businessName: businessName,
-        ruc: ruc,
-        description: description,
-        clientName: clientName,
-        clientEmail: clientEmail,
-        clientPhone: clientPhone,
-        employeeName: employeeName,
-        serviceName: serviceName,
-        price: price,
-        paymentMethod: paymentMethod,
-        observations: finalObservations,
-      );
-
-      final base64Pdf = base64Encode(pdfBytes);
+      // PDF generation disabled — digital invoice only
       final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
 
       final baseUrl = _getFunctionsBaseUrl();
@@ -309,7 +287,6 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
         },
         body: jsonEncode({
           'orderId': orderId,
-          'base64Pdf': base64Pdf,
         }),
       );
 
@@ -320,7 +297,7 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
       final responseData = jsonDecode(response.body);
       final String invoiceId = responseData['invoiceId'] as String;
       final String numeroUnico = responseData['numeroUnico'] as String;
-      final String? pdfUrl = responseData['invoiceUrl'] as String?;
+      final String? pdfUrl = null;
 
       final double subtotal = price / 1.15;
       final double tax = price - subtotal;
@@ -351,19 +328,13 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
     }
 
     // Prepaid/PayPal/PayPhone/Transferencia — call HTTP endpoint (same pattern as CASH)
-    // 1. Fetch business details for PDF generation
+    // 1. Fetch business details
     final businessResponse = await _connector.getBusinessDetails(id: businessId).execute();
     final biz = businessResponse.data.business;
     final String businessName = biz?.nombre ?? 'WashGo';
-    final String ruc = biz?.ruc ?? '20123456789';
-    final String description = biz?.descripcion ?? 'Lavado Profesional';
-
-    // 2. Generate unique invoice number: FAC-YYYY-XXXXXX
     final now = DateTime.now();
-    final uniqueSuffix = (now.millisecondsSinceEpoch % 1000000).toString().padLeft(6, '0');
-    final invoiceNumber = 'FAC-${now.year}-$uniqueSuffix';
 
-    // 3. Combine observations safely
+    // 2. Combine observations safely
     String finalObservations = originalObservations;
     if (employeeNotes.trim().isNotEmpty) {
       if (finalObservations.isNotEmpty) {
@@ -373,24 +344,7 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
       }
     }
 
-    // 4. Generate PDF and base64 encode it
-    final pdfBytes = await PdfGenerator.generateInvoicePdf(
-      invoiceNumber: invoiceNumber,
-      fechaEmision: now,
-      businessName: businessName,
-      ruc: ruc,
-      description: description,
-      clientName: clientName,
-      clientEmail: clientEmail,
-      clientPhone: clientPhone,
-      employeeName: employeeName,
-      serviceName: serviceName,
-      price: price,
-      paymentMethod: paymentMethod,
-      observations: finalObservations,
-    );
-
-    final base64Pdf = base64Encode(pdfBytes);
+    // PDF generation disabled — digital invoice only
     final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
 
     // 5. Call HTTP endpoint (which handles NO_ACCESS mutations server-side)
@@ -403,7 +357,6 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
       },
       body: jsonEncode({
         'orderId': orderId,
-        'base64Pdf': base64Pdf,
         'paymentMethod': paymentMethod.toUpperCase(),
         'observations': finalObservations,
       }),
@@ -416,7 +369,7 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
     final responseData = jsonDecode(response.body);
     final String invoiceId = responseData['invoiceId'] as String;
     final String numeroUnico = responseData['numeroUnico'] as String;
-    final String? pdfUrl = responseData['invoiceUrl'] as String?;
+    final String? pdfUrl = null;
 
     final double subtotal = price / 1.18;
     final double tax = price - subtotal;
@@ -448,79 +401,7 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
 
   @override
   Future<InvoiceModel> regenerateInvoicePdf(InvoiceModel invoiceData) async {
-    // 1. Fallback values for fields not stored in InvoiceModel
-    final String ruc = '20123456789';
-    final String description = 'Lavado Profesional';
-    final String finalObservations = invoiceData.observations ?? '';
-    final String employeeName = invoiceData.employeeName ?? 'Sin asignar';
-
-    // 2. Generate PDF client-side
-    final pdfBytes = await PdfGenerator.generateInvoicePdf(
-      invoiceNumber: invoiceData.numeroUnico,
-      fechaEmision: invoiceData.fechaEmision,
-      businessName: invoiceData.businessName,
-      ruc: ruc,
-      description: description,
-      clientName: invoiceData.clientName,
-      clientEmail: invoiceData.clientEmail,
-      clientPhone: invoiceData.clientPhone,
-      employeeName: employeeName,
-      serviceName: invoiceData.serviceName,
-      price: invoiceData.price,
-      paymentMethod: invoiceData.paymentMethod,
-      observations: finalObservations,
-    );
-
-    // 3. Base64 encode the PDF
-    final base64Pdf = base64Encode(pdfBytes);
-    final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
-
-    // 4. POST to the Cloud Functions endpoint (bypasses storage.rules and FDC @auth gates)
-    final baseUrl = _getFunctionsBaseUrl();
-    final response = await http.post(
-      Uri.parse('$baseUrl/invoices/${invoiceData.id}/regenerate-pdf'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (idToken != null) 'Authorization': 'Bearer $idToken',
-      },
-      body: jsonEncode({
-        'base64Pdf': base64Pdf,
-      }),
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception('Failed to regenerate invoice PDF: ${response.body}');
-    }
-
-    final responseData = jsonDecode(response.body);
-    final String? pdfUrl = responseData['pdfUrl'] as String?;
-    final String invoiceStatusStr = responseData['invoiceStatus'] as String? ?? 'GENERATED';
-    final InvoiceStatus invoiceStatus = invoiceStatusStr == 'GENERATED'
-        ? InvoiceStatus.GENERATED
-        : InvoiceStatus.FAILED;
-
-    return InvoiceModel(
-      id: invoiceData.id,
-      numeroUnico: invoiceData.numeroUnico,
-      fechaEmision: invoiceData.fechaEmision,
-      pdfUrl: pdfUrl,
-      orderId: invoiceData.orderId,
-      price: invoiceData.price,
-      serviceName: invoiceData.serviceName,
-      paymentMethod: invoiceData.paymentMethod,
-      orderStatus: invoiceData.orderStatus,
-      businessName: invoiceData.businessName,
-      clientName: invoiceData.clientName,
-      clientEmail: invoiceData.clientEmail,
-      clientPhone: invoiceData.clientPhone,
-      employeeName: invoiceData.employeeName,
-      employeePhone: invoiceData.employeePhone,
-      subtotal: invoiceData.subtotal,
-      discount: invoiceData.discount,
-      tax: invoiceData.tax,
-      total: invoiceData.total,
-      invoiceStatus: invoiceStatus,
-      generatedAt: DateTime.now(),
-    );
+    // PDF regeneration disabled — return the invoice data unchanged
+    return invoiceData;
   }
 }

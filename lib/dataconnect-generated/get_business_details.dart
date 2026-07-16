@@ -7,8 +7,8 @@ class GetBusinessDetailsVariablesBuilder {
   GetBusinessDetailsVariablesBuilder(this._dataConnect, {required  this.id,});
   Deserializer<GetBusinessDetailsData> dataDeserializer = (dynamic json)  => GetBusinessDetailsData.fromJson(jsonDecode(json));
   Serializer<GetBusinessDetailsVariables> varsSerializer = (GetBusinessDetailsVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetBusinessDetailsData, GetBusinessDetailsVariables>> execute() {
-    return ref().execute();
+  Future<QueryResult<GetBusinessDetailsData, GetBusinessDetailsVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<GetBusinessDetailsData, GetBusinessDetailsVariables> ref() {

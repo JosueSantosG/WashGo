@@ -8,8 +8,8 @@ class SuperAdminGetCompletedOrdersVariablesBuilder {
   SuperAdminGetCompletedOrdersVariablesBuilder(this._dataConnect, {required  this.startOfMonth,required  this.endOfMonth,});
   Deserializer<SuperAdminGetCompletedOrdersData> dataDeserializer = (dynamic json)  => SuperAdminGetCompletedOrdersData.fromJson(jsonDecode(json));
   Serializer<SuperAdminGetCompletedOrdersVariables> varsSerializer = (SuperAdminGetCompletedOrdersVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<SuperAdminGetCompletedOrdersData, SuperAdminGetCompletedOrdersVariables>> execute() {
-    return ref().execute();
+  Future<QueryResult<SuperAdminGetCompletedOrdersData, SuperAdminGetCompletedOrdersVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<SuperAdminGetCompletedOrdersData, SuperAdminGetCompletedOrdersVariables> ref() {

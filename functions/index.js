@@ -608,11 +608,11 @@ app.get("/payphone/transaction/:orderId", async (req, res) => {
   }
 });
 
-// 3. Complete Cash Payment
+// 3. Complete Cash Payment (PDF generation disabled — digital invoice only)
 app.post("/orders/complete-cash-payment", authenticate, async (req, res) => {
-  const { orderId, base64Pdf } = req.body;
-  if (!orderId || !base64Pdf) {
-    return res.status(400).json({ error: "Missing orderId or base64Pdf" });
+  const { orderId } = req.body;
+  if (!orderId) {
+    return res.status(400).json({ error: "Missing orderId" });
   }
 
   try {
@@ -644,24 +644,14 @@ app.post("/orders/complete-cash-payment", authenticate, async (req, res) => {
     const subtotal = parseFloat((order.price / 1.15).toFixed(2));
     const tax = parseFloat((order.price - subtotal).toFixed(2));
 
-    // Upload PDF to Storage
-    const bucket = admin.storage().bucket();
-    const file = bucket.file(`invoices/${invoiceId}.pdf`);
-    const buffer = Buffer.from(base64Pdf, "base64");
-    await file.save(buffer, {
-      metadata: {
-        contentType: "application/pdf",
-      },
-    });
-
-    // Generate Signed URL / Download URL (resilient to emulator environment)
-    const signedUrl = await getDownloadUrlSafe(file);
+    // PDF generation is disabled — no PDF uploaded to Storage
+    // Invoice is created with digital data only (no pdfUrl)
 
     // Complete order with mutation using admin SDK
     await completeOrderWithInvoiceOnly({
       orderId,
       observations: "Pago en efectivo completado",
-      invoiceUrl: signedUrl,
+      invoiceUrl: null,
       invoiceId,
       numeroUnico,
       subtotal,
@@ -676,7 +666,7 @@ app.post("/orders/complete-cash-payment", authenticate, async (req, res) => {
       success: true,
       invoiceId,
       numeroUnico,
-      invoiceUrl: signedUrl,
+      invoiceUrl: null,
       orderStatus: "COMPLETADO",
     });
   } catch (error) {
@@ -685,11 +675,11 @@ app.post("/orders/complete-cash-payment", authenticate, async (req, res) => {
   }
 });
 
-// 4b. Complete Prepaid Payment (PayPhone, PayPal, Transferencia — employee completion)
+// 4b. Complete Prepaid Payment (PayPhone, PayPal, Transferencia — employee completion, PDF disabled)
 app.post("/orders/complete-prepaid-payment", authenticate, async (req, res) => {
-  const { orderId, base64Pdf, paymentMethod, observations } = req.body;
-  if (!orderId || !base64Pdf || !paymentMethod) {
-    return res.status(400).json({ error: "Missing required fields: orderId, base64Pdf, paymentMethod" });
+  const { orderId, paymentMethod, observations } = req.body;
+  if (!orderId || !paymentMethod) {
+    return res.status(400).json({ error: "Missing required fields: orderId, paymentMethod" });
   }
 
   try {
@@ -722,25 +712,15 @@ app.post("/orders/complete-prepaid-payment", authenticate, async (req, res) => {
     const subtotal = parseFloat((order.price / 1.18).toFixed(2));
     const tax = parseFloat((order.price - subtotal).toFixed(2));
 
-    // Upload PDF to Storage
-    const bucket = admin.storage().bucket();
-    const file = bucket.file(`invoices/${invoiceId}.pdf`);
-    const buffer = Buffer.from(base64Pdf, "base64");
-    await file.save(buffer, {
-      metadata: {
-        contentType: "application/pdf",
-      },
-    });
-
-    // Generate Signed URL / Download URL (resilient to emulator environment)
-    const signedUrl = await getDownloadUrlSafe(file);
+    // PDF generation is disabled — no PDF uploaded to Storage
+    // Invoice is created with digital data only (no pdfUrl)
 
     // Complete order with prepaid helper (handles NO_ACCESS mutations via admin SDK)
     await completeOrderWithPrepaid({
       req,
       order,
       invoiceParams: {
-        signedUrl,
+        signedUrl: null,
         invoiceId,
         numeroUnico,
         subtotal,
@@ -754,7 +734,7 @@ app.post("/orders/complete-prepaid-payment", authenticate, async (req, res) => {
       success: true,
       invoiceId,
       numeroUnico,
-      invoiceUrl: signedUrl,
+      invoiceUrl: null,
       orderStatus: "COMPLETADO",
     });
   } catch (error) {

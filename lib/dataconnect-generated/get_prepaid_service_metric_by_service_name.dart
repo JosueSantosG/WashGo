@@ -8,8 +8,8 @@ class GetPrepaidServiceMetricByServiceNameVariablesBuilder {
   GetPrepaidServiceMetricByServiceNameVariablesBuilder(this._dataConnect, {required  this.businessId,required  this.serviceName,});
   Deserializer<GetPrepaidServiceMetricByServiceNameData> dataDeserializer = (dynamic json)  => GetPrepaidServiceMetricByServiceNameData.fromJson(jsonDecode(json));
   Serializer<GetPrepaidServiceMetricByServiceNameVariables> varsSerializer = (GetPrepaidServiceMetricByServiceNameVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetPrepaidServiceMetricByServiceNameData, GetPrepaidServiceMetricByServiceNameVariables>> execute() {
-    return ref().execute();
+  Future<QueryResult<GetPrepaidServiceMetricByServiceNameData, GetPrepaidServiceMetricByServiceNameVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<GetPrepaidServiceMetricByServiceNameData, GetPrepaidServiceMetricByServiceNameVariables> ref() {

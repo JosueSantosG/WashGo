@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:washgo/config/theme/app_colors.dart';
 import 'package:washgo/features/invoices/models/invoice.dart';
 import 'package:washgo/features/invoices/repositories/invoice_repository.dart';
-import 'package:washgo/features/invoices/utils/invoice_cache_manager.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
@@ -240,74 +239,12 @@ class _ClientInvoiceHistoryPageState extends State<ClientInvoiceHistoryPage> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        bool isGenerating = false;
-        String? sheetError;
+        final currentInvoice = _filteredInvoices.firstWhere(
+          (inv) => inv.id == invoice.id,
+          orElse: () => invoice,
+        );
 
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            final currentInvoice = _filteredInvoices.firstWhere(
-              (inv) => inv.id == invoice.id,
-              orElse: () => invoice,
-            );
-
-            Future<void> handleGenerate({required bool share, required bool print}) async {
-              setSheetState(() {
-                isGenerating = true;
-                sheetError = null;
-              });
-              try {
-                final updatedInvoice = await _invoiceRepository.regenerateInvoicePdf(currentInvoice);
-                
-                if (mounted) {
-                  setState(() {
-                    final idxFiltered = _filteredInvoices.indexWhere((inv) => inv.id == currentInvoice.id);
-                    if (idxFiltered != -1) {
-                      _filteredInvoices[idxFiltered] = updatedInvoice;
-                    }
-                  });
-                }
-
-                if (updatedInvoice.pdfUrl != null && updatedInvoice.pdfUrl!.isNotEmpty) {
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                  }
-
-                  final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
-                  final baseUrl = InvoiceCacheManager.getFunctionsBaseUrl();
-
-                  if (share) {
-                    await InvoiceCacheManager.shareInvoice(
-                      updatedInvoice.orderId,
-                      updatedInvoice.pdfUrl!,
-                      invoiceId: updatedInvoice.id,
-                      baseUrl: baseUrl,
-                      idToken: idToken,
-                      subject: 'Factura ${updatedInvoice.numeroUnico}',
-                    );
-                  } else if (print) {
-                    await InvoiceCacheManager.printOrViewInvoice(
-                      updatedInvoice.orderId,
-                      updatedInvoice.pdfUrl!,
-                      invoiceId: updatedInvoice.id,
-                      baseUrl: baseUrl,
-                      idToken: idToken,
-                    );
-                  }
-                } else {
-                  throw Exception('El enlace del PDF no se generó correctamente.');
-                }
-              } catch (e) {
-                debugPrint('Error generating PDF: $e');
-                if (mounted) {
-                  setSheetState(() {
-                    isGenerating = false;
-                    sheetError = 'Error al generar la factura. Inténtalo de nuevo.';
-                  });
-                }
-              }
-            }
-
-            return Container(
+        return Container(
               decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(
@@ -411,134 +348,39 @@ class _ClientInvoiceHistoryPageState extends State<ClientInvoiceHistoryPage> {
                   
                   const SizedBox(height: 24),
                   
-                  // Action Buttons or Loader
-                  if (isGenerating)
-                    Column(
+                  // Factura digital — PDF deshabilitado
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const CircularProgressIndicator(
-                          color: AppColors.primary,
+                        Icon(Icons.receipt_long_rounded, color: AppColors.primary, size: 20),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            'Factura digital disponible',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primaryDark,
+                            ),
+                          ),
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Generando factura electrónica...',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    )
-                  else ...[
-                    Row(
-                      children: [
-                        if (currentInvoice.pdfUrl != null && currentInvoice.pdfUrl!.isNotEmpty) ...[
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () async {
-                                Navigator.pop(context);
-                                final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
-                                final baseUrl = InvoiceCacheManager.getFunctionsBaseUrl();
-                                await InvoiceCacheManager.shareInvoice(
-                                  currentInvoice.orderId,
-                                  currentInvoice.pdfUrl!,
-                                  invoiceId: currentInvoice.id,
-                                  baseUrl: baseUrl,
-                                  idToken: idToken,
-                                  subject: 'Factura ${currentInvoice.numeroUnico}',
-                                );
-                              },
-                              icon: const Icon(Icons.share_rounded),
-                              label: const Text('Compartir'),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                side: const BorderSide(color: AppColors.primary),
-                                foregroundColor: AppColors.primary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () async {
-                                Navigator.pop(context);
-                                final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
-                                final baseUrl = InvoiceCacheManager.getFunctionsBaseUrl();
-                                await InvoiceCacheManager.printOrViewInvoice(
-                                  currentInvoice.orderId,
-                                  currentInvoice.pdfUrl!,
-                                  invoiceId: currentInvoice.id,
-                                  baseUrl: baseUrl,
-                                  idToken: idToken,
-                                );
-                              },
-                              icon: const Icon(Icons.print_rounded),
-                              label: const Text('Ver / Imprimir'),
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                              ),
-                            ),
-                          ),
-                        ] else ...[
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => handleGenerate(share: true, print: false),
-                              icon: const Icon(Icons.share_rounded),
-                              label: const Text('Generar y Compartir'),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                side: const BorderSide(color: AppColors.primary),
-                                foregroundColor: AppColors.primary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () => handleGenerate(share: false, print: true),
-                              icon: const Icon(Icons.print_rounded),
-                              label: const Text('Generar y Ver'),
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                              ),
-                            ),
-                          ),
-                        ],
                       ],
                     ),
-                    if (sheetError != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        sheetError!,
-                        style: GoogleFonts.inter(
-                          color: AppColors.error,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ],
+                  ),
                   
 
                 ],
               ),
             );
           },
-        );
-      },
-    );
-  }
+      );
+    }
 
   Widget _buildStatusBadge(InvoiceStatus status) {
     Color color;
@@ -563,7 +405,7 @@ class _ClientInvoiceHistoryPageState extends State<ClientInvoiceHistoryPage> {
         color = AppColors.error;
         bgColor = AppColors.error.withValues(alpha: 0.1);
         icon = Icons.error_outline_rounded;
-        label = 'Fallo de PDF';
+        label = 'Fallo';
         break;
     }
 
@@ -584,47 +426,6 @@ class _ClientInvoiceHistoryPageState extends State<ClientInvoiceHistoryPage> {
               color: color,
               fontWeight: FontWeight.bold,
               fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCardActionBadge(InvoiceStatus status) {
-    Color color;
-    Color bgColor;
-    IconData icon;
-    String label;
-
-    if (status == InvoiceStatus.FAILED) {
-      color = AppColors.error;
-      bgColor = AppColors.error.withValues(alpha: 0.1);
-      icon = Icons.refresh_rounded;
-      label = 'Reintentar';
-    } else {
-      color = AppColors.warning;
-      bgColor = AppColors.warning.withValues(alpha: 0.1);
-      icon = Icons.add_circle_outline_rounded;
-      label = 'Generar';
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              color: color,
-              fontWeight: FontWeight.bold,
             ),
           ),
         ],
@@ -1059,35 +860,8 @@ class _ClientInvoiceHistoryPageState extends State<ClientInvoiceHistoryPage> {
                         ),
                       ],
                     ),
-                    // Status badge or Generated status
-                    Row(
-                      children: [
-                        if (invoice.pdfUrl == null || invoice.pdfUrl!.isEmpty)
-                          _buildCardActionBadge(invoice.invoiceStatus)
-                        else
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.success.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.verified_rounded, size: 12, color: AppColors.success),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Emitida',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 10,
-                                    color: AppColors.success,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
+                    // Invoice status badge
+                    _buildStatusBadge(invoice.invoiceStatus),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -1111,9 +885,8 @@ class _ClientInvoiceHistoryPageState extends State<ClientInvoiceHistoryPage> {
                 ),
                 const SizedBox(height: 12),
                 
-                // Price, Date and Actions
+                // Price and Date
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1133,56 +906,6 @@ class _ClientInvoiceHistoryPageState extends State<ClientInvoiceHistoryPage> {
                             fontSize: 11,
                             color: AppColors.textSecondary,
                           ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        // Share Action Icon Button
-                        IconButton(
-                          icon: const Icon(Icons.share_outlined, color: AppColors.primary, size: 20),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          onPressed: () async {
-                            if (invoice.pdfUrl != null && invoice.pdfUrl!.isNotEmpty) {
-                              final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
-                              final baseUrl = InvoiceCacheManager.getFunctionsBaseUrl();
-                              await InvoiceCacheManager.shareInvoice(
-                                invoice.orderId,
-                                invoice.pdfUrl!,
-                                invoiceId: invoice.id,
-                                baseUrl: baseUrl,
-                                idToken: idToken,
-                                subject: 'Factura ${invoice.numeroUnico}',
-                              );
-                            } else {
-                              _showInvoiceDetailsSheet(invoice);
-                            }
-                          },
-                          tooltip: 'Compartir',
-                        ),
-                        const SizedBox(width: 14),
-                        // View / Print Action Button
-                        IconButton(
-                          icon: const Icon(Icons.print_outlined, color: AppColors.primary, size: 20),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          onPressed: () async {
-                            if (invoice.pdfUrl != null && invoice.pdfUrl!.isNotEmpty) {
-                              final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
-                              final baseUrl = InvoiceCacheManager.getFunctionsBaseUrl();
-                              await InvoiceCacheManager.printOrViewInvoice(
-                                invoice.orderId,
-                                invoice.pdfUrl!,
-                                invoiceId: invoice.id,
-                                baseUrl: baseUrl,
-                                idToken: idToken,
-                              );
-                            } else {
-                              _showInvoiceDetailsSheet(invoice);
-                            }
-                          },
-                          tooltip: 'Imprimir',
                         ),
                       ],
                     ),
