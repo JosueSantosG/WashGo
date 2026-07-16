@@ -130,9 +130,49 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                     _isProcessing = true;
                                   });
                                   try {
+                                    final user = FirebaseAuth.instance.currentUser;
+                                    if (user == null) {
+                                      throw Exception('Usuario no autenticado.');
+                                    }
+                                    final idToken = await user.getIdToken();
+                                    if (idToken == null) {
+                                      throw Exception('No se pudo obtener token de autenticación.');
+                                    }
+                                    final baseUrl = _getFunctionsBaseUrl();
+                                    final orderId = _payphoneOrderId!;
+
+                                    // 1. Try fetching stored transactionId from Firestore bridge
+                                    String? transactionId;
+                                    try {
+                                      transactionId = await PayphoneService.getStoredTransaction(
+                                        orderId: orderId,
+                                        baseUrl: baseUrl,
+                                        idToken: idToken,
+                                      );
+                                    } catch (_) {
+                                      // Fall through to Data Connect check
+                                    }
+
+                                    // 2. If in emulator and no transaction found, generate mock
+                                    if (transactionId == null && Environment.useEmulators) {
+                                      transactionId = 'mock-${DateTime.now().millisecondsSinceEpoch}';
+                                    }
+
+                                    // 3. If we have a transactionId, navigate to success page
+                                    if (transactionId != null && transactionId.isNotEmpty) {
+                                      if (!context.mounted) return;
+                                      await context.push(
+                                        '/payphone-callback/success'
+                                        '?transactionId=$transactionId'
+                                        '&orderId=$orderId',
+                                      );
+                                      return;
+                                    }
+
+                                    // 4. Fallback: check Data Connect order status
                                     final connector = ExampleConnector.instance;
                                     final orderResult = await connector
-                                        .getOrderById(id: _payphoneOrderId!)
+                                        .getOrderById(id: orderId)
                                         .execute();
                                     final order = orderResult.data.order;
                                     if (order == null) {
