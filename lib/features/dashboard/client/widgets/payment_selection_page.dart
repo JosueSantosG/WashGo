@@ -40,7 +40,7 @@ class PaymentSelectionPage extends StatefulWidget {
 }
 
 class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
-  PaymentMethod _selectedMethod = PaymentMethod.PAYPAL;
+  PaymentMethod _selectedMethod = PaymentMethod.PAYPHONE;
   bool _preferPaypalCard = false;
   bool _isProcessing = false;
   bool _payphoneWaiting = false;
