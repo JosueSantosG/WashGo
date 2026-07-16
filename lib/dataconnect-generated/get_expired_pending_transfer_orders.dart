@@ -6,8 +6,8 @@ class GetExpiredPendingTransferOrdersVariablesBuilder {
   GetExpiredPendingTransferOrdersVariablesBuilder(this._dataConnect, );
   Deserializer<GetExpiredPendingTransferOrdersData> dataDeserializer = (dynamic json)  => GetExpiredPendingTransferOrdersData.fromJson(jsonDecode(json));
   
-  Future<QueryResult<GetExpiredPendingTransferOrdersData, void>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetExpiredPendingTransferOrdersData, void>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetExpiredPendingTransferOrdersData, void> ref() {

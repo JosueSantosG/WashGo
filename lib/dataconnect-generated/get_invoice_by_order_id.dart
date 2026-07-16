@@ -7,8 +7,8 @@ class GetInvoiceByOrderIdVariablesBuilder {
   GetInvoiceByOrderIdVariablesBuilder(this._dataConnect, {required  this.orderId,});
   Deserializer<GetInvoiceByOrderIdData> dataDeserializer = (dynamic json)  => GetInvoiceByOrderIdData.fromJson(jsonDecode(json));
   Serializer<GetInvoiceByOrderIdVariables> varsSerializer = (GetInvoiceByOrderIdVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetInvoiceByOrderIdData, GetInvoiceByOrderIdVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetInvoiceByOrderIdData, GetInvoiceByOrderIdVariables>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetInvoiceByOrderIdData, GetInvoiceByOrderIdVariables> ref() {

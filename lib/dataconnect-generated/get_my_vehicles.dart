@@ -6,8 +6,8 @@ class GetMyVehiclesVariablesBuilder {
   GetMyVehiclesVariablesBuilder(this._dataConnect, );
   Deserializer<GetMyVehiclesData> dataDeserializer = (dynamic json)  => GetMyVehiclesData.fromJson(jsonDecode(json));
   
-  Future<QueryResult<GetMyVehiclesData, void>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetMyVehiclesData, void>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetMyVehiclesData, void> ref() {

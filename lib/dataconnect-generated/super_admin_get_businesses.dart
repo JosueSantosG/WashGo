@@ -6,8 +6,8 @@ class SuperAdminGetBusinessesVariablesBuilder {
   SuperAdminGetBusinessesVariablesBuilder(this._dataConnect, );
   Deserializer<SuperAdminGetBusinessesData> dataDeserializer = (dynamic json)  => SuperAdminGetBusinessesData.fromJson(jsonDecode(json));
   
-  Future<QueryResult<SuperAdminGetBusinessesData, void>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<SuperAdminGetBusinessesData, void>> execute() {
+    return ref().execute();
   }
 
   QueryRef<SuperAdminGetBusinessesData, void> ref() {

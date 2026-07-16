@@ -172,6 +172,8 @@ part 'get_business_invoices.dart';
 
 part 'get_invoice_by_id.dart';
 
+part 'get_invoice_by_id_admin.dart';
+
 part 'get_invoices_by_date_range.dart';
 
 part 'get_business_details.dart';
@@ -1036,6 +1038,11 @@ class ExampleConnector {
   }
   
   
+  GetInvoiceByIdAdminVariablesBuilder getInvoiceByIdAdmin ({required String id, }) {
+    return GetInvoiceByIdAdminVariablesBuilder(dataConnect, id: id,);
+  }
+  
+  
   GetInvoicesByDateRangeVariablesBuilder getInvoicesByDateRange ({required String businessId, required Timestamp startDate, required Timestamp endDate, }) {
     return GetInvoicesByDateRangeVariablesBuilder(dataConnect, businessId: businessId,startDate: startDate,endDate: endDate,);
   }
@@ -1189,18 +1196,9 @@ class ExampleConnector {
 
   ExampleConnector({required this.dataConnect});
   static ExampleConnector get instance {
-    
-    CacheSettings cacheSettings = CacheSettings(
-      maxAge: Duration(milliseconds:5000),
-      storage: CacheStorage.memory,
-    );
-    
     return ExampleConnector(
         dataConnect: FirebaseDataConnect.instanceFor(
             connectorConfig: connectorConfig,
-            
-            cacheSettings: cacheSettings,
-            
             sdkType: CallerSDKType.generated));
   }
 

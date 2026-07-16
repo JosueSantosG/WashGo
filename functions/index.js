@@ -4,7 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
 const crypto = require("crypto");
-const { getOrderById, serverGetOrderById, completeOrderWithInvoiceOnly, getInvoiceById, getInvoiceByOrderId, getPaymentProof, getExpiredPendingTransferOrders, getPendingElectronicOrders, createPaymentProof, serverUpdatePaymentProof, serverUpdatePaymentProofStatus, serverUpdateOrderStatus, createSystemNotification, completeOrderWithTransferAndInvoice, completeOrderWithPrepaidAndUpdateMetric, completeOrderWithPrepaidAndCreateMetric, getPrepaidServiceMetricByServiceName, getPrepaidHistoryByOrderId, updateInvoicePdf, updateOrderCompletion } = require("@washgo/db-admin");
+const { getOrderById, serverGetOrderById, completeOrderWithInvoiceOnly, getInvoiceById, getInvoiceByIdAdmin, getInvoiceByOrderId, getPaymentProof, getExpiredPendingTransferOrders, getPendingElectronicOrders, createPaymentProof, serverUpdatePaymentProof, serverUpdatePaymentProofStatus, serverUpdateOrderStatus, createSystemNotification, completeOrderWithTransferAndInvoice, completeOrderWithPrepaidAndUpdateMetric, completeOrderWithPrepaidAndCreateMetric, getPrepaidServiceMetricByServiceName, getPrepaidHistoryByOrderId, updateInvoicePdf, updateOrderCompletion } = require("@washgo/db-admin");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 
 // Initialize Firebase Admin SDK
@@ -808,12 +808,13 @@ app.post("/invoices/:invoiceId/regenerate-pdf", authenticate, async (req, res) =
   }
 
   try {
-    // Fetch invoice using admin SDK context (no auth options = admin bypass)
-    // This avoids @auth(level: USER) issues in emulators
-    const invoiceResult = await getInvoiceById({ id: invoiceId });
+    // Fetch invoice using admin-safe query (bypasses @auth gates, no auth.uid dependency)
+    const invoiceResult = await getInvoiceByIdAdmin({ id: invoiceId });
     const invoice = invoiceResult.data.invoice;
     if (!invoice) {
       return res.status(404).json({ error: "Invoice not found" });
+
+
     }
 
     // Permission check: allow if the caller is the client, the assigned employee,
@@ -878,8 +879,8 @@ app.get("/invoices/:invoiceId/pdf", authenticate, async (req, res) => {
   }
 
   try {
-    // Fetch invoice using admin SDK context (bypasses @auth gates)
-    const invoiceResult = await getInvoiceById({ id: invoiceId });
+    // Fetch invoice using admin-safe query (bypasses @auth gates, no auth.uid dependency)
+    const invoiceResult = await getInvoiceByIdAdmin({ id: invoiceId });
     const invoice = invoiceResult.data.invoice;
     if (!invoice) {
       return res.status(404).json({ error: "Invoice not found" });
@@ -935,8 +936,8 @@ app.get("/orders/:orderId/invoice-pdf", authenticate, async (req, res) => {
     const invoice = invoices[0];
     const invoiceId = invoice.id;
 
-    // Fetch full invoice for permission checks
-    const fullInvoiceResult = await getInvoiceById({ id: invoiceId });
+    // Fetch full invoice using admin-safe query (bypasses @auth gates, no auth.uid dependency)
+    const fullInvoiceResult = await getInvoiceByIdAdmin({ id: invoiceId });
     const fullInvoice = fullInvoiceResult.data.invoice;
     if (!fullInvoice) {
       return res.status(404).json({ error: "Invoice not found" });

@@ -574,6 +574,12 @@ export function getInvoiceById(dcOrVarsOrOptions, varsOrOptions, options) {
   return dcInstance.executeQuery('GetInvoiceById', inputVars, inputOpts);
 }
 
+export function getInvoiceByIdAdmin(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetInvoiceByIdAdmin', inputVars, inputOpts);
+}
+
 export function getInvoicesByDateRange(dcOrVarsOrOptions, varsOrOptions, options) {
   const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
   dcInstance.useGen(true);

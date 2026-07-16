@@ -755,6 +755,57 @@ query GetInvoiceById($id: UUID!) @auth(level: USER) {
   }
 }
 
+query GetInvoiceByIdAdmin($id: UUID!) @auth(level: NO_ACCESS) {
+  invoice(key: { id: $id }) {
+    id
+    numeroUnico
+    fechaEmision
+    subtotal
+    discount
+    tax
+    total
+    paymentMethod
+    invoiceStatus
+    generatedAt
+    pdfUrl
+    order {
+      id
+      price
+      serviceName
+      paymentMethod
+      status
+      observations
+      clientId
+      employeeId
+      business {
+        id
+        nombre
+        ruc
+        descripcion
+        owner {
+          id
+        }
+      }
+      client {
+        nombreCompleto
+        email
+        telefono
+      }
+      employee {
+        nombreCompleto
+        telefono
+      }
+    }
+    invoiceItems_on_invoice {
+      id
+      serviceName
+      quantity
+      unitPrice
+      total
+    }
+  }
+}
+
 query GetInvoicesByDateRange($businessId: UUID!, $startDate: Timestamp!, $endDate: Timestamp!) @auth(level: USER) {
   business(key: { id: $businessId }) @redact {
     owner {

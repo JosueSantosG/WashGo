@@ -1,59 +1,24 @@
 part of 'example.dart';
 
-class GetEmployeeInvoicesVariablesBuilder {
-  Optional<int> _limit = Optional.optional(nativeFromJson, nativeToJson);
-  Optional<int> _offset = Optional.optional(nativeFromJson, nativeToJson);
-  Optional<Timestamp> _startDate = Optional.optional((json) => json['startDate'] = Timestamp.fromJson(json['startDate']), defaultSerializer);
-  Optional<Timestamp> _endDate = Optional.optional((json) => json['endDate'] = Timestamp.fromJson(json['endDate']), defaultSerializer);
-  Optional<PaymentMethod> _paymentMethod = Optional.optional((data) => PaymentMethod.values.byName(data), enumSerializer);
-  Optional<InvoiceStatus> _status = Optional.optional((data) => InvoiceStatus.values.byName(data), enumSerializer);
-  Optional<String> _searchQuery = Optional.optional(nativeFromJson, nativeToJson);
+class GetInvoiceByIdAdminVariablesBuilder {
+  String id;
 
   final FirebaseDataConnect _dataConnect;
-  GetEmployeeInvoicesVariablesBuilder limit(int? t) {
-   _limit.value = t;
-   return this;
-  }
-  GetEmployeeInvoicesVariablesBuilder offset(int? t) {
-   _offset.value = t;
-   return this;
-  }
-  GetEmployeeInvoicesVariablesBuilder startDate(Timestamp? t) {
-   _startDate.value = t;
-   return this;
-  }
-  GetEmployeeInvoicesVariablesBuilder endDate(Timestamp? t) {
-   _endDate.value = t;
-   return this;
-  }
-  GetEmployeeInvoicesVariablesBuilder paymentMethod(PaymentMethod? t) {
-   _paymentMethod.value = t;
-   return this;
-  }
-  GetEmployeeInvoicesVariablesBuilder status(InvoiceStatus? t) {
-   _status.value = t;
-   return this;
-  }
-  GetEmployeeInvoicesVariablesBuilder searchQuery(String? t) {
-   _searchQuery.value = t;
-   return this;
-  }
-
-  GetEmployeeInvoicesVariablesBuilder(this._dataConnect, );
-  Deserializer<GetEmployeeInvoicesData> dataDeserializer = (dynamic json)  => GetEmployeeInvoicesData.fromJson(jsonDecode(json));
-  Serializer<GetEmployeeInvoicesVariables> varsSerializer = (GetEmployeeInvoicesVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetEmployeeInvoicesData, GetEmployeeInvoicesVariables>> execute() {
+  GetInvoiceByIdAdminVariablesBuilder(this._dataConnect, {required  this.id,});
+  Deserializer<GetInvoiceByIdAdminData> dataDeserializer = (dynamic json)  => GetInvoiceByIdAdminData.fromJson(jsonDecode(json));
+  Serializer<GetInvoiceByIdAdminVariables> varsSerializer = (GetInvoiceByIdAdminVariables vars) => jsonEncode(vars.toJson());
+  Future<QueryResult<GetInvoiceByIdAdminData, GetInvoiceByIdAdminVariables>> execute() {
     return ref().execute();
   }
 
-  QueryRef<GetEmployeeInvoicesData, GetEmployeeInvoicesVariables> ref() {
-    GetEmployeeInvoicesVariables vars= GetEmployeeInvoicesVariables(limit: _limit,offset: _offset,startDate: _startDate,endDate: _endDate,paymentMethod: _paymentMethod,status: _status,searchQuery: _searchQuery,);
-    return _dataConnect.query("GetEmployeeInvoices", dataDeserializer, varsSerializer, vars);
+  QueryRef<GetInvoiceByIdAdminData, GetInvoiceByIdAdminVariables> ref() {
+    GetInvoiceByIdAdminVariables vars= GetInvoiceByIdAdminVariables(id: id,);
+    return _dataConnect.query("GetInvoiceByIdAdmin", dataDeserializer, varsSerializer, vars);
   }
 }
 
 @immutable
-class GetEmployeeInvoicesInvoices {
+class GetInvoiceByIdAdminInvoice {
   final String id;
   final String numeroUnico;
   final Timestamp fechaEmision;
@@ -65,9 +30,9 @@ class GetEmployeeInvoicesInvoices {
   final EnumValue<InvoiceStatus> invoiceStatus;
   final Timestamp? generatedAt;
   final String? pdfUrl;
-  final GetEmployeeInvoicesInvoicesOrder order;
-  final List<GetEmployeeInvoicesInvoicesInvoiceItemsOnInvoice> invoiceItems_on_invoice;
-  GetEmployeeInvoicesInvoices.fromJson(dynamic json):
+  final GetInvoiceByIdAdminInvoiceOrder order;
+  final List<GetInvoiceByIdAdminInvoiceInvoiceItemsOnInvoice> invoiceItems_on_invoice;
+  GetInvoiceByIdAdminInvoice.fromJson(dynamic json):
   
   id = nativeFromJson<String>(json['id']),
   numeroUnico = nativeFromJson<String>(json['numeroUnico']),
@@ -80,9 +45,9 @@ class GetEmployeeInvoicesInvoices {
   invoiceStatus = invoiceStatusDeserializer(json['invoiceStatus']),
   generatedAt = json['generatedAt'] == null ? null : Timestamp.fromJson(json['generatedAt']),
   pdfUrl = json['pdfUrl'] == null ? null : nativeFromJson<String>(json['pdfUrl']),
-  order = GetEmployeeInvoicesInvoicesOrder.fromJson(json['order']),
+  order = GetInvoiceByIdAdminInvoiceOrder.fromJson(json['order']),
   invoiceItems_on_invoice = (json['invoiceItems_on_invoice'] as List<dynamic>)
-        .map((e) => GetEmployeeInvoicesInvoicesInvoiceItemsOnInvoice.fromJson(e))
+        .map((e) => GetInvoiceByIdAdminInvoiceInvoiceItemsOnInvoice.fromJson(e))
         .toList();
   @override
   bool operator ==(Object other) {
@@ -93,7 +58,7 @@ class GetEmployeeInvoicesInvoices {
       return false;
     }
 
-    final GetEmployeeInvoicesInvoices otherTyped = other as GetEmployeeInvoicesInvoices;
+    final GetInvoiceByIdAdminInvoice otherTyped = other as GetInvoiceByIdAdminInvoice;
     return id == otherTyped.id && 
     numeroUnico == otherTyped.numeroUnico && 
     fechaEmision == otherTyped.fechaEmision && 
@@ -139,7 +104,7 @@ class GetEmployeeInvoicesInvoices {
     return json;
   }
 
-  GetEmployeeInvoicesInvoices({
+  GetInvoiceByIdAdminInvoice({
     required this.id,
     required this.numeroUnico,
     required this.fechaEmision,
@@ -157,16 +122,19 @@ class GetEmployeeInvoicesInvoices {
 }
 
 @immutable
-class GetEmployeeInvoicesInvoicesOrder {
+class GetInvoiceByIdAdminInvoiceOrder {
   final String id;
   final double price;
   final String? serviceName;
   final EnumValue<PaymentMethod> paymentMethod;
   final EnumValue<OrderStatus> status;
   final String? observations;
-  final GetEmployeeInvoicesInvoicesOrderBusiness business;
-  final GetEmployeeInvoicesInvoicesOrderClient client;
-  GetEmployeeInvoicesInvoicesOrder.fromJson(dynamic json):
+  final String clientId;
+  final String? employeeId;
+  final GetInvoiceByIdAdminInvoiceOrderBusiness business;
+  final GetInvoiceByIdAdminInvoiceOrderClient client;
+  final GetInvoiceByIdAdminInvoiceOrderEmployee? employee;
+  GetInvoiceByIdAdminInvoiceOrder.fromJson(dynamic json):
   
   id = nativeFromJson<String>(json['id']),
   price = nativeFromJson<double>(json['price']),
@@ -174,8 +142,11 @@ class GetEmployeeInvoicesInvoicesOrder {
   paymentMethod = paymentMethodDeserializer(json['paymentMethod']),
   status = orderStatusDeserializer(json['status']),
   observations = json['observations'] == null ? null : nativeFromJson<String>(json['observations']),
-  business = GetEmployeeInvoicesInvoicesOrderBusiness.fromJson(json['business']),
-  client = GetEmployeeInvoicesInvoicesOrderClient.fromJson(json['client']);
+  clientId = nativeFromJson<String>(json['clientId']),
+  employeeId = json['employeeId'] == null ? null : nativeFromJson<String>(json['employeeId']),
+  business = GetInvoiceByIdAdminInvoiceOrderBusiness.fromJson(json['business']),
+  client = GetInvoiceByIdAdminInvoiceOrderClient.fromJson(json['client']),
+  employee = json['employee'] == null ? null : GetInvoiceByIdAdminInvoiceOrderEmployee.fromJson(json['employee']);
   @override
   bool operator ==(Object other) {
     if(identical(this, other)) {
@@ -185,19 +156,22 @@ class GetEmployeeInvoicesInvoicesOrder {
       return false;
     }
 
-    final GetEmployeeInvoicesInvoicesOrder otherTyped = other as GetEmployeeInvoicesInvoicesOrder;
+    final GetInvoiceByIdAdminInvoiceOrder otherTyped = other as GetInvoiceByIdAdminInvoiceOrder;
     return id == otherTyped.id && 
     price == otherTyped.price && 
     serviceName == otherTyped.serviceName && 
     paymentMethod == otherTyped.paymentMethod && 
     status == otherTyped.status && 
     observations == otherTyped.observations && 
+    clientId == otherTyped.clientId && 
+    employeeId == otherTyped.employeeId && 
     business == otherTyped.business && 
-    client == otherTyped.client;
+    client == otherTyped.client && 
+    employee == otherTyped.employee;
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, price.hashCode, serviceName.hashCode, paymentMethod.hashCode, status.hashCode, observations.hashCode, business.hashCode, client.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, price.hashCode, serviceName.hashCode, paymentMethod.hashCode, status.hashCode, observations.hashCode, clientId.hashCode, employeeId.hashCode, business.hashCode, client.hashCode, employee.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -216,29 +190,47 @@ class GetEmployeeInvoicesInvoicesOrder {
     if (observations != null) {
       json['observations'] = nativeToJson<String?>(observations);
     }
+    json['clientId'] = nativeToJson<String>(clientId);
+    if (employeeId != null) {
+      json['employeeId'] = nativeToJson<String?>(employeeId);
+    }
     json['business'] = business.toJson();
     json['client'] = client.toJson();
+    if (employee != null) {
+      json['employee'] = employee!.toJson();
+    }
     return json;
   }
 
-  GetEmployeeInvoicesInvoicesOrder({
+  GetInvoiceByIdAdminInvoiceOrder({
     required this.id,
     required this.price,
     this.serviceName,
     required this.paymentMethod,
     required this.status,
     this.observations,
+    required this.clientId,
+    this.employeeId,
     required this.business,
     required this.client,
+    this.employee,
   });
 }
 
 @immutable
-class GetEmployeeInvoicesInvoicesOrderBusiness {
+class GetInvoiceByIdAdminInvoiceOrderBusiness {
+  final String id;
   final String nombre;
-  GetEmployeeInvoicesInvoicesOrderBusiness.fromJson(dynamic json):
+  final String ruc;
+  final String? descripcion;
+  final GetInvoiceByIdAdminInvoiceOrderBusinessOwner owner;
+  GetInvoiceByIdAdminInvoiceOrderBusiness.fromJson(dynamic json):
   
-  nombre = nativeFromJson<String>(json['nombre']);
+  id = nativeFromJson<String>(json['id']),
+  nombre = nativeFromJson<String>(json['nombre']),
+  ruc = nativeFromJson<String>(json['ruc']),
+  descripcion = json['descripcion'] == null ? null : nativeFromJson<String>(json['descripcion']),
+  owner = GetInvoiceByIdAdminInvoiceOrderBusinessOwner.fromJson(json['owner']);
   @override
   bool operator ==(Object other) {
     if(identical(this, other)) {
@@ -248,31 +240,79 @@ class GetEmployeeInvoicesInvoicesOrderBusiness {
       return false;
     }
 
-    final GetEmployeeInvoicesInvoicesOrderBusiness otherTyped = other as GetEmployeeInvoicesInvoicesOrderBusiness;
-    return nombre == otherTyped.nombre;
+    final GetInvoiceByIdAdminInvoiceOrderBusiness otherTyped = other as GetInvoiceByIdAdminInvoiceOrderBusiness;
+    return id == otherTyped.id && 
+    nombre == otherTyped.nombre && 
+    ruc == otherTyped.ruc && 
+    descripcion == otherTyped.descripcion && 
+    owner == otherTyped.owner;
     
   }
   @override
-  int get hashCode => nombre.hashCode;
+  int get hashCode => Object.hashAll([id.hashCode, nombre.hashCode, ruc.hashCode, descripcion.hashCode, owner.hashCode]);
   
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = {};
+    json['id'] = nativeToJson<String>(id);
     json['nombre'] = nativeToJson<String>(nombre);
+    json['ruc'] = nativeToJson<String>(ruc);
+    if (descripcion != null) {
+      json['descripcion'] = nativeToJson<String?>(descripcion);
+    }
+    json['owner'] = owner.toJson();
     return json;
   }
 
-  GetEmployeeInvoicesInvoicesOrderBusiness({
+  GetInvoiceByIdAdminInvoiceOrderBusiness({
+    required this.id,
     required this.nombre,
+    required this.ruc,
+    this.descripcion,
+    required this.owner,
   });
 }
 
 @immutable
-class GetEmployeeInvoicesInvoicesOrderClient {
+class GetInvoiceByIdAdminInvoiceOrderBusinessOwner {
+  final String id;
+  GetInvoiceByIdAdminInvoiceOrderBusinessOwner.fromJson(dynamic json):
+  
+  id = nativeFromJson<String>(json['id']);
+  @override
+  bool operator ==(Object other) {
+    if(identical(this, other)) {
+      return true;
+    }
+    if(other.runtimeType != runtimeType) {
+      return false;
+    }
+
+    final GetInvoiceByIdAdminInvoiceOrderBusinessOwner otherTyped = other as GetInvoiceByIdAdminInvoiceOrderBusinessOwner;
+    return id == otherTyped.id;
+    
+  }
+  @override
+  int get hashCode => id.hashCode;
+  
+
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> json = {};
+    json['id'] = nativeToJson<String>(id);
+    return json;
+  }
+
+  GetInvoiceByIdAdminInvoiceOrderBusinessOwner({
+    required this.id,
+  });
+}
+
+@immutable
+class GetInvoiceByIdAdminInvoiceOrderClient {
   final String nombreCompleto;
   final String email;
   final String? telefono;
-  GetEmployeeInvoicesInvoicesOrderClient.fromJson(dynamic json):
+  GetInvoiceByIdAdminInvoiceOrderClient.fromJson(dynamic json):
   
   nombreCompleto = nativeFromJson<String>(json['nombreCompleto']),
   email = nativeFromJson<String>(json['email']),
@@ -286,7 +326,7 @@ class GetEmployeeInvoicesInvoicesOrderClient {
       return false;
     }
 
-    final GetEmployeeInvoicesInvoicesOrderClient otherTyped = other as GetEmployeeInvoicesInvoicesOrderClient;
+    final GetInvoiceByIdAdminInvoiceOrderClient otherTyped = other as GetInvoiceByIdAdminInvoiceOrderClient;
     return nombreCompleto == otherTyped.nombreCompleto && 
     email == otherTyped.email && 
     telefono == otherTyped.telefono;
@@ -306,7 +346,7 @@ class GetEmployeeInvoicesInvoicesOrderClient {
     return json;
   }
 
-  GetEmployeeInvoicesInvoicesOrderClient({
+  GetInvoiceByIdAdminInvoiceOrderClient({
     required this.nombreCompleto,
     required this.email,
     this.telefono,
@@ -314,13 +354,54 @@ class GetEmployeeInvoicesInvoicesOrderClient {
 }
 
 @immutable
-class GetEmployeeInvoicesInvoicesInvoiceItemsOnInvoice {
+class GetInvoiceByIdAdminInvoiceOrderEmployee {
+  final String nombreCompleto;
+  final String? telefono;
+  GetInvoiceByIdAdminInvoiceOrderEmployee.fromJson(dynamic json):
+  
+  nombreCompleto = nativeFromJson<String>(json['nombreCompleto']),
+  telefono = json['telefono'] == null ? null : nativeFromJson<String>(json['telefono']);
+  @override
+  bool operator ==(Object other) {
+    if(identical(this, other)) {
+      return true;
+    }
+    if(other.runtimeType != runtimeType) {
+      return false;
+    }
+
+    final GetInvoiceByIdAdminInvoiceOrderEmployee otherTyped = other as GetInvoiceByIdAdminInvoiceOrderEmployee;
+    return nombreCompleto == otherTyped.nombreCompleto && 
+    telefono == otherTyped.telefono;
+    
+  }
+  @override
+  int get hashCode => Object.hashAll([nombreCompleto.hashCode, telefono.hashCode]);
+  
+
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> json = {};
+    json['nombreCompleto'] = nativeToJson<String>(nombreCompleto);
+    if (telefono != null) {
+      json['telefono'] = nativeToJson<String?>(telefono);
+    }
+    return json;
+  }
+
+  GetInvoiceByIdAdminInvoiceOrderEmployee({
+    required this.nombreCompleto,
+    this.telefono,
+  });
+}
+
+@immutable
+class GetInvoiceByIdAdminInvoiceInvoiceItemsOnInvoice {
   final String id;
   final String serviceName;
   final int quantity;
   final double unitPrice;
   final double total;
-  GetEmployeeInvoicesInvoicesInvoiceItemsOnInvoice.fromJson(dynamic json):
+  GetInvoiceByIdAdminInvoiceInvoiceItemsOnInvoice.fromJson(dynamic json):
   
   id = nativeFromJson<String>(json['id']),
   serviceName = nativeFromJson<String>(json['serviceName']),
@@ -336,7 +417,7 @@ class GetEmployeeInvoicesInvoicesInvoiceItemsOnInvoice {
       return false;
     }
 
-    final GetEmployeeInvoicesInvoicesInvoiceItemsOnInvoice otherTyped = other as GetEmployeeInvoicesInvoicesInvoiceItemsOnInvoice;
+    final GetInvoiceByIdAdminInvoiceInvoiceItemsOnInvoice otherTyped = other as GetInvoiceByIdAdminInvoiceInvoiceItemsOnInvoice;
     return id == otherTyped.id && 
     serviceName == otherTyped.serviceName && 
     quantity == otherTyped.quantity && 
@@ -358,7 +439,7 @@ class GetEmployeeInvoicesInvoicesInvoiceItemsOnInvoice {
     return json;
   }
 
-  GetEmployeeInvoicesInvoicesInvoiceItemsOnInvoice({
+  GetInvoiceByIdAdminInvoiceInvoiceItemsOnInvoice({
     required this.id,
     required this.serviceName,
     required this.quantity,
@@ -368,13 +449,11 @@ class GetEmployeeInvoicesInvoicesInvoiceItemsOnInvoice {
 }
 
 @immutable
-class GetEmployeeInvoicesData {
-  final List<GetEmployeeInvoicesInvoices> invoices;
-  GetEmployeeInvoicesData.fromJson(dynamic json):
+class GetInvoiceByIdAdminData {
+  final GetInvoiceByIdAdminInvoice? invoice;
+  GetInvoiceByIdAdminData.fromJson(dynamic json):
   
-  invoices = (json['invoices'] as List<dynamic>)
-        .map((e) => GetEmployeeInvoicesInvoices.fromJson(e))
-        .toList();
+  invoice = json['invoice'] == null ? null : GetInvoiceByIdAdminInvoice.fromJson(json['invoice']);
   @override
   bool operator ==(Object other) {
     if(identical(this, other)) {
@@ -384,66 +463,34 @@ class GetEmployeeInvoicesData {
       return false;
     }
 
-    final GetEmployeeInvoicesData otherTyped = other as GetEmployeeInvoicesData;
-    return invoices == otherTyped.invoices;
+    final GetInvoiceByIdAdminData otherTyped = other as GetInvoiceByIdAdminData;
+    return invoice == otherTyped.invoice;
     
   }
   @override
-  int get hashCode => invoices.hashCode;
+  int get hashCode => invoice.hashCode;
   
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = {};
-    json['invoices'] = invoices.map((e) => e.toJson()).toList();
+    if (invoice != null) {
+      json['invoice'] = invoice!.toJson();
+    }
     return json;
   }
 
-  GetEmployeeInvoicesData({
-    required this.invoices,
+  GetInvoiceByIdAdminData({
+    this.invoice,
   });
 }
 
 @immutable
-class GetEmployeeInvoicesVariables {
-  late final Optional<int>limit;
-  late final Optional<int>offset;
-  late final Optional<Timestamp>startDate;
-  late final Optional<Timestamp>endDate;
-  late final Optional<PaymentMethod>paymentMethod;
-  late final Optional<InvoiceStatus>status;
-  late final Optional<String>searchQuery;
+class GetInvoiceByIdAdminVariables {
+  final String id;
   @Deprecated('fromJson is deprecated for Variable classes as they are no longer required for deserialization.')
-  GetEmployeeInvoicesVariables.fromJson(Map<String, dynamic> json) {
+  GetInvoiceByIdAdminVariables.fromJson(Map<String, dynamic> json):
   
-  
-    limit = Optional.optional(nativeFromJson, nativeToJson);
-    limit.value = json['limit'] == null ? null : nativeFromJson<int>(json['limit']);
-  
-  
-    offset = Optional.optional(nativeFromJson, nativeToJson);
-    offset.value = json['offset'] == null ? null : nativeFromJson<int>(json['offset']);
-  
-  
-    startDate = Optional.optional((json) => json['startDate'] = Timestamp.fromJson(json['startDate']), defaultSerializer);
-    startDate.value = json['startDate'] == null ? null : Timestamp.fromJson(json['startDate']);
-  
-  
-    endDate = Optional.optional((json) => json['endDate'] = Timestamp.fromJson(json['endDate']), defaultSerializer);
-    endDate.value = json['endDate'] == null ? null : Timestamp.fromJson(json['endDate']);
-  
-  
-    paymentMethod = Optional.optional((data) => PaymentMethod.values.byName(data), enumSerializer);
-    paymentMethod.value = json['paymentMethod'] == null ? null : PaymentMethod.values.byName(json['paymentMethod']);
-  
-  
-    status = Optional.optional((data) => InvoiceStatus.values.byName(data), enumSerializer);
-    status.value = json['status'] == null ? null : InvoiceStatus.values.byName(json['status']);
-  
-  
-    searchQuery = Optional.optional(nativeFromJson, nativeToJson);
-    searchQuery.value = json['searchQuery'] == null ? null : nativeFromJson<String>(json['searchQuery']);
-  
-  }
+  id = nativeFromJson<String>(json['id']);
   @override
   bool operator ==(Object other) {
     if(identical(this, other)) {
@@ -453,54 +500,22 @@ class GetEmployeeInvoicesVariables {
       return false;
     }
 
-    final GetEmployeeInvoicesVariables otherTyped = other as GetEmployeeInvoicesVariables;
-    return limit == otherTyped.limit && 
-    offset == otherTyped.offset && 
-    startDate == otherTyped.startDate && 
-    endDate == otherTyped.endDate && 
-    paymentMethod == otherTyped.paymentMethod && 
-    status == otherTyped.status && 
-    searchQuery == otherTyped.searchQuery;
+    final GetInvoiceByIdAdminVariables otherTyped = other as GetInvoiceByIdAdminVariables;
+    return id == otherTyped.id;
     
   }
   @override
-  int get hashCode => Object.hashAll([limit.hashCode, offset.hashCode, startDate.hashCode, endDate.hashCode, paymentMethod.hashCode, status.hashCode, searchQuery.hashCode]);
+  int get hashCode => id.hashCode;
   
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = {};
-    if(limit.state == OptionalState.set) {
-      json['limit'] = limit.toJson();
-    }
-    if(offset.state == OptionalState.set) {
-      json['offset'] = offset.toJson();
-    }
-    if(startDate.state == OptionalState.set) {
-      json['startDate'] = startDate.toJson();
-    }
-    if(endDate.state == OptionalState.set) {
-      json['endDate'] = endDate.toJson();
-    }
-    if(paymentMethod.state == OptionalState.set) {
-      json['paymentMethod'] = paymentMethod.toJson();
-    }
-    if(status.state == OptionalState.set) {
-      json['status'] = status.toJson();
-    }
-    if(searchQuery.state == OptionalState.set) {
-      json['searchQuery'] = searchQuery.toJson();
-    }
+    json['id'] = nativeToJson<String>(id);
     return json;
   }
 
-  GetEmployeeInvoicesVariables({
-    required this.limit,
-    required this.offset,
-    required this.startDate,
-    required this.endDate,
-    required this.paymentMethod,
-    required this.status,
-    required this.searchQuery,
+  GetInvoiceByIdAdminVariables({
+    required this.id,
   });
 }
 
