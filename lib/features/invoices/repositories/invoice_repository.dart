@@ -8,7 +8,6 @@ import 'package:washgo/dataconnect-generated/example.dart';
 import 'package:washgo/features/invoices/models/invoice.dart';
 import 'package:washgo/features/invoices/utils/pdf_generator.dart';
 import 'package:washgo/config/env/environment.dart';
-import 'package:uuid/uuid.dart';
 import 'package:http/http.dart' as http;
 
 abstract class InvoiceRepository {
@@ -351,8 +350,8 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
       );
     }
 
-    // Prepaid/PayPal local flow if not CASH
-    // 1. Fetch business details
+    // Prepaid/PayPal/PayPhone/Transferencia — call HTTP endpoint (same pattern as CASH)
+    // 1. Fetch business details for PDF generation
     final businessResponse = await _connector.getBusinessDetails(id: businessId).execute();
     final biz = businessResponse.data.business;
     final String businessName = biz?.nombre ?? 'WashGo';
@@ -364,7 +363,7 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
     final uniqueSuffix = (now.millisecondsSinceEpoch % 1000000).toString().padLeft(6, '0');
     final invoiceNumber = 'FAC-${now.year}-$uniqueSuffix';
 
-    // Combine observations safely
+    // 3. Combine observations safely
     String finalObservations = originalObservations;
     if (employeeNotes.trim().isNotEmpty) {
       if (finalObservations.isNotEmpty) {
@@ -374,131 +373,57 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
       }
     }
 
-    // 3. Compute financial details
-    final double subtotal = price / 1.18;
-    final double discount = 0.0;
-    final double tax = price - subtotal;
-    final double total = price;
-    final String pmUpper = paymentMethod.toUpperCase();
-    final PaymentMethod pmVal;
-    if (pmUpper == 'PAYPAL') {
-      pmVal = PaymentMethod.PAYPAL;
-    } else if (pmUpper == 'PAYPHONE') {
-      pmVal = PaymentMethod.PAYPHONE;
-    } else if (pmUpper == 'TRANSFERENCIA_BANCARIA' || pmUpper == 'TRANSFERENCIA') {
-      pmVal = PaymentMethod.TRANSFERENCIA_BANCARIA;
-    } else {
-      pmVal = PaymentMethod.CASH;
-    }
-
-    final String invoiceId = orderId;
-
-    // 4. Generate and Upload PDF with CORS safety (try-catch)
-    String? pdfUrl;
-    InvoiceStatus finalStatus = InvoiceStatus.PENDING;
-    try {
-      final pdfBytes = await PdfGenerator.generateInvoicePdf(
-        invoiceNumber: invoiceNumber,
-        fechaEmision: now,
-        businessName: businessName,
-        ruc: ruc,
-        description: description,
-        clientName: clientName,
-        clientEmail: clientEmail,
-        clientPhone: clientPhone,
-        employeeName: employeeName,
-        serviceName: serviceName,
-        price: price,
-        paymentMethod: paymentMethod,
-        observations: finalObservations,
-      );
-
-      final storageRef = FirebaseStorage.instance.ref().child('invoices/$orderId.pdf');
-      final metadata = SettableMetadata(contentType: 'application/pdf');
-      final uploadTask = await storageRef.putData(pdfBytes, metadata);
-      pdfUrl = await uploadTask.ref.getDownloadURL();
-      finalStatus = InvoiceStatus.GENERATED;
-    } catch (e) {
-      debugPrint('Error generating/uploading PDF invoice: $e');
-      finalStatus = InvoiceStatus.FAILED;
-    }
-
-    // 5. Execute single atomic transaction!
-    final double saldoPrepagoInicial = biz?.saldoPrepagoInicial ?? 0.0;
-    final double saldoPrepagoConsumido = biz?.saldoPrepagoConsumido ?? 0.0;
-    final double newSaldoConsumido = saldoPrepagoConsumido + price;
-    final double saldoResultante = saldoPrepagoInicial - newSaldoConsumido;
-    
-    final historyId = const Uuid().v4();
-
-    // Check if service metric already exists
-    final metricResponse = await _connector.getPrepaidServiceMetricByServiceName(
-      businessId: businessId,
+    // 4. Generate PDF and base64 encode it
+    final pdfBytes = await PdfGenerator.generateInvoicePdf(
+      invoiceNumber: invoiceNumber,
+      fechaEmision: now,
+      businessName: businessName,
+      ruc: ruc,
+      description: description,
+      clientName: clientName,
+      clientEmail: clientEmail,
+      clientPhone: clientPhone,
+      employeeName: employeeName,
       serviceName: serviceName,
-    ).execute();
+      price: price,
+      paymentMethod: paymentMethod,
+      observations: finalObservations,
+    );
 
-    if (metricResponse.data.prepaidServiceMetrics.isNotEmpty) {
-      final existingMetric = metricResponse.data.prepaidServiceMetrics.first;
-      final newCantidad = existingMetric.cantidad + 1;
-      final newTotalConsumido = existingMetric.totalConsumido + price;
+    final base64Pdf = base64Encode(pdfBytes);
+    final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
 
-      await _connector.completeOrderWithPrepaidAndUpdateMetric(
-        orderId: orderId,
-        orderIdStr: orderId,
-        invoiceId: invoiceId,
-        numeroUnico: invoiceNumber,
-        subtotal: subtotal,
-        discount: discount,
-        tax: tax,
-        total: total,
-        paymentMethod: pmVal,
-        invoiceStatus: finalStatus,
-        businessId: businessId,
-        saldoPrepagoInicial: saldoPrepagoInicial,
-        saldoPrepagoConsumido: newSaldoConsumido,
-        historyId: historyId,
-        serviceName: serviceName,
-        costoConsumido: price,
-        saldoResultante: saldoResultante,
-        metricId: existingMetric.id,
-        metricCantidad: newCantidad,
-        metricTotalConsumido: newTotalConsumido,
-      )
-      .observations(finalObservations)
-      .invoiceUrl(pdfUrl)
-      .execute();
-    } else {
-      final newMetricId = const Uuid().v4();
+    // 5. Call HTTP endpoint (which handles NO_ACCESS mutations server-side)
+    final baseUrl = _getFunctionsBaseUrl();
+    final response = await http.post(
+      Uri.parse('$baseUrl/orders/complete-prepaid-payment'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (idToken != null) 'Authorization': 'Bearer $idToken',
+      },
+      body: jsonEncode({
+        'orderId': orderId,
+        'base64Pdf': base64Pdf,
+        'paymentMethod': paymentMethod.toUpperCase(),
+        'observations': finalObservations,
+      }),
+    );
 
-      await _connector.completeOrderWithPrepaidAndCreateMetric(
-        orderId: orderId,
-        orderIdStr: orderId,
-        invoiceId: invoiceId,
-        numeroUnico: invoiceNumber,
-        subtotal: subtotal,
-        discount: discount,
-        tax: tax,
-        total: total,
-        paymentMethod: pmVal,
-        invoiceStatus: finalStatus,
-        businessId: businessId,
-        saldoPrepagoInicial: saldoPrepagoInicial,
-        saldoPrepagoConsumido: newSaldoConsumido,
-        historyId: historyId,
-        serviceName: serviceName,
-        costoConsumido: price,
-        saldoResultante: saldoResultante,
-        metricId: newMetricId,
-        metricCostoUnitario: price,
-      )
-      .observations(finalObservations)
-      .invoiceUrl(pdfUrl)
-      .execute();
+    if (response.statusCode != 200) {
+      throw Exception('Failed to complete prepaid payment: ${response.body}');
     }
+
+    final responseData = jsonDecode(response.body);
+    final String invoiceId = responseData['invoiceId'] as String;
+    final String numeroUnico = responseData['numeroUnico'] as String;
+    final String? pdfUrl = responseData['invoiceUrl'] as String?;
+
+    final double subtotal = price / 1.18;
+    final double tax = price - subtotal;
 
     return InvoiceModel(
       id: invoiceId,
-      numeroUnico: invoiceNumber,
+      numeroUnico: numeroUnico,
       fechaEmision: now,
       pdfUrl: pdfUrl,
       orderId: orderId,
@@ -513,10 +438,10 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
       employeeName: employeeName,
       employeePhone: null,
       subtotal: subtotal,
-      discount: discount,
+      discount: 0.0,
       tax: tax,
-      total: total,
-      invoiceStatus: finalStatus,
+      total: price,
+      invoiceStatus: InvoiceStatus.GENERATED,
       generatedAt: now,
     );
   }
