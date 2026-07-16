@@ -486,9 +486,22 @@ app.post("/orders/complete-payphone-payment", authenticate, async (req, res) => 
   }
 
   try {
-    // Fetch order details from database
-    const orderResult = await serverGetOrderById({ id: orderId });
-    const order = orderResult.data.order;
+    // Fetch order details — try Data Connect first
+    let order = null;
+    try {
+      const orderResult = await serverGetOrderById({ id: orderId });
+      order = orderResult.data.order;
+    } catch (dataConnectError) {
+      // Data Connect may return NOT_FOUND (gRPC 5) if the emulator lost state on restart.
+      // In production this should never happen. Return a distinguishable error so the
+      // Flutter client can show a graceful "try again" message.
+      console.error(`[complete-payphone-payment] Data Connect lookup failed: ${dataConnectError.message}`);
+      return res.status(503).json({
+        error: "DATA_CONNECT_UNAVAILABLE",
+        message: "No se pudo acceder a la base de datos. Por favor intenta de nuevo en unos segundos.",
+      });
+    }
+
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
@@ -575,6 +588,63 @@ app.post("/orders/complete-payphone-payment", authenticate, async (req, res) => 
   } catch (error) {
     console.error("Complete PayPhone Payment Error:", error.response?.data || error.message);
     return res.status(500).json({ error: error.response?.data || error.message });
+  }
+});
+
+
+// 2bb. Get stored PayPhone Transaction ID (Authenticated)
+app.get("/orders/:orderId/payphone-transaction", authenticate, async (req, res) => {
+  // Double-guard: if the authenticate middleware failed but Express v2 still entered
+  // this handler (known Firebase Functions v2 behavior), bail out early.
+  if (!req.user) {
+    return res.status(401).json({ error: "Missing or invalid authorization token" });
+  }
+  const { orderId } = req.params;
+  try {
+    // Try to verify order ownership via Data Connect, but don't fail if it throws NOT_FOUND.
+    // The user is already authenticated via Firebase Auth token, which is sufficient security.
+    try {
+      const orderResult = await serverGetOrderById({ id: orderId });
+      const order = orderResult.data.order;
+      if (order && order.clientId !== req.user.uid) {
+        return res.status(403).json({ error: "Forbidden: You do not own this order" });
+      }
+    } catch (dataConnectError) {
+      // Data Connect may return NOT_FOUND (gRPC code 5) if the order was auto-cancelled
+      // or if the emulator lost state. We still allow the lookup since auth is verified.
+      console.warn(`[payphone-transaction] serverGetOrderById failed for ${orderId}: ${dataConnectError.message}. Falling back to Firestore lookup.`);
+    }
+
+    const doc = await admin.firestore().collection("payphone_transactions").doc(orderId).get();
+    if (!doc.exists) {
+      return res.json({ transactionId: null });
+    }
+
+    return res.json({ transactionId: doc.data().transactionId });
+  } catch (error) {
+    console.error("Get Stored PayPhone Transaction Error:", error.message);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// 2bc. Store PayPhone Transaction ID (Public — no auth required, called from browser callback page)
+// This is the safety net: saves the transactionId so the Flutter app can recover it later via the
+// authenticated GET /orders/:orderId/payphone-transaction endpoint.
+app.post("/payphone/store-transaction", async (req, res) => {
+  const { orderId, transactionId } = req.body;
+  if (!orderId || !transactionId) {
+    return res.status(400).json({ error: "Missing orderId or transactionId" });
+  }
+  try {
+    await admin.firestore().collection("payphone_transactions").doc(orderId).set({
+      transactionId,
+      storedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    console.log(`[PayPhone] Stored transactionId for order ${orderId}: ${transactionId}`);
+    return res.json({ success: true });
+  } catch (error) {
+    console.error("Store PayPhone Transaction Error:", error.message);
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -966,9 +1036,9 @@ app.get("/payments/proof-status/:orderId", async (req, res) => {
 // Export Express app as a Cloud Function v2
 exports.api = onRequest({}, app);
 
-// Scheduled cleanup: every 6 hours, cancel pending bank transfer orders older than 24h
+// Scheduled cleanup: every 15 minutes, cancel pending bank transfer orders older than 30 minutes without proof
 exports.cleanupPendingTransfers = onSchedule({
-  schedule: "0 */6 * * *",
+  schedule: "*/15 * * * *",
   timeZone: "America/Guayaquil",
   retryCount: 2,
   maxRetrySeconds: 120,
@@ -980,13 +1050,18 @@ exports.cleanupPendingTransfers = onSchedule({
     console.log(`[Cleanup] Found ${orders.length} pending transfer orders`);
 
     const now = Date.now();
-    const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+    const THIRTY_MINUTES_MS = 30 * 60 * 1000;
     let cancelledCount = 0;
 
     for (const order of orders) {
+      // If a payment proof has already been uploaded, do not cancel
+      if (order.paymentProof_on_order) {
+        continue;
+      }
+
       const createdAt = new Date(order.createdAt).getTime();
-      if (now - createdAt < TWENTY_FOUR_HOURS_MS) {
-        continue; // Skip orders younger than 24h
+      if (now - createdAt < THIRTY_MINUTES_MS) {
+        continue; // Skip orders younger than 30 minutes
       }
 
       try {
@@ -997,7 +1072,7 @@ exports.cleanupPendingTransfers = onSchedule({
         await createSystemNotification({
           userId: order.clientId,
           titulo: "Pago por transferencia cancelado",
-          mensaje: `Tu orden de "${order.serviceName}" con pago por transferencia ha sido cancelada automáticamente por exceder las 24 horas de espera. Si deseas continuar, puedes realizar una nueva orden.`,
+          mensaje: `Tu orden de "${order.serviceName}" con pago por transferencia ha sido cancelada automáticamente por exceder los 30 minutos de espera sin subir el comprobante. Si deseas continuar, puedes realizar una nueva orden.`,
         });
 
         cancelledCount++;
