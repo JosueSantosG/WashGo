@@ -4,6 +4,7 @@ import 'package:washgo/config/theme/app_colors.dart';
 import 'package:washgo/features/invoices/models/invoice.dart';
 import 'package:washgo/features/invoices/repositories/invoice_repository.dart';
 import 'package:washgo/features/invoices/utils/invoice_cache_manager.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
 
 class OwnerInvoiceDetailPage extends StatefulWidget {
@@ -651,9 +652,14 @@ class _OwnerInvoiceDetailPageState extends State<OwnerInvoiceDetailPage> {
           Expanded(
             child: OutlinedButton.icon(
               onPressed: () async {
+                final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+                final baseUrl = InvoiceCacheManager.getFunctionsBaseUrl();
                 await InvoiceCacheManager.shareInvoice(
                   _currentInvoice.orderId,
                   _currentInvoice.pdfUrl!,
+                  invoiceId: _currentInvoice.id,
+                  baseUrl: baseUrl,
+                  idToken: idToken,
                   subject: 'Factura ${_currentInvoice.numeroUnico}',
                 );
               },
@@ -671,9 +677,14 @@ class _OwnerInvoiceDetailPageState extends State<OwnerInvoiceDetailPage> {
           Expanded(
             child: ElevatedButton.icon(
               onPressed: () async {
+                final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+                final baseUrl = InvoiceCacheManager.getFunctionsBaseUrl();
                 await InvoiceCacheManager.printOrViewInvoice(
                   _currentInvoice.orderId,
                   _currentInvoice.pdfUrl!,
+                  invoiceId: _currentInvoice.id,
+                  baseUrl: baseUrl,
+                  idToken: idToken,
                 );
               },
               icon: const Icon(Icons.print_rounded),

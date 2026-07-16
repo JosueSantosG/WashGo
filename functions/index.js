@@ -4,7 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
 const crypto = require("crypto");
-const { getOrderById, serverGetOrderById, completeOrderWithInvoiceOnly, getInvoiceById, getPaymentProof, getExpiredPendingTransferOrders, getPendingElectronicOrders, createPaymentProof, serverUpdatePaymentProof, serverUpdatePaymentProofStatus, serverUpdateOrderStatus, createSystemNotification, completeOrderWithTransferAndInvoice, completeOrderWithPrepaidAndUpdateMetric, completeOrderWithPrepaidAndCreateMetric, getPrepaidServiceMetricByServiceName, getPrepaidHistoryByOrderId, updateInvoicePdf, updateOrderCompletion } = require("@washgo/db-admin");
+const { getOrderById, serverGetOrderById, completeOrderWithInvoiceOnly, getInvoiceById, getInvoiceByOrderId, getPaymentProof, getExpiredPendingTransferOrders, getPendingElectronicOrders, createPaymentProof, serverUpdatePaymentProof, serverUpdatePaymentProofStatus, serverUpdateOrderStatus, createSystemNotification, completeOrderWithTransferAndInvoice, completeOrderWithPrepaidAndUpdateMetric, completeOrderWithPrepaidAndCreateMetric, getPrepaidServiceMetricByServiceName, getPrepaidHistoryByOrderId, updateInvoicePdf, updateOrderCompletion } = require("@washgo/db-admin");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 
 // Initialize Firebase Admin SDK
@@ -865,6 +865,110 @@ app.post("/invoices/:invoiceId/regenerate-pdf", authenticate, async (req, res) =
     });
   } catch (error) {
     console.error("Regenerate Invoice PDF Error:", error.message);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// 7. Serve Invoice PDF (proxy that bypasses storage.rules)
+app.get("/invoices/:invoiceId/pdf", authenticate, async (req, res) => {
+  const { invoiceId } = req.params;
+
+  if (!invoiceId) {
+    return res.status(400).json({ error: "Missing invoiceId" });
+  }
+
+  try {
+    // Fetch invoice using admin SDK context (bypasses @auth gates)
+    const invoiceResult = await getInvoiceById({ id: invoiceId });
+    const invoice = invoiceResult.data.invoice;
+    if (!invoice) {
+      return res.status(404).json({ error: "Invoice not found" });
+    }
+
+    // Permission check: same as regenerate-pdf
+    const isClient = invoice.order?.clientId === req.user.uid;
+    const isEmployee = invoice.order?.employeeId === req.user.uid;
+    const isOwner = invoice.order?.business?.owner?.id === req.user.uid;
+    const isSuperAdmin = req.user.token?.roles?.includes("SUPER_ADMIN");
+
+    if (!isClient && !isEmployee && !isOwner && !isSuperAdmin) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    // Read PDF from Storage via Admin SDK (bypasses storage.rules)
+    const bucket = admin.storage().bucket();
+    const file = bucket.file(`invoices/${invoiceId}.pdf`);
+
+    const [exists] = await file.exists();
+    if (!exists) {
+      return res.status(404).json({ error: "PDF file not found in storage" });
+    }
+
+    const [buffer] = await file.download();
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="Factura_${invoice.numeroUnico || invoiceId}.pdf"`);
+    res.setHeader("Content-Length", buffer.length.toString());
+    return res.send(buffer);
+  } catch (error) {
+    console.error("Serve Invoice PDF Error:", error.message);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// 7b. Serve Invoice PDF by Order ID (for callers without invoiceId — uses orderId → invoice resolution)
+app.get("/orders/:orderId/invoice-pdf", authenticate, async (req, res) => {
+  const { orderId } = req.params;
+
+  if (!orderId) {
+    return res.status(400).json({ error: "Missing orderId" });
+  }
+
+  try {
+    // Resolve orderId → invoiceId via admin SDK (bypasses @auth gates)
+    const invoiceResult = await getInvoiceByOrderId({ orderId });
+    const invoices = invoiceResult.data.invoices;
+    if (!invoices || invoices.length === 0) {
+      return res.status(404).json({ error: "No invoice found for this order" });
+    }
+
+    const invoice = invoices[0];
+    const invoiceId = invoice.id;
+
+    // Fetch full invoice for permission checks
+    const fullInvoiceResult = await getInvoiceById({ id: invoiceId });
+    const fullInvoice = fullInvoiceResult.data.invoice;
+    if (!fullInvoice) {
+      return res.status(404).json({ error: "Invoice not found" });
+    }
+
+    // Permission check: same as in /invoices/:invoiceId/pdf
+    const isClient = fullInvoice.order?.clientId === req.user.uid;
+    const isEmployee = fullInvoice.order?.employeeId === req.user.uid;
+    const isOwner = fullInvoice.order?.business?.owner?.id === req.user.uid;
+    const isSuperAdmin = req.user.token?.roles?.includes("SUPER_ADMIN");
+
+    if (!isClient && !isEmployee && !isOwner && !isSuperAdmin) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    // Read PDF from Storage via Admin SDK (bypasses storage.rules)
+    const bucket = admin.storage().bucket();
+    const file = bucket.file(`invoices/${invoiceId}.pdf`);
+
+    const [exists] = await file.exists();
+    if (!exists) {
+      return res.status(404).json({ error: "PDF file not found in storage" });
+    }
+
+    const [buffer] = await file.download();
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="Factura_${fullInvoice.numeroUnico || invoiceId}.pdf"`);
+    res.setHeader("Content-Length", buffer.length.toString());
+    return res.send(buffer);
+  } catch (error) {
+    console.error("Serve Invoice PDF by OrderId Error:", error.message);
     return res.status(500).json({ error: error.message });
   }
 });

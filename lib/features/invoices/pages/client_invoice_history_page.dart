@@ -272,16 +272,25 @@ class _ClientInvoiceHistoryPageState extends State<ClientInvoiceHistoryPage> {
                     Navigator.pop(context);
                   }
 
+                  final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+                  final baseUrl = InvoiceCacheManager.getFunctionsBaseUrl();
+
                   if (share) {
                     await InvoiceCacheManager.shareInvoice(
                       updatedInvoice.orderId,
                       updatedInvoice.pdfUrl!,
+                      invoiceId: updatedInvoice.id,
+                      baseUrl: baseUrl,
+                      idToken: idToken,
                       subject: 'Factura ${updatedInvoice.numeroUnico}',
                     );
                   } else if (print) {
                     await InvoiceCacheManager.printOrViewInvoice(
                       updatedInvoice.orderId,
                       updatedInvoice.pdfUrl!,
+                      invoiceId: updatedInvoice.id,
+                      baseUrl: baseUrl,
+                      idToken: idToken,
                     );
                   }
                 } else {
@@ -428,9 +437,14 @@ class _ClientInvoiceHistoryPageState extends State<ClientInvoiceHistoryPage> {
                             child: OutlinedButton.icon(
                               onPressed: () async {
                                 Navigator.pop(context);
+                                final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+                                final baseUrl = InvoiceCacheManager.getFunctionsBaseUrl();
                                 await InvoiceCacheManager.shareInvoice(
                                   currentInvoice.orderId,
                                   currentInvoice.pdfUrl!,
+                                  invoiceId: currentInvoice.id,
+                                  baseUrl: baseUrl,
+                                  idToken: idToken,
                                   subject: 'Factura ${currentInvoice.numeroUnico}',
                                 );
                               },
@@ -449,9 +463,14 @@ class _ClientInvoiceHistoryPageState extends State<ClientInvoiceHistoryPage> {
                             child: ElevatedButton.icon(
                               onPressed: () async {
                                 Navigator.pop(context);
+                                final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+                                final baseUrl = InvoiceCacheManager.getFunctionsBaseUrl();
                                 await InvoiceCacheManager.printOrViewInvoice(
                                   currentInvoice.orderId,
                                   currentInvoice.pdfUrl!,
+                                  invoiceId: currentInvoice.id,
+                                  baseUrl: baseUrl,
+                                  idToken: idToken,
                                 );
                               },
                               icon: const Icon(Icons.print_rounded),
@@ -1126,9 +1145,14 @@ class _ClientInvoiceHistoryPageState extends State<ClientInvoiceHistoryPage> {
                           constraints: const BoxConstraints(),
                           onPressed: () async {
                             if (invoice.pdfUrl != null && invoice.pdfUrl!.isNotEmpty) {
+                              final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+                              final baseUrl = InvoiceCacheManager.getFunctionsBaseUrl();
                               await InvoiceCacheManager.shareInvoice(
                                 invoice.orderId,
                                 invoice.pdfUrl!,
+                                invoiceId: invoice.id,
+                                baseUrl: baseUrl,
+                                idToken: idToken,
                                 subject: 'Factura ${invoice.numeroUnico}',
                               );
                             } else {
@@ -1145,9 +1169,14 @@ class _ClientInvoiceHistoryPageState extends State<ClientInvoiceHistoryPage> {
                           constraints: const BoxConstraints(),
                           onPressed: () async {
                             if (invoice.pdfUrl != null && invoice.pdfUrl!.isNotEmpty) {
+                              final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+                              final baseUrl = InvoiceCacheManager.getFunctionsBaseUrl();
                               await InvoiceCacheManager.printOrViewInvoice(
                                 invoice.orderId,
                                 invoice.pdfUrl!,
+                                invoiceId: invoice.id,
+                                baseUrl: baseUrl,
+                                idToken: idToken,
                               );
                             } else {
                               _showInvoiceDetailsSheet(invoice);

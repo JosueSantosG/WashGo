@@ -223,9 +223,16 @@ class _BookingsTabState extends State<BookingsTab> {
                   'Abrir en el lector de PDF y guardar offline',
                   style: GoogleFonts.inter(fontSize: 12, color: AppColors.outline),
                 ),
-                onTap: () {
+                onTap: () async {
                   Navigator.pop(context);
-                  InvoiceCacheManager.printOrViewInvoice(orderId, pdfUrl);
+                  final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+                  final baseUrl = InvoiceCacheManager.getFunctionsBaseUrl();
+                  await InvoiceCacheManager.printOrViewInvoice(
+                    orderId,
+                    pdfUrl,
+                    baseUrl: baseUrl,
+                    idToken: idToken,
+                  );
                 },
               ),
               const Divider(),
@@ -246,9 +253,16 @@ class _BookingsTabState extends State<BookingsTab> {
                   'Enviar PDF por WhatsApp, correo, etc.',
                   style: GoogleFonts.inter(fontSize: 12, color: AppColors.outline),
                 ),
-                onTap: () {
+                onTap: () async {
                   Navigator.pop(context);
-                  InvoiceCacheManager.shareInvoice(orderId, pdfUrl);
+                  final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+                  final baseUrl = InvoiceCacheManager.getFunctionsBaseUrl();
+                  await InvoiceCacheManager.shareInvoice(
+                    orderId,
+                    pdfUrl,
+                    baseUrl: baseUrl,
+                    idToken: idToken,
+                  );
                 },
               ),
               const SizedBox(height: 16),
