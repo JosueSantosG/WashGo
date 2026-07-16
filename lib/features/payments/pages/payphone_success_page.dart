@@ -8,7 +8,6 @@ import 'package:http/http.dart' as http;
 import 'package:washgo/config/env/environment.dart';
 import 'package:washgo/config/theme/app_colors.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
-import 'package:washgo/features/invoices/utils/pdf_generator.dart';
 
 class PayphoneSuccessPage extends StatefulWidget {
   final String? transactionId;
@@ -28,7 +27,6 @@ class _PayphoneSuccessPageState extends State<PayphoneSuccessPage> {
   bool _isLoading = true;
   String? _errorMessage;
   String? _confirmedTransactionId;
-  String? _invoiceNumber;
   double? _amount;
   String? _businessName;
   String? _serviceName;
@@ -111,37 +109,7 @@ class _PayphoneSuccessPageState extends State<PayphoneSuccessPage> {
       _businessName = order.business.nombre;
       _serviceName = order.serviceName ?? 'Servicio de Lavandería';
 
-      // 2. Fetch Business Details for RUC & Description
-      final businessResult = await connector.getBusinessDetails(id: order.business.id).execute();
-      final biz = businessResult.data.business;
-      final String ruc = biz?.ruc ?? '20123456789';
-      final String description = biz?.descripcion ?? 'Lavado Profesional';
-
-      // 3. Generate Temporary Invoice Details
-      final now = DateTime.now();
-      final uniqueSuffix = (now.millisecondsSinceEpoch % 1000000).toString().padLeft(6, '0');
-      final tempInvoiceNumber = 'FAC-${now.year}-$uniqueSuffix';
-
-      // 4. Generate local PDF invoice
-      final pdfBytes = await PdfGenerator.generateInvoicePdf(
-        invoiceNumber: tempInvoiceNumber,
-        fechaEmision: now,
-        businessName: order.business.nombre,
-        ruc: ruc,
-        description: description,
-        clientName: order.client.nombreCompleto,
-        clientEmail: order.client.email,
-        clientPhone: order.client.telefono,
-        employeeName: order.employee?.nombreCompleto ?? 'Sin asignar',
-        serviceName: _serviceName!,
-        price: order.price,
-        paymentMethod: 'PAYPHONE',
-        observations: order.observations ?? '',
-      );
-
-      final base64Pdf = base64Encode(pdfBytes);
-
-      // 5. Complete PayPhone Payment with Backend
+      // 2. Complete PayPhone Payment with Backend
       final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
       final baseUrl = _getFunctionsBaseUrl();
 
@@ -154,7 +122,6 @@ class _PayphoneSuccessPageState extends State<PayphoneSuccessPage> {
         body: jsonEncode({
           'orderId': orderId,
           'transactionId': transactionId,
-          'base64Pdf': base64Pdf,
         }),
       );
 
@@ -177,7 +144,6 @@ class _PayphoneSuccessPageState extends State<PayphoneSuccessPage> {
       if (responseData['success'] == true) {
         setState(() {
           _confirmedTransactionId = transactionId;
-          _invoiceNumber = responseData['numeroUnico'] ?? tempInvoiceNumber;
           _isLoading = false;
         });
       } else {
@@ -386,10 +352,6 @@ class _PayphoneSuccessPageState extends State<PayphoneSuccessPage> {
           child: Column(
             children: [
               _buildDetailRow('Transacción ID', _confirmedTransactionId ?? 'N/A', isBold: true),
-              if (_invoiceNumber != null) ...[
-                const SizedBox(height: 10),
-                _buildDetailRow('Factura Nro.', _invoiceNumber!),
-              ],
               if (_businessName != null) ...[
                 const SizedBox(height: 10),
                 _buildDetailRow('Establecimiento', _businessName!),

@@ -391,9 +391,9 @@ async function completeOrderWithPrepaid({ req, order, invoiceParams, paymentMeth
 
 // 2. Complete PayPal Payment
 app.post("/orders/complete-paypal-payment", authenticate, async (req, res) => {
-  const { orderId, paypalOrderId, base64Pdf } = req.body;
-  if (!orderId || !paypalOrderId || !base64Pdf) {
-    return res.status(400).json({ error: "Missing orderId, paypalOrderId, or base64Pdf" });
+  const { orderId, paypalOrderId } = req.body;
+  if (!orderId || !paypalOrderId) {
+    return res.status(400).json({ error: "Missing orderId or paypalOrderId" });
   }
 
   try {
@@ -429,48 +429,12 @@ app.post("/orders/complete-paypal-payment", authenticate, async (req, res) => {
       return res.status(400).json({ error: `PayPal capture not completed. Status: ${captureResponse.data.status}` });
     }
 
-    // Generate invoice database details
-    const invoiceId = crypto.randomUUID();
-    const numeroUnico = generateNumeroUnico();
-
-    // Secure calculation on backend (15% VAT)
-    const subtotal = parseFloat((order.price / 1.15).toFixed(2));
-    const tax = parseFloat((order.price - subtotal).toFixed(2));
-
-    // Upload PDF to Storage
-    const bucket = admin.storage().bucket();
-    const file = bucket.file(`invoices/${invoiceId}.pdf`);
-    const buffer = Buffer.from(base64Pdf, "base64");
-    await file.save(buffer, {
-      metadata: {
-        contentType: "application/pdf",
-      },
-    });
-
-    // Generate Signed URL / Download URL (resilient to emulator environment)
-    const signedUrl = await getDownloadUrlSafe(file);
-
-    // Complete order and deduct business prepaid balance
-    await completeOrderWithPrepaid({
-      req,
-      order,
-      invoiceParams: {
-        signedUrl,
-        invoiceId,
-        numeroUnico,
-        subtotal,
-        tax,
-      },
-      paymentMethod: "PAYPAL",
-      observations: "Pago completado a través de PayPal",
-    });
+    // Payment captured — set order to EN_COLA so it enters the employee service queue
+    await serverUpdateOrderStatus({ orderId, status: "EN_COLA" });
 
     return res.json({
       success: true,
-      invoiceId,
-      numeroUnico,
-      invoiceUrl: signedUrl,
-      orderStatus: "COMPLETADO",
+      orderStatus: "EN_COLA",
     });
   } catch (error) {
     console.error("Complete PayPal Payment Error:", error.response?.data || error.message);
@@ -480,9 +444,9 @@ app.post("/orders/complete-paypal-payment", authenticate, async (req, res) => {
 
 // 2b. Complete PayPhone Payment
 app.post("/orders/complete-payphone-payment", authenticate, async (req, res) => {
-  const { orderId, transactionId, base64Pdf } = req.body;
-  if (!orderId || !transactionId || !base64Pdf) {
-    return res.status(400).json({ error: "Missing orderId, transactionId, or base64Pdf" });
+  const { orderId, transactionId } = req.body;
+  if (!orderId || !transactionId) {
+    return res.status(400).json({ error: "Missing orderId or transactionId" });
   }
 
   try {
@@ -542,48 +506,12 @@ app.post("/orders/complete-payphone-payment", authenticate, async (req, res) => 
       }
     }
 
-    // Generate invoice database details
-    const invoiceId = crypto.randomUUID();
-    const numeroUnico = generateNumeroUnico();
-
-    // Secure calculation on backend (15% VAT Ecuador)
-    const subtotal = parseFloat((order.price / 1.15).toFixed(2));
-    const tax = parseFloat((order.price - subtotal).toFixed(2));
-
-    // Upload PDF to Storage
-    const bucket = admin.storage().bucket();
-    const file = bucket.file(`invoices/${invoiceId}.pdf`);
-    const buffer = Buffer.from(base64Pdf, "base64");
-    await file.save(buffer, {
-      metadata: {
-        contentType: "application/pdf",
-      },
-    });
-
-    // Generate Signed URL / Download URL (resilient to emulator environment)
-    const signedUrl = await getDownloadUrlSafe(file);
-
-    // Complete order and deduct business prepaid balance
-    await completeOrderWithPrepaid({
-      req,
-      order,
-      invoiceParams: {
-        signedUrl,
-        invoiceId,
-        numeroUnico,
-        subtotal,
-        tax,
-      },
-      paymentMethod: "PAYPHONE",
-      observations: "Pago completado a través de PayPhone",
-    });
+    // Payment confirmed — set order to EN_COLA so it enters the employee service queue
+    await serverUpdateOrderStatus({ orderId, status: "EN_COLA" });
 
     return res.json({
       success: true,
-      invoiceId,
-      numeroUnico,
-      invoiceUrl: signedUrl,
-      orderStatus: "COMPLETADO",
+      orderStatus: "EN_COLA",
     });
   } catch (error) {
     console.error("Complete PayPhone Payment Error:", error.response?.data || error.message);
