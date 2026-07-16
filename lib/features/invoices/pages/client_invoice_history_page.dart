@@ -256,7 +256,7 @@ class _ClientInvoiceHistoryPageState extends State<ClientInvoiceHistoryPage> {
                 sheetError = null;
               });
               try {
-                final updatedInvoice = await _invoiceRepository.regenerateInvoicePdf(currentInvoice.id);
+                final updatedInvoice = await _invoiceRepository.regenerateInvoicePdf(currentInvoice);
                 
                 if (mounted) {
                   setState(() {

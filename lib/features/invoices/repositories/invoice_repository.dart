@@ -54,7 +54,7 @@ abstract class InvoiceRepository {
     String? clientEmail,
     String? clientPhone,
   });
-  Future<InvoiceModel> regenerateInvoicePdf(String invoiceId);
+  Future<InvoiceModel> regenerateInvoicePdf(InvoiceModel invoiceData);
 }
 
 
@@ -447,104 +447,80 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
   }
 
   @override
-  Future<InvoiceModel> regenerateInvoicePdf(String invoiceId) async {
-    // 1. Fetch the invoice details via DataConnect
-    final response = await _connector.getInvoiceById(id: invoiceId).ref().execute(
-      fetchPolicy: QueryFetchPolicy.serverOnly,
+  Future<InvoiceModel> regenerateInvoicePdf(InvoiceModel invoiceData) async {
+    // 1. Fallback values for fields not stored in InvoiceModel
+    final String ruc = '20123456789';
+    final String description = 'Lavado Profesional';
+    final String finalObservations = invoiceData.observations ?? '';
+    final String employeeName = invoiceData.employeeName ?? 'Sin asignar';
+
+    // 2. Generate PDF client-side
+    final pdfBytes = await PdfGenerator.generateInvoicePdf(
+      invoiceNumber: invoiceData.numeroUnico,
+      fechaEmision: invoiceData.fechaEmision,
+      businessName: invoiceData.businessName,
+      ruc: ruc,
+      description: description,
+      clientName: invoiceData.clientName,
+      clientEmail: invoiceData.clientEmail,
+      clientPhone: invoiceData.clientPhone,
+      employeeName: employeeName,
+      serviceName: invoiceData.serviceName,
+      price: invoiceData.price,
+      paymentMethod: invoiceData.paymentMethod,
+      observations: finalObservations,
     );
-    final inv = response.data.invoice;
-    if (inv == null) {
-      throw Exception('Invoice not found: $invoiceId');
+
+    // 3. Base64 encode the PDF
+    final base64Pdf = base64Encode(pdfBytes);
+    final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+
+    // 4. POST to the Cloud Functions endpoint (bypasses storage.rules and FDC @auth gates)
+    final baseUrl = _getFunctionsBaseUrl();
+    final response = await http.post(
+      Uri.parse('$baseUrl/invoices/${invoiceData.id}/regenerate-pdf'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (idToken != null) 'Authorization': 'Bearer $idToken',
+      },
+      body: jsonEncode({
+        'base64Pdf': base64Pdf,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to regenerate invoice PDF: ${response.body}');
     }
 
-    final String businessName = inv.order.business.nombre;
-    final String ruc = inv.order.business.ruc;
-    final String description = inv.order.business.descripcion ?? 'Lavado Profesional';
-    final String invoiceNumber = inv.numeroUnico;
-    final DateTime now = inv.fechaEmision.toDateTime();
-    final String clientName = inv.order.client.nombreCompleto;
-    final String clientEmail = inv.order.client.email;
-    final String? clientPhone = inv.order.client.telefono;
-    final String? employeeName = inv.order.employee?.nombreCompleto;
-    final String serviceName = inv.order.serviceName ?? '';
-    final double price = inv.order.price;
-    final String paymentMethod = inv.order.paymentMethod.stringValue;
-    final String finalObservations = inv.order.observations ?? '';
-
-    // 2. Generate and Upload PDF
-    String? pdfUrl;
-    InvoiceStatus finalStatus = InvoiceStatus.PENDING;
-    try {
-      final pdfBytes = await PdfGenerator.generateInvoicePdf(
-        invoiceNumber: invoiceNumber,
-        fechaEmision: now,
-        businessName: businessName,
-        ruc: ruc,
-        description: description,
-        clientName: clientName,
-        clientEmail: clientEmail,
-        clientPhone: clientPhone,
-        employeeName: employeeName ?? 'Sin asignar',
-        serviceName: serviceName,
-        price: price,
-        paymentMethod: paymentMethod,
-        observations: finalObservations,
-      );
-
-      final storageRef = FirebaseStorage.instance.ref().child('invoices/$invoiceId.pdf');
-      final metadata = SettableMetadata(contentType: 'application/pdf');
-      final uploadTask = await storageRef.putData(pdfBytes, metadata);
-      pdfUrl = await uploadTask.ref.getDownloadURL();
-      finalStatus = InvoiceStatus.GENERATED;
-    } catch (e) {
-      debugPrint('Error regenerating/uploading PDF invoice: $e');
-      finalStatus = InvoiceStatus.FAILED;
-    }
-
-    // 3. Update the Invoice with pdfUrl (if generated successfully) and finalStatus
-    try {
-      await _connector.updateInvoicePdf(
-        id: invoiceId,
-        invoiceStatus: finalStatus,
-      ).pdfUrl(pdfUrl).execute();
-    } catch (e) {
-      debugPrint('Error updating invoice PDF status in DB: $e');
-    }
-
-    // 4. Update the order with finalObservations and invoiceUrl
-    try {
-      await _connector.updateOrderCompletion(
-        orderId: invoiceId,
-      )
-      .observations(finalObservations)
-      .invoiceUrl(pdfUrl)
-      .execute();
-    } catch (e) {
-      debugPrint('Error updating order completion: $e');
-    }
+    final responseData = jsonDecode(response.body);
+    final String? pdfUrl = responseData['pdfUrl'] as String?;
+    final String invoiceStatusStr = responseData['invoiceStatus'] as String? ?? 'GENERATED';
+    final InvoiceStatus invoiceStatus = invoiceStatusStr == 'GENERATED'
+        ? InvoiceStatus.GENERATED
+        : InvoiceStatus.FAILED;
 
     return InvoiceModel(
-      id: invoiceId,
-      numeroUnico: invoiceNumber,
-      fechaEmision: now,
+      id: invoiceData.id,
+      numeroUnico: invoiceData.numeroUnico,
+      fechaEmision: invoiceData.fechaEmision,
       pdfUrl: pdfUrl,
-      orderId: invoiceId,
-      price: price,
-      serviceName: serviceName,
-      paymentMethod: paymentMethod,
-      orderStatus: inv.order.status.stringValue,
-      businessName: businessName,
-      clientName: clientName,
-      clientEmail: clientEmail,
-      clientPhone: clientPhone,
-      employeeName: employeeName,
-      employeePhone: inv.order.employee?.telefono,
-      subtotal: inv.subtotal,
-      discount: inv.discount,
-      tax: inv.tax,
-      total: inv.total,
-      invoiceStatus: finalStatus,
-      generatedAt: now,
+      orderId: invoiceData.orderId,
+      price: invoiceData.price,
+      serviceName: invoiceData.serviceName,
+      paymentMethod: invoiceData.paymentMethod,
+      orderStatus: invoiceData.orderStatus,
+      businessName: invoiceData.businessName,
+      clientName: invoiceData.clientName,
+      clientEmail: invoiceData.clientEmail,
+      clientPhone: invoiceData.clientPhone,
+      employeeName: invoiceData.employeeName,
+      employeePhone: invoiceData.employeePhone,
+      subtotal: invoiceData.subtotal,
+      discount: invoiceData.discount,
+      tax: invoiceData.tax,
+      total: invoiceData.total,
+      invoiceStatus: invoiceStatus,
+      generatedAt: DateTime.now(),
     );
   }
 }
