@@ -27,6 +27,31 @@ class PayphoneService {
     return data['payWithCardUrl'] as String;
   }
 
+  /// Retrieves the stored PayPhone transactionId for a given order.
+  /// Returns the transactionId string, or null if not found.
+  static Future<String?> getStoredTransaction({
+    required String orderId,
+    required String baseUrl,
+    required String idToken,
+  }) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/orders/$orderId/payphone-transaction'),
+        headers: {
+          'Authorization': 'Bearer $idToken',
+          'Content-Type': 'application/json',
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['transactionId'] as String?;
+      }
+    } catch (e) {
+      // Silently fail — caller handles the null
+    }
+    return null;
+  }
+
   static Future<void> cancelPendingOrder({
     required String orderId,
     required String idToken,

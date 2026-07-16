@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import 'package:washgo/config/theme/app_colors.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
 import 'package:washgo/features/dashboard/client/models/laundry_item.dart';
@@ -132,6 +133,85 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                     _isProcessing = true;
                                   });
                                   try {
+                                    // Build functions base URL (same logic as PayphoneSuccessPage)
+                                    final user = FirebaseAuth.instance.currentUser;
+                                    if (user == null) {
+                                      throw Exception('Debes iniciar sesión.');
+                                    }
+                                    final idToken = await user.getIdToken();
+                                    var projectId = Firebase.apps.isNotEmpty
+                                        ? Firebase.app().options.projectId
+                                        : 'washgo-app-8392';
+                                    String baseUrl;
+                                    if (Environment.useEmulators) {
+                                      var emulatorProjectId = projectId;
+                                      if (emulatorProjectId.endsWith('-dev')) {
+                                        emulatorProjectId = emulatorProjectId.substring(
+                                            0, emulatorProjectId.length - 4);
+                                      } else if (emulatorProjectId.endsWith('-staging')) {
+                                        emulatorProjectId = emulatorProjectId.substring(
+                                            0, emulatorProjectId.length - 8);
+                                      }
+                                      baseUrl =
+                                          'http://${Environment.emulatorHost}:5001/$emulatorProjectId/us-central1/api';
+                                    } else {
+                                      baseUrl =
+                                          'https://us-central1-$projectId.cloudfunctions.net/api';
+                                    }
+
+                                    // 1. Try to get the stored transactionId from Firestore
+                                    String? transactionId;
+                                    try {
+                                      final http.Response response = await http.get(
+                                        Uri.parse(
+                                            '$baseUrl/orders/${_payphoneOrderId!}/payphone-transaction'),
+                                        headers: {
+                                          'Authorization': 'Bearer $idToken',
+                                          'Content-Type': 'application/json',
+                                        },
+                                      );
+                                      if (response.statusCode == 200) {
+                                        final data = jsonDecode(response.body);
+                                        transactionId = data['transactionId'] as String?;
+                                      }
+                                    } catch (_) {
+                                      // Ignore HTTP errors — fall through to fallback
+                                    }
+
+                                    // 2. If transactionId found, navigate to complete payment
+                                    if (transactionId != null &&
+                                        transactionId.isNotEmpty) {
+                                      if (!mounted) return;
+                                      await context.push(
+                                        '/payphone-callback/success',
+                                        extra: null,
+                                        queryParameters: {
+                                          'transactionId': transactionId,
+                                          'orderId': _payphoneOrderId,
+                                        },
+                                      );
+                                      return;
+                                    }
+
+                                    // 3. No stored transactionId found
+                                    // In local dev mode: generate a mock transactionId so
+                                    // we can test the complete-payphone-payment flow directly.
+                                    if (Environment.useEmulators) {
+                                      final mockTxId =
+                                          'mock-${DateTime.now().millisecondsSinceEpoch}';
+                                      if (!mounted) return;
+                                      await context.push(
+                                        '/payphone-callback/success',
+                                        extra: null,
+                                        queryParameters: {
+                                          'transactionId': mockTxId,
+                                          'orderId': _payphoneOrderId,
+                                        },
+                                      );
+                                      return;
+                                    }
+
+                                    // 4. Production — check Data Connect status as fallback
                                     final connector = ExampleConnector.instance;
                                     final orderResult = await connector
                                         .getOrderById(id: _payphoneOrderId!)
@@ -148,7 +228,8 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                         SnackBar(
                                           content: Text(
                                             '¡Pago verificado y reserva confirmada!',
-                                            style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                                            style: GoogleFonts.inter(
+                                                fontWeight: FontWeight.bold),
                                           ),
                                           backgroundColor: Colors.green.shade600,
                                         ),
@@ -230,8 +311,10 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
                                           content: Text(
-                                            'El pago aún no ha sido reportado como completado. Completa el pago en el navegador.',
-                                            style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                                            'El pago aún no ha sido reportado como completado. '
+                                            'Completa el pago en el navegador.',
+                                            style: GoogleFonts.inter(
+                                                fontWeight: FontWeight.w600),
                                           ),
                                           backgroundColor: Colors.orange.shade800,
                                         ),

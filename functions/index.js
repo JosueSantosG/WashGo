@@ -617,6 +617,23 @@ app.get("/orders/:orderId/payphone-transaction", authenticate, async (req, res) 
 
     const doc = await admin.firestore().collection("payphone_transactions").doc(orderId).get();
     if (!doc.exists) {
+      // When running on the emulator, proxy to production Firestore via the public endpoint.
+      // This ensures the local dev flow works when the production callback (success.html)
+      // already stored the transactionId in the production Firestore.
+      if (process.env.FIRESTORE_EMULATOR_HOST) {
+        try {
+          const prodResponse = await axios.get(
+            `https://us-central1-washgo-app-8392.cloudfunctions.net/api/payphone/transaction/${encodeURIComponent(orderId)}`,
+            { timeout: 5000 }
+          );
+          if (prodResponse.data?.transactionId) {
+            console.log(`[payphone-transaction] Production fallback returned transactionId for ${orderId}`);
+            return res.json({ transactionId: prodResponse.data.transactionId });
+          }
+        } catch (proxyError) {
+          console.warn(`[payphone-transaction] Production fallback failed for ${orderId}: ${proxyError.message}`);
+        }
+      }
       return res.json({ transactionId: null });
     }
 
@@ -644,6 +661,21 @@ app.post("/payphone/store-transaction", async (req, res) => {
     return res.json({ success: true });
   } catch (error) {
     console.error("Store PayPhone Transaction Error:", error.message);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// 2bd. Get stored PayPhone Transaction ID (Public — no auth required, for cross-environment reads)
+// Used when the local emulator needs to reach production Firestore, or for browser callback polling.
+app.get("/payphone/transaction/:orderId", async (req, res) => {
+  const { orderId } = req.params;
+  if (!orderId) return res.status(400).json({ error: "Missing orderId" });
+  try {
+    const doc = await admin.firestore().collection("payphone_transactions").doc(orderId).get();
+    if (!doc.exists) return res.json({ transactionId: null });
+    return res.json({ transactionId: doc.data().transactionId });
+  } catch (error) {
+    console.error("Query PayPhone Transaction Error:", error.message);
     return res.status(500).json({ error: error.message });
   }
 });
