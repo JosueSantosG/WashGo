@@ -235,6 +235,8 @@ app.post("/payphone/prepare", authenticate, async (req, res) => {
         storeId: storeId,
         reference: `Orden WashGo #${orderId.substring(0, 8)}`,
         currency: "USD",
+        // After payment, PayPhone redirects the user's browser here with ?id=TRANSACTION_ID&clientTransactionId=ORDER_ID
+        redirectUrl: `https://us-central1-${admin.app().options.projectId || 'washgo-app-8392'}.cloudfunctions.net/api/payphone-callback/success`,
       },
     });
 
@@ -257,6 +259,55 @@ app.post("/payphone/prepare", authenticate, async (req, res) => {
     console.error("Prepare PayPhone Payment Error:", error.response?.data || error.message);
     return res.status(500).json({ error: error.response?.data || error.message });
   }
+});
+
+// 1b-1. PayPhone Callback — redirect target after successful payment
+// PayPhone redirects the user's browser here (GET) with ?id=TRANSACTION_ID&clientTransactionId=ORDER_ID
+// Stores the transactionId in Firestore so the Flutter app can recover it via the Verificar flow.
+app.get("/payphone-callback/success", async (req, res) => {
+  const transactionId = req.query.id;
+  const orderId = req.query.clientTransactionId;
+
+  if (orderId && transactionId) {
+    try {
+      await admin.firestore().collection("payphone_transactions").doc(orderId).set({
+        transactionId,
+        storedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+      console.log(`[PayPhone-callback] Stored transactionId for order ${orderId}: ${transactionId}`);
+    } catch (err) {
+      console.error(`[PayPhone-callback] Error storing transactionId: ${err.message}`);
+    }
+  }
+
+  res.set("Content-Type", "text/html");
+  res.status(200).send(`
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pago Exitoso - WashGo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .card { background: white; border-radius: 24px; padding: 40px 32px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+    .icon { width: 72px; height: 72px; background: #ecfdf5; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; }
+    .icon svg { width: 36px; height: 36px; stroke: #059669; stroke-width: 2; fill: none; }
+    h1 { color: #059669; font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+    p { color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
+    .btn { display: inline-block; background: #059669; color: white; border: none; padding: 12px 32px; border-radius: 12px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <h1>¡Pago Exitoso!</h1>
+    <p>Tu pago ha sido procesado correctamente. Puedes cerrar esta ventana y volver a la aplicación para verificar tu reserva.</p>
+  </div>
+</body>
+</html>
+  `);
 });
 
 // 1b-2. Verify PayPhone Transaction Status (read-only, no side effects)
