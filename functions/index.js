@@ -710,8 +710,8 @@ app.post("/orders/complete-prepaid-payment", authenticate, async (req, res) => {
     }
 
     // Ensure order is in a valid status for employee completion
-    if (order.status !== "EN_COLA" && order.status !== "ACEPTADO") {
-      return res.status(400).json({ error: `Order cannot be completed. Current status: ${order.status}. Expected EN_COLA or ACEPTADO.` });
+    if (order.status !== "EN_COLA" && order.status !== "ACEPTADO" && order.status !== "EN_SERVICIO") {
+      return res.status(400).json({ error: `Order cannot be completed. Current status: ${order.status}. Expected EN_COLA, ACEPTADO or EN_SERVICIO.` });
     }
 
     // Generate invoice database details
