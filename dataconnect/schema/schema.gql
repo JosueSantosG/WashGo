@@ -156,6 +156,7 @@ type Order @table {
   qrCode: String
   invoiceUrl: String
   observations: String
+  cancellationReason: String
   type: OrderType!
   paymentMethod: PaymentMethod!
   status: OrderStatus!

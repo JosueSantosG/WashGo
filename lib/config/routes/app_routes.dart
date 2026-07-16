@@ -5,6 +5,7 @@ class AppRoutes {
   static const String register = '/register';
   static const String authGate = '/auth-gate';
   static const String roleSelection = '/role-selection';
+  static const String roleDetail = '/role-detail';
   static const String onboardingCliente = '/onboarding-cliente';
   static const String onboardingEmployee = '/onboarding-employee';
   static const String employeeCode = '/employee-code';

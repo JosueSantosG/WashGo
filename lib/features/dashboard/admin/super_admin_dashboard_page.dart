@@ -1920,25 +1920,51 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
         }
       }
 
-      // 3. Process electronic cancelled orders (PayPal/Payphone with price > 0 are treated as paid)
+      // 3. Process electronic cancelled orders (PayPal/Payphone with price > 0 are treated as paid if and only if they have a non-empty invoice URL)
       for (final order in cancelledSummaryRes.data.orders) {
         final method = order.paymentMethod is Known<PaymentMethod>
             ? (order.paymentMethod as Known<PaymentMethod>).value
             : null;
 
         if (method == PaymentMethod.PAYPAL || method == PaymentMethod.PAYPHONE) {
-          if (order.price > 0) {
+          final isPaid = order.invoiceUrl != null && order.invoiceUrl!.isNotEmpty;
+          if (isPaid && order.price > 0) {
             tempElectronicTotal += order.price;
             tempElectronicCount++;
           }
         }
       }
 
-      // 4. Calculate Cancelled Summary
+      // 4. Calculate Cancelled Summary (only paid cancelled orders)
       double tempCancelledTotal = 0.0;
-      int tempCancelledCount = cancelledSummaryRes.data.orders.length;
+      int tempCancelledCount = 0;
+
+      // Add bank transfer cancelled paid orders
+      for (final proof in cancelledPaidRes.data.paymentProofs) {
+        final order = proof.order;
+        final method = order.paymentMethod is Known<PaymentMethod>
+            ? (order.paymentMethod as Known<PaymentMethod>).value
+            : null;
+
+        if (method == PaymentMethod.TRANSFERENCIA_BANCARIA) {
+          tempCancelledTotal += proof.declaredAmount;
+          tempCancelledCount++;
+        }
+      }
+
+      // Add electronic cancelled paid orders
       for (final order in cancelledSummaryRes.data.orders) {
-        tempCancelledTotal += order.price;
+        final method = order.paymentMethod is Known<PaymentMethod>
+            ? (order.paymentMethod as Known<PaymentMethod>).value
+            : null;
+
+        if (method == PaymentMethod.PAYPAL || method == PaymentMethod.PAYPHONE) {
+          final isPaid = order.invoiceUrl != null && order.invoiceUrl!.isNotEmpty;
+          if (isPaid && order.price > 0) {
+            tempCancelledTotal += order.price;
+            tempCancelledCount++;
+          }
+        }
       }
 
       if (!mounted) return;
@@ -2219,7 +2245,7 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'ÓRDENES CANCELADAS DEL MES',
+                          'ÓRDENES CANCELADAS Y PAGADAS DEL MES',
                           style: GoogleFonts.inter(
                             color: Colors.red.shade800,
                             fontSize: 11,
@@ -2238,7 +2264,7 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '$_cancelledCount servicios cancelados (informativo)',
+                          '$_cancelledCount servicios cancelados y pagados',
                           style: GoogleFonts.inter(
                             color: Colors.red.shade700,
                             fontSize: 11,

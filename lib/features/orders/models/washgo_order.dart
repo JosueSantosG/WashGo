@@ -18,6 +18,7 @@ class WashGoOrder {
   final String id;
   final OrderStatus status;
   final String? observations;
+  final String? cancellationReason;
   final String businessId;
   final String businessName;
   final String? serviceName;
@@ -32,6 +33,7 @@ class WashGoOrder {
     required this.id,
     required this.status,
     this.observations,
+    this.cancellationReason,
     required this.businessId,
     required this.businessName,
     this.serviceName,

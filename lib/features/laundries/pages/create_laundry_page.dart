@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math';
 import 'package:washgo/dataconnect-generated/example.dart';
 import 'package:washgo/config/theme/app_colors.dart';
@@ -74,6 +75,50 @@ class _CreateLaundryPageState extends State<CreateLaundryPage> {
 
   bool _isLoading = false;
   LatLng? _selectedLocation;
+
+  Future<void> _confirmSignOut(BuildContext context) async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.logout_rounded, color: AppColors.primary),
+            const SizedBox(width: 10),
+            const Text('Cerrar Sesión'),
+          ],
+        ),
+        content: const Text(
+          '¿Estás seguro de que deseas cerrar sesión? Puedes volver a iniciar sesión y completar el registro de tu local en cualquier momento.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('Cerrar Sesión'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await FirebaseAuth.instance.signOut();
+      SessionManager.activeRole = null;
+      if (context.mounted) {
+        context.go(AppRoutes.login);
+      }
+    }
+  }
 
   String _generateBusinessCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -157,221 +202,267 @@ class _CreateLaundryPageState extends State<CreateLaundryPage> {
                 width: double.maxFinite,
                 child: SingleChildScrollView(
                   child: Form(
-                  key: dialogFormKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: nombreController,
-                        style: GoogleFonts.inter(fontSize: 14),
-                        decoration: InputDecoration(
-                          labelText: 'Nombre del Servicio',
-                          labelStyle: GoogleFonts.inter(fontSize: 13),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    key: dialogFormKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: nombreController,
+                          style: GoogleFonts.inter(fontSize: 14),
+                          decoration: InputDecoration(
+                            labelText: 'Nombre del Servicio',
+                            labelStyle: GoogleFonts.inter(fontSize: 13),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.design_services,
+                              color: AppColors.primary,
+                            ),
                           ),
-                          prefixIcon: const Icon(
-                            Icons.design_services,
-                            color: AppColors.primary,
+                          validator: (value) =>
+                              value == null || value.trim().isEmpty
+                              ? 'El nombre es requerido'
+                              : null,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Precios por Categoría (\$)',
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: Colors.grey.shade700,
                           ),
                         ),
-                        validator: (value) =>
-                            value == null || value.trim().isEmpty
-                            ? 'El nombre es requerido'
-                            : null,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Precios por Categoría (\$)',
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: Colors.grey.shade700,
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: precioPequenoController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                style: GoogleFonts.inter(fontSize: 13),
+                                decoration: InputDecoration(
+                                  labelText: 'Pequeño',
+                                  labelStyle: GoogleFonts.inter(fontSize: 12),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.attach_money,
+                                    size: 16,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty)
+                                    return 'Requerido';
+                                  final val = double.tryParse(value);
+                                  if (val == null || val <= 0)
+                                    return 'Inválido';
+                                  return null;
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: precioMedianoController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                style: GoogleFonts.inter(fontSize: 13),
+                                decoration: InputDecoration(
+                                  labelText: 'Mediano',
+                                  labelStyle: GoogleFonts.inter(fontSize: 12),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.attach_money,
+                                    size: 16,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty)
+                                    return 'Requerido';
+                                  final val = double.tryParse(value);
+                                  if (val == null || val <= 0)
+                                    return 'Inválido';
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: precioPequenoController,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              style: GoogleFonts.inter(fontSize: 13),
-                              decoration: InputDecoration(
-                                labelText: 'Pequeño',
-                                labelStyle: GoogleFonts.inter(fontSize: 12),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                prefixIcon: const Icon(Icons.attach_money, size: 16, color: AppColors.primary),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) return 'Requerido';
-                                final val = double.tryParse(value);
-                                if (val == null || val <= 0) return 'Inválido';
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextFormField(
-                              controller: precioMedianoController,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              style: GoogleFonts.inter(fontSize: 13),
-                              decoration: InputDecoration(
-                                labelText: 'Mediano',
-                                labelStyle: GoogleFonts.inter(fontSize: 12),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                prefixIcon: const Icon(Icons.attach_money, size: 16, color: AppColors.primary),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) return 'Requerido';
-                                final val = double.tryParse(value);
-                                if (val == null || val <= 0) return 'Inválido';
-                                return null;
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: precioGrandeController,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              style: GoogleFonts.inter(fontSize: 13),
-                              decoration: InputDecoration(
-                                labelText: 'Grande',
-                                labelStyle: GoogleFonts.inter(fontSize: 12),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                prefixIcon: const Icon(Icons.attach_money, size: 16, color: AppColors.primary),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) return 'Requerido';
-                                final val = double.tryParse(value);
-                                if (val == null || val <= 0) return 'Inválido';
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextFormField(
-                              controller: precioMotoController,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              style: GoogleFonts.inter(fontSize: 13),
-                              decoration: InputDecoration(
-                                labelText: 'Moto',
-                                labelStyle: GoogleFonts.inter(fontSize: 12),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                prefixIcon: const Icon(Icons.attach_money, size: 16, color: AppColors.primary),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) return 'Requerido';
-                                final val = double.tryParse(value);
-                                if (val == null || val <= 0) return 'Inválido';
-                                return null;
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: duracionController,
-                              keyboardType: TextInputType.number,
-                              style: GoogleFonts.inter(fontSize: 14),
-                              decoration: InputDecoration(
-                                labelText: 'Duración (min)',
-                                labelStyle: GoogleFonts.inter(fontSize: 13),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: precioGrandeController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                style: GoogleFonts.inter(fontSize: 13),
+                                decoration: InputDecoration(
+                                  labelText: 'Grande',
+                                  labelStyle: GoogleFonts.inter(fontSize: 12),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.attach_money,
+                                    size: 16,
+                                    color: AppColors.primary,
+                                  ),
                                 ),
-                                prefixIcon: const Icon(
-                                  Icons.timer_outlined,
-                                  color: AppColors.primary,
-                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty)
+                                    return 'Requerido';
+                                  final val = double.tryParse(value);
+                                  if (val == null || val <= 0)
+                                    return 'Inválido';
+                                  return null;
+                                },
                               ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Requerido';
-                                }
-                                final val = int.tryParse(value);
-                                if (val == null || val <= 0) {
-                                  return 'Inválido';
-                                }
-                                return null;
-                              },
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: DropdownButtonFormField<ServiceType>(
-                              initialValue: tipoServicio,
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                color: AppColors.onSurface,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: precioMotoController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                style: GoogleFonts.inter(fontSize: 13),
+                                decoration: InputDecoration(
+                                  labelText: 'Moto',
+                                  labelStyle: GoogleFonts.inter(fontSize: 12),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.attach_money,
+                                    size: 16,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty)
+                                    return 'Requerido';
+                                  final val = double.tryParse(value);
+                                  if (val == null || val <= 0)
+                                    return 'Inválido';
+                                  return null;
+                                },
                               ),
-                              decoration: InputDecoration(
-                                labelText: 'Tipo',
-                                labelStyle: GoogleFonts.inter(fontSize: 13),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                prefixIcon: const Icon(
-                                  Icons.category,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: ServiceType.LOCAL,
-                                  child: Text('Local'),
-                                ),
-                                DropdownMenuItem(
-                                  value: ServiceType.DOMICILIO,
-                                  child: Text('Domicilio'),
-                                ),
-                              ],
-                              onChanged: (val) {
-                                if (val != null) {
-                                  setDialogState(() {
-                                    tipoServicio = val;
-                                  });
-                                }
-                              },
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: descripcionController,
-                        style: GoogleFonts.inter(fontSize: 14),
-                        decoration: InputDecoration(
-                          labelText: 'Descripción del Servicio (Opcional)',
-                          labelStyle: GoogleFonts.inter(fontSize: 13),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.description,
-                            color: AppColors.primary,
-                          ),
+                          ],
                         ),
-                        minLines: 2,
-                        maxLines: 4,
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: duracionController,
+                                keyboardType: TextInputType.number,
+                                style: GoogleFonts.inter(fontSize: 14),
+                                decoration: InputDecoration(
+                                  labelText: 'Duración (min)',
+                                  labelStyle: GoogleFonts.inter(fontSize: 13),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.timer_outlined,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Requerido';
+                                  }
+                                  final val = int.tryParse(value);
+                                  if (val == null || val <= 0) {
+                                    return 'Inválido';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: DropdownButtonFormField<ServiceType>(
+                                initialValue: tipoServicio,
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  color: AppColors.onSurface,
+                                ),
+                                decoration: InputDecoration(
+                                  labelText: 'Tipo',
+                                  labelStyle: GoogleFonts.inter(fontSize: 13),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.category,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: ServiceType.LOCAL,
+                                    child: Text('Local'),
+                                  ),
+                                ],
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    setDialogState(() {
+                                      tipoServicio = val;
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: descripcionController,
+                          style: GoogleFonts.inter(fontSize: 14),
+                          decoration: InputDecoration(
+                            labelText: 'Descripción del Servicio',
+                            labelStyle: GoogleFonts.inter(fontSize: 13),
+                            hintText:
+                                'Ej: Lavamos tu carro con cera siliconada de alta calidad y lo secamos a la sombra.',
+                            hintStyle: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: Colors.grey.shade400,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.description,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          minLines: 2,
+                          maxLines: 4,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
               ),
               actions: [
                 TextButton(
@@ -384,10 +475,18 @@ class _CreateLaundryPageState extends State<CreateLaundryPage> {
                 ElevatedButton(
                   onPressed: () {
                     if (dialogFormKey.currentState!.validate()) {
-                      final double pPequeno = double.parse(precioPequenoController.text);
-                      final double pMediano = double.parse(precioMedianoController.text);
-                      final double pGrande = double.parse(precioGrandeController.text);
-                      final double pMoto = double.parse(precioMotoController.text);
+                      final double pPequeno = double.parse(
+                        precioPequenoController.text,
+                      );
+                      final double pMediano = double.parse(
+                        precioMedianoController.text,
+                      );
+                      final double pGrande = double.parse(
+                        precioGrandeController.text,
+                      );
+                      final double pMoto = double.parse(
+                        precioMotoController.text,
+                      );
                       final int duracion = int.parse(duracionController.text);
 
                       setState(() {
@@ -438,12 +537,24 @@ class _CreateLaundryPageState extends State<CreateLaundryPage> {
     final s = _addedServices[index];
     final dialogFormKey = GlobalKey<FormState>();
     final nombreController = TextEditingController(text: s['nombre']);
-    final precioPequenoController = TextEditingController(text: s['precioPequeno'].toString());
-    final precioMedianoController = TextEditingController(text: s['precioMediano'].toString());
-    final precioGrandeController = TextEditingController(text: s['precioGrande'].toString());
-    final precioMotoController = TextEditingController(text: s['precioMoto'].toString());
-    final duracionController = TextEditingController(text: s['duracionMinutos'].toString());
-    final descripcionController = TextEditingController(text: s['descripcion'] ?? '');
+    final precioPequenoController = TextEditingController(
+      text: s['precioPequeno'].toString(),
+    );
+    final precioMedianoController = TextEditingController(
+      text: s['precioMediano'].toString(),
+    );
+    final precioGrandeController = TextEditingController(
+      text: s['precioGrande'].toString(),
+    );
+    final precioMotoController = TextEditingController(
+      text: s['precioMoto'].toString(),
+    );
+    final duracionController = TextEditingController(
+      text: s['duracionMinutos'].toString(),
+    );
+    final descripcionController = TextEditingController(
+      text: s['descripcion'] ?? '',
+    );
     ServiceType tipoServicio = s['tipo'];
 
     showDialog(
@@ -473,221 +584,272 @@ class _CreateLaundryPageState extends State<CreateLaundryPage> {
                 width: double.maxFinite,
                 child: SingleChildScrollView(
                   child: Form(
-                  key: dialogFormKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: nombreController,
-                        style: GoogleFonts.inter(fontSize: 14),
-                        decoration: InputDecoration(
-                          labelText: 'Nombre del Servicio',
-                          labelStyle: GoogleFonts.inter(fontSize: 13),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    key: dialogFormKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: nombreController,
+                          style: GoogleFonts.inter(fontSize: 14),
+                          decoration: InputDecoration(
+                            labelText: 'Nombre del Servicio',
+                            labelStyle: GoogleFonts.inter(fontSize: 13),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.design_services,
+                              color: AppColors.primary,
+                            ),
                           ),
-                          prefixIcon: const Icon(
-                            Icons.design_services,
-                            color: AppColors.primary,
+                          validator: (value) =>
+                              value == null || value.trim().isEmpty
+                              ? 'El nombre es requerido'
+                              : null,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Precios por Categoría (\$)',
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: Colors.grey.shade700,
                           ),
                         ),
-                        validator: (value) =>
-                            value == null || value.trim().isEmpty
-                            ? 'El nombre es requerido'
-                            : null,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Precios por Categoría (\$)',
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: Colors.grey.shade700,
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: precioPequenoController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                style: GoogleFonts.inter(fontSize: 13),
+                                decoration: InputDecoration(
+                                  labelText: 'Pequeño',
+                                  labelStyle: GoogleFonts.inter(fontSize: 12),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.attach_money,
+                                    size: 16,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty)
+                                    return 'Requerido';
+                                  final val = double.tryParse(value);
+                                  if (val == null || val <= 0)
+                                    return 'Inválido';
+                                  return null;
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: precioMedianoController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                style: GoogleFonts.inter(fontSize: 13),
+                                decoration: InputDecoration(
+                                  labelText: 'Mediano',
+                                  labelStyle: GoogleFonts.inter(fontSize: 12),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.attach_money,
+                                    size: 16,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty)
+                                    return 'Requerido';
+                                  final val = double.tryParse(value);
+                                  if (val == null || val <= 0)
+                                    return 'Inválido';
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: precioPequenoController,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              style: GoogleFonts.inter(fontSize: 13),
-                              decoration: InputDecoration(
-                                labelText: 'Pequeño',
-                                labelStyle: GoogleFonts.inter(fontSize: 12),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                prefixIcon: const Icon(Icons.attach_money, size: 16, color: AppColors.primary),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) return 'Requerido';
-                                final val = double.tryParse(value);
-                                if (val == null || val <= 0) return 'Inválido';
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextFormField(
-                              controller: precioMedianoController,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              style: GoogleFonts.inter(fontSize: 13),
-                              decoration: InputDecoration(
-                                labelText: 'Mediano',
-                                labelStyle: GoogleFonts.inter(fontSize: 12),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                prefixIcon: const Icon(Icons.attach_money, size: 16, color: AppColors.primary),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) return 'Requerido';
-                                final val = double.tryParse(value);
-                                if (val == null || val <= 0) return 'Inválido';
-                                return null;
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: precioGrandeController,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              style: GoogleFonts.inter(fontSize: 13),
-                              decoration: InputDecoration(
-                                labelText: 'Grande',
-                                labelStyle: GoogleFonts.inter(fontSize: 12),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                prefixIcon: const Icon(Icons.attach_money, size: 16, color: AppColors.primary),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) return 'Requerido';
-                                final val = double.tryParse(value);
-                                if (val == null || val <= 0) return 'Inválido';
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextFormField(
-                              controller: precioMotoController,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              style: GoogleFonts.inter(fontSize: 13),
-                              decoration: InputDecoration(
-                                labelText: 'Moto',
-                                labelStyle: GoogleFonts.inter(fontSize: 12),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                prefixIcon: const Icon(Icons.attach_money, size: 16, color: AppColors.primary),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) return 'Requerido';
-                                final val = double.tryParse(value);
-                                if (val == null || val <= 0) return 'Inválido';
-                                return null;
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: duracionController,
-                              keyboardType: TextInputType.number,
-                              style: GoogleFonts.inter(fontSize: 14),
-                              decoration: InputDecoration(
-                                labelText: 'Duración (min)',
-                                labelStyle: GoogleFonts.inter(fontSize: 13),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: precioGrandeController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                style: GoogleFonts.inter(fontSize: 13),
+                                decoration: InputDecoration(
+                                  labelText: 'Grande',
+                                  labelStyle: GoogleFonts.inter(fontSize: 12),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.attach_money,
+                                    size: 16,
+                                    color: AppColors.primary,
+                                  ),
                                 ),
-                                prefixIcon: const Icon(
-                                  Icons.timer_outlined,
-                                  color: AppColors.primary,
-                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty)
+                                    return 'Requerido';
+                                  final val = double.tryParse(value);
+                                  if (val == null || val <= 0)
+                                    return 'Inválido';
+                                  return null;
+                                },
                               ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Requerido';
-                                }
-                                final val = int.tryParse(value);
-                                if (val == null || val <= 0) {
-                                  return 'Inválido';
-                                }
-                                return null;
-                              },
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: DropdownButtonFormField<ServiceType>(
-                              initialValue: tipoServicio,
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                color: AppColors.onSurface,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: precioMotoController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                style: GoogleFonts.inter(fontSize: 13),
+                                decoration: InputDecoration(
+                                  labelText: 'Moto',
+                                  labelStyle: GoogleFonts.inter(fontSize: 12),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.attach_money,
+                                    size: 16,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty)
+                                    return 'Requerido';
+                                  final val = double.tryParse(value);
+                                  if (val == null || val <= 0)
+                                    return 'Inválido';
+                                  return null;
+                                },
                               ),
-                              decoration: InputDecoration(
-                                labelText: 'Tipo',
-                                labelStyle: GoogleFonts.inter(fontSize: 13),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                prefixIcon: const Icon(
-                                  Icons.category,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: ServiceType.LOCAL,
-                                  child: Text('Local'),
-                                ),
-                                DropdownMenuItem(
-                                  value: ServiceType.DOMICILIO,
-                                  child: Text('Domicilio'),
-                                ),
-                              ],
-                              onChanged: (val) {
-                                if (val != null) {
-                                  setDialogState(() {
-                                    tipoServicio = val;
-                                  });
-                                }
-                              },
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: descripcionController,
-                        style: GoogleFonts.inter(fontSize: 14),
-                        decoration: InputDecoration(
-                          labelText: 'Descripción del Servicio (Opcional)',
-                          labelStyle: GoogleFonts.inter(fontSize: 13),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.description,
-                            color: AppColors.primary,
-                          ),
+                          ],
                         ),
-                        minLines: 2,
-                        maxLines: 4,
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: duracionController,
+                                keyboardType: TextInputType.number,
+                                style: GoogleFonts.inter(fontSize: 14),
+                                decoration: InputDecoration(
+                                  labelText: 'Duración (min)',
+                                  labelStyle: GoogleFonts.inter(fontSize: 13),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.timer_outlined,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Requerido';
+                                  }
+                                  final val = int.tryParse(value);
+                                  if (val == null || val <= 0) {
+                                    return 'Inválido';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: DropdownButtonFormField<ServiceType>(
+                                initialValue: tipoServicio,
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  color: AppColors.onSurface,
+                                ),
+                                decoration: InputDecoration(
+                                  labelText: 'Tipo',
+                                  labelStyle: GoogleFonts.inter(fontSize: 13),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.category,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                items: [
+                                  const DropdownMenuItem(
+                                    value: ServiceType.LOCAL,
+                                    child: Text('Local'),
+                                  ),
+                                  if (tipoServicio == ServiceType.DOMICILIO)
+                                    const DropdownMenuItem(
+                                      value: ServiceType.DOMICILIO,
+                                      child: Text('Domicilio'),
+                                    ),
+                                ],
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    setDialogState(() {
+                                      tipoServicio = val;
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: descripcionController,
+                          style: GoogleFonts.inter(fontSize: 14),
+                          decoration: InputDecoration(
+                            labelText: 'Descripción del Servicio',
+                            labelStyle: GoogleFonts.inter(fontSize: 13),
+                            hintText:
+                                'Ej: Lavamos tu carro con cera siliconada de alta calidad y lo secamos a la sombra.',
+                            hintStyle: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: Colors.grey.shade400,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.description,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          minLines: 2,
+                          maxLines: 4,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
               ),
               actions: [
                 TextButton(
@@ -700,10 +862,18 @@ class _CreateLaundryPageState extends State<CreateLaundryPage> {
                 ElevatedButton(
                   onPressed: () {
                     if (dialogFormKey.currentState!.validate()) {
-                      final double pPequeno = double.parse(precioPequenoController.text);
-                      final double pMediano = double.parse(precioMedianoController.text);
-                      final double pGrande = double.parse(precioGrandeController.text);
-                      final double pMoto = double.parse(precioMotoController.text);
+                      final double pPequeno = double.parse(
+                        precioPequenoController.text,
+                      );
+                      final double pMediano = double.parse(
+                        precioMedianoController.text,
+                      );
+                      final double pGrande = double.parse(
+                        precioGrandeController.text,
+                      );
+                      final double pMoto = double.parse(
+                        precioMotoController.text,
+                      );
                       final int duracion = int.parse(duracionController.text);
 
                       setState(() {
@@ -862,7 +1032,8 @@ class _CreateLaundryPageState extends State<CreateLaundryPage> {
       );
 
       // Auto-switch to the newly created business
-      final BusinessRepository businessRepository = FirebaseBusinessRepository();
+      final BusinessRepository businessRepository =
+          FirebaseBusinessRepository();
       await businessRepository.switchCurrentBusiness(uuid);
 
       // Set active role and redirect or pop
@@ -936,6 +1107,11 @@ class _CreateLaundryPageState extends State<CreateLaundryPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Cerrar Sesión / Volver',
+          onPressed: () => _confirmSignOut(context),
+        ),
         title: Text(
           'Configuración del Negocio',
           style: GoogleFonts.inter(fontWeight: FontWeight.bold),
@@ -944,6 +1120,13 @@ class _CreateLaundryPageState extends State<CreateLaundryPage> {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout_rounded),
+            tooltip: 'Cerrar Sesión',
+            onPressed: () => _confirmSignOut(context),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
@@ -1022,6 +1205,9 @@ class _CreateLaundryPageState extends State<CreateLaundryPage> {
                     decoration: InputDecoration(
                       labelText: 'Número de Teléfono del Local',
                       labelStyle: GoogleFonts.inter(fontSize: 13),
+                      helperText:
+                          'Tus clientes te contactarán a este número para más información.',
+                      helperMaxLines: 2,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -1034,8 +1220,12 @@ class _CreateLaundryPageState extends State<CreateLaundryPage> {
                       if (value == null || value.trim().isEmpty) {
                         return 'El número de teléfono es requerido';
                       }
-                      final cleanVal = value.replaceAll(RegExp(r'\s+|-|\+'), '');
-                      if (cleanVal.length < 7 || int.tryParse(cleanVal) == null) {
+                      final cleanVal = value.replaceAll(
+                        RegExp(r'\s+|-|\+'),
+                        '',
+                      );
+                      if (cleanVal.length < 7 ||
+                          int.tryParse(cleanVal) == null) {
                         return 'Ingresa un número de teléfono válido';
                       }
                       return null;
@@ -1502,69 +1692,62 @@ class _CreateLaundryPageState extends State<CreateLaundryPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _capacidadController,
-                          keyboardType: TextInputType.number,
-                          style: GoogleFonts.inter(fontSize: 14),
-                          decoration: InputDecoration(
-                            labelText: 'Capacidad Simultánea',
-                            helperText: 'Nro. máx. de reservas a la vez',
-                            labelStyle: GoogleFonts.inter(fontSize: 13),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.people_alt_rounded,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Requerido';
-                            }
-                            final val = int.tryParse(value);
-                            if (val == null || val <= 0) {
-                              return 'Debe ser >= 1';
-                            }
-                            return null;
-                          },
-                        ),
+                  TextFormField(
+                    controller: _capacidadController,
+                    keyboardType: TextInputType.number,
+                    style: GoogleFonts.inter(fontSize: 14),
+                    decoration: InputDecoration(
+                      labelText: 'Capacidad Simultánea (Reservas)',
+                      helperText: 'Número máximo de citas o clientes que puedes atender al mismo tiempo (mín. 1).',
+                      helperMaxLines: 2,
+                      labelStyle: GoogleFonts.inter(fontSize: 13),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _anticipacionController,
-                          keyboardType: TextInputType.number,
-                          style: GoogleFonts.inter(fontSize: 14),
-                          decoration: InputDecoration(
-                            labelText: 'Tiempo de Anticipación (min)',
-                            helperText: 'Tiempo de espera para programar',
-                            labelStyle: GoogleFonts.inter(fontSize: 13),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.hourglass_empty_rounded,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Requerido';
-                            }
-                            final val = int.tryParse(value);
-                            if (val == null || val < 0) {
-                              return 'Debe ser >= 0';
-                            }
-                            return null;
-                          },
-                        ),
+                      prefixIcon: const Icon(
+                        Icons.people_alt_rounded,
+                        color: AppColors.primary,
                       ),
-                    ],
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Requerido';
+                      }
+                      final val = int.tryParse(value);
+                      if (val == null || val <= 0) {
+                        return 'Debe ser >= 1';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _anticipacionController,
+                    keyboardType: TextInputType.number,
+                    style: GoogleFonts.inter(fontSize: 14),
+                    decoration: InputDecoration(
+                      labelText: 'Tiempo de Anticipación (Minutos)',
+                      helperText: 'Tiempo mínimo requerido antes de la cita para poder reservar (mín. 0).',
+                      helperMaxLines: 2,
+                      labelStyle: GoogleFonts.inter(fontSize: 13),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.timer_rounded,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Requerido';
+                      }
+                      final val = int.tryParse(value);
+                      if (val == null || val < 0) {
+                        return 'Debe ser >= 0';
+                      }
+                      return null;
+                    },
                   ),
                 ],
               ),

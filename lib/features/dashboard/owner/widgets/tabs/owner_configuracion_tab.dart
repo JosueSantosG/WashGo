@@ -97,7 +97,7 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
           TextFormField(
             controller: widget.rucController,
             decoration: const InputDecoration(
-              labelText: 'RUC / Identificación Fiscal',
+              labelText: 'RUC / Cédula del Propietario',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.assignment, color: AppColors.primary),
             ),
@@ -108,7 +108,8 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
             keyboardType: TextInputType.phone,
             decoration: const InputDecoration(
               labelText: 'Teléfono del Local',
-              helperText: 'Mínimo 7 dígitos (ej: 099123456)',
+              helperText: 'Tus clientes te contactarán a este número para más información (mín. 7 dígitos).',
+              helperMaxLines: 2,
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.phone, color: AppColors.primary),
             ),
@@ -426,9 +427,7 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
               decoration: BoxDecoration(
                 color: Colors.amber.shade50,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.amber.shade200,
-                ),
+                border: Border.all(color: Colors.amber.shade200),
               ),
               child: Row(
                 children: [
@@ -453,36 +452,36 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
             ),
           ],
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: widget.capacidadController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: const InputDecoration(
-                    labelText: 'Capacidad Simultánea',
-                    helperText: 'Vehículos al mismo tiempo (mín. 1)',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.directions_car_rounded, color: AppColors.primary),
-                  ),
-                ),
+          TextFormField(
+            controller: widget.capacidadController,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: const InputDecoration(
+              labelText: 'Capacidad Simultánea (Reservas)',
+              helperText: 'Número máximo de citas o clientes que puedes atender al mismo tiempo (mín. 1).',
+              helperMaxLines: 2,
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(
+                Icons.people_alt_rounded,
+                color: AppColors.primary,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: TextFormField(
-                  controller: widget.anticipacionController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: const InputDecoration(
-                    labelText: 'Anticipación (minutos)',
-                    helperText: 'Tiempo mínimo para reservar (mín. 0)',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.timer_rounded, color: AppColors.primary),
-                  ),
-                ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: widget.anticipacionController,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: const InputDecoration(
+              labelText: 'Tiempo de Anticipación (Minutos)',
+              helperText: 'Tiempo mínimo requerido antes de la cita para poder reservar (mín. 0).',
+              helperMaxLines: 2,
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(
+                Icons.timer_rounded,
+                color: AppColors.primary,
               ),
-            ],
+            ),
           ),
           const SizedBox(height: 32),
           ElevatedButton(
@@ -571,10 +570,7 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
                 ),
                 Divider(height: 1, color: Colors.grey.shade100),
                 ListTile(
-                  leading: const Icon(
-                    Icons.logout_rounded,
-                    color: Colors.red,
-                  ),
+                  leading: const Icon(Icons.logout_rounded, color: Colors.red),
                   title: Text(
                     'Cerrar Sesión',
                     style: GoogleFonts.inter(

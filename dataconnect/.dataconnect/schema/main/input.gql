@@ -338,10 +338,6 @@ input Business_Data {
   ✨ Generated from Field `Business`.`users_on_currentBusiness` of type `[User!]!`
   """
   users_on_currentBusiness: [User_Data!]
-  """
-  ✨ Generated from Field `Business`.`businessReservationConfig_on_business` of type `BusinessReservationConfig`
-  """
-  businessReservationConfig_on_business: BusinessReservationConfig_Data
 }
 """
 ✨ Generated filter input type for table 'Business'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
@@ -3585,6 +3581,14 @@ input Order_Data {
   """
   service: Service_Key @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `Order`.`cancellationReason` of type `String`
+  """
+  cancellationReason: String
+  """
+  ✨ `_expr` server value variant of `cancellationReason` (✨ Generated from Field `Order`.`cancellationReason` of type `String`)
+  """
+  cancellationReason_expr: String_Expr @fdc_forbiddenInVariables
+  """
   ✨ Generated from Field `Order`.`costo` of type `Float!`
   """
   costo: Float
@@ -3684,22 +3688,6 @@ input Order_Data {
   ✨ Generated from Field `Order`.`orderLogs_on_order` of type `[OrderLog!]!`
   """
   orderLogs_on_order: [OrderLog_Data!]
-  """
-  ✨ Generated from Field `Order`.`invoice_on_order` of type `Invoice`
-  """
-  invoice_on_order: Invoice_Data
-  """
-  ✨ Generated from Field `Order`.`orderReservation_on_order` of type `OrderReservation`
-  """
-  orderReservation_on_order: OrderReservation_Data
-  """
-  ✨ Generated from Field `Order`.`paymentProof_on_order` of type `PaymentProof`
-  """
-  paymentProof_on_order: PaymentProof_Data
-  """
-  ✨ Generated from Field `Order`.`review_on_order` of type `Review`
-  """
-  review_on_order: Review_Data
 }
 """
 ✨ Generated filter input type for table 'Order'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
@@ -3753,6 +3741,10 @@ input Order_Filter {
   ✨ Generated from Field `Order`.`service` of type `Service`
   """
   service: Service_Filter
+  """
+  ✨ Generated from Field `Order`.`cancellationReason` of type `String`
+  """
+  cancellationReason: String_Filter
   """
   ✨ Generated from Field `Order`.`costo` of type `Float!`
   """
@@ -3855,6 +3847,10 @@ input Order_Having {
   ✨ Generated from Field `Order`.`businessId_count` of type `Int!`
   """
   businessId_count: Int_Filter
+  """
+  ✨ Generated from Field `Order`.`cancellationReason_count` of type `Int!`
+  """
+  cancellationReason_count: Int_Filter
   """
   ✨ Generated from Field `Order`.`clientId_count` of type `Int!`
   """
@@ -4019,6 +4015,10 @@ input Order_Order {
   """
   service: Service_Order
   """
+  ✨ Generated from Field `Order`.`cancellationReason` of type `String`
+  """
+  cancellationReason: OrderDirection
+  """
   ✨ Generated from Field `Order`.`costo` of type `Float!`
   """
   costo: OrderDirection
@@ -4066,6 +4066,10 @@ input Order_Order {
   ✨ Generated from Field `Order`.`businessId_count` of type `Int!`
   """
   businessId_count: OrderDirection
+  """
+  ✨ Generated from Field `Order`.`cancellationReason_count` of type `Int!`
+  """
+  cancellationReason_count: OrderDirection
   """
   ✨ Generated from Field `Order`.`clientId_count` of type `Int!`
   """

@@ -26,6 +26,7 @@ class ServerGetOrderByIdOrder {
   final String? serviceName;
   final EnumValue<OrderStatus> status;
   final String? observations;
+  final String? cancellationReason;
   final double price;
   final EnumValue<PaymentMethod> paymentMethod;
   final EnumValue<OrderType> type;
@@ -41,6 +42,7 @@ class ServerGetOrderByIdOrder {
   serviceName = json['serviceName'] == null ? null : nativeFromJson<String>(json['serviceName']),
   status = orderStatusDeserializer(json['status']),
   observations = json['observations'] == null ? null : nativeFromJson<String>(json['observations']),
+  cancellationReason = json['cancellationReason'] == null ? null : nativeFromJson<String>(json['cancellationReason']),
   price = nativeFromJson<double>(json['price']),
   paymentMethod = paymentMethodDeserializer(json['paymentMethod']),
   type = orderTypeDeserializer(json['type']),
@@ -64,6 +66,7 @@ class ServerGetOrderByIdOrder {
     serviceName == otherTyped.serviceName && 
     status == otherTyped.status && 
     observations == otherTyped.observations && 
+    cancellationReason == otherTyped.cancellationReason && 
     price == otherTyped.price && 
     paymentMethod == otherTyped.paymentMethod && 
     type == otherTyped.type && 
@@ -73,7 +76,7 @@ class ServerGetOrderByIdOrder {
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, clientId.hashCode, employeeId.hashCode, costo.hashCode, serviceName.hashCode, status.hashCode, observations.hashCode, price.hashCode, paymentMethod.hashCode, type.hashCode, business.hashCode, client.hashCode, employee.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, clientId.hashCode, employeeId.hashCode, costo.hashCode, serviceName.hashCode, status.hashCode, observations.hashCode, cancellationReason.hashCode, price.hashCode, paymentMethod.hashCode, type.hashCode, business.hashCode, client.hashCode, employee.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -92,6 +95,9 @@ class ServerGetOrderByIdOrder {
     ;
     if (observations != null) {
       json['observations'] = nativeToJson<String?>(observations);
+    }
+    if (cancellationReason != null) {
+      json['cancellationReason'] = nativeToJson<String?>(cancellationReason);
     }
     json['price'] = nativeToJson<double>(price);
     json['paymentMethod'] = 
@@ -116,6 +122,7 @@ class ServerGetOrderByIdOrder {
     this.serviceName,
     required this.status,
     this.observations,
+    this.cancellationReason,
     required this.price,
     required this.paymentMethod,
     required this.type,

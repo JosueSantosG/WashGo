@@ -1500,6 +1500,15 @@ extend type Order {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "Order.businessId", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `Order` table where the `cancellationReason` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  cancellationReason_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Order.cancellationReason", purpose: QUERY_COUNT)
+  """
   ✨ Count the number of rows in the `Order` table where the `clientId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
   clientId_count(

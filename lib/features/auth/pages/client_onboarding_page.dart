@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:washgo/config/theme/app_colors.dart';
 import 'package:washgo/shared/widgets/custom_text_field.dart';
@@ -13,6 +14,7 @@ import 'package:washgo/features/auth/repositories/firebase_auth_repository.dart'
 import 'package:washgo/core/session/booking_intent_manager.dart';
 import 'package:washgo/config/routes/app_routes.dart';
 import 'package:washgo/features/payments/pages/proof_status_page.dart';
+import 'package:washgo/features/auth/models/registration_draft.dart';
 
 class ClientOnboardingPage extends StatefulWidget {
   const ClientOnboardingPage({super.key});
@@ -39,6 +41,10 @@ class _ClientOnboardingPageState extends State<ClientOnboardingPage> {
       if (user.photoURL != null && user.photoURL!.isNotEmpty) {
         _photoUrl = user.photoURL;
       }
+    } else {
+      if (RegistrationDraft.name.isNotEmpty) {
+        _nameController.text = RegistrationDraft.name;
+      }
     }
   }
 
@@ -50,29 +56,101 @@ class _ClientOnboardingPageState extends State<ClientOnboardingPage> {
   }
 
   Future<void> _finalizar() async {
+    final name = _nameController.text.trim();
+    final phone = _phoneController.text.trim();
+
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, ingresa tu nombre completo.')),
+      );
+      return;
+    }
+
+    if (phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, ingresa tu teléfono de contacto.')),
+      );
+      return;
+    }
+
+    if (phone.length != 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('El teléfono de contacto debe tener exactamente 10 dígitos.')),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        // Actualizar nombre en Firebase Auth
-        await user.updateDisplayName(_nameController.text);
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        final email = RegistrationDraft.email;
+        final password = RegistrationDraft.password;
+        if (email.isEmpty || password.isEmpty) {
+          throw Exception('Faltan datos de registro del paso anterior.');
+        }
 
-        // Actualizar datos en DataConnect
+        final credential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(email: email, password: password);
+        user = credential.user;
+
+        if (user != null) {
+          await user.updateDisplayName(name);
+          if (_photoUrl != null) {
+            await user.updateProfile(photoURL: _photoUrl);
+          }
+
+          await _authRepository.upsertUser(
+            email: email,
+            nombreCompleto: name,
+            roles: [UserRole.CLIENTE],
+            telefono: phone,
+            fotoPerfil: _photoUrl,
+          );
+
+          RegistrationDraft.clear();
+          SessionManager.activeRole = UserRole.CLIENTE;
+        }
+      } else {
+        await user.updateDisplayName(name);
+        if (_photoUrl != null) {
+          await user.updateProfile(photoURL: _photoUrl);
+        }
+
+        final currentUserData = await _authRepository.getCurrentUser();
+        final List<UserRole> roles = currentUserData?.roles ?? [UserRole.CLIENTE];
+
         if (user.email != null) {
           await _authRepository.upsertUser(
             email: user.email!,
-            nombreCompleto: _nameController.text,
-            roles: [UserRole.CLIENTE], // Por ahora fijo ya que es onboarding cliente
-            telefono: _phoneController.text.trim().isNotEmpty ? _phoneController.text.trim() : null,
+            nombreCompleto: name,
+            roles: roles,
+            telefono: phone,
             fotoPerfil: _photoUrl,
           );
         }
       }
+
       if (mounted) {
         _showContinueReservationDialog();
+      }
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Firebase Auth Error: $e');
+      String errorMessage = 'Error al crear la cuenta.';
+      if (e.code == 'weak-password') {
+        errorMessage = 'La contraseña proporcionada es demasiado débil.';
+      } else if (e.code == 'email-already-in-use') {
+        errorMessage = 'Ya existe una cuenta con ese correo.';
+      } else if (e.message != null) {
+        errorMessage = e.message!;
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage)),
+        );
       }
     } catch (e) {
       debugPrint('Error guardando los datos: $e');
@@ -242,11 +320,14 @@ class _ClientOnboardingPageState extends State<ClientOnboardingPage> {
   }
 
   Future<void> _confirmSignOut() async {
+    final user = FirebaseAuth.instance.currentUser;
     final bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Cerrar Sesión?'),
-        content: const Text('¿Estás seguro de que deseas cerrar sesión? Si sales ahora, se cerrará tu sesión actual y volverás a la pantalla de ingreso.'),
+        title: Text(user != null ? '¿Cerrar Sesión?' : '¿Cancelar Registro?'),
+        content: Text(user != null 
+            ? '¿Estás seguro de que deseas cerrar sesión? Si sales ahora, se cerrará tu sesión actual y volverás a la pantalla de ingreso.'
+            : '¿Estás seguro de que deseas cancelar el registro? Se perderán los datos ingresados y volverás a la pantalla de ingreso.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -258,7 +339,7 @@ class _ClientOnboardingPageState extends State<ClientOnboardingPage> {
               backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Cerrar Sesión'),
+            child: Text(user != null ? 'Cerrar Sesión' : 'Aceptar'),
           ),
         ],
       ),
@@ -266,12 +347,17 @@ class _ClientOnboardingPageState extends State<ClientOnboardingPage> {
 
     if (confirm == true) {
       try {
-        await FirebaseAuth.instance.signOut();
-        if (mounted) {
+        if (user != null) {
+          await FirebaseAuth.instance.signOut();
           SessionManager.activeRole = null;
+        } else {
+          RegistrationDraft.clear();
+        }
+        if (mounted) {
+          context.go('/login');
         }
       } catch (e) {
-        debugPrint('Error al cerrar sesión: $e');
+        debugPrint('Error al cerrar sesión/cancelar: $e');
       }
     }
   }
@@ -283,7 +369,12 @@ class _ClientOnboardingPageState extends State<ClientOnboardingPage> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        leading: const Icon(Icons.local_car_wash, color: AppColors.primary),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
+          onPressed: () {
+            context.go(AppRoutes.roleSelection);
+          },
+        ),
         title: const Text(
           'WashGo',
           style: TextStyle(
@@ -313,7 +404,7 @@ class _ClientOnboardingPageState extends State<ClientOnboardingPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Paso 2 de 3',
+                      'Paso 3 de 3',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -324,7 +415,7 @@ class _ClientOnboardingPageState extends State<ClientOnboardingPage> {
                       child: Padding(
                         padding: const EdgeInsets.only(left: 16.0),
                         child: LinearProgressIndicator(
-                          value: 0.66,
+                          value: 1.0,
                           backgroundColor: AppColors.outlineVariant,
                           valueColor: const AlwaysStoppedAnimation<Color>(
                             AppColors.primary,
@@ -411,6 +502,10 @@ class _ClientOnboardingPageState extends State<ClientOnboardingPage> {
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   prefixIcon: Icons.call_outlined,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
                 ),
 
                 const SizedBox(height: 48),

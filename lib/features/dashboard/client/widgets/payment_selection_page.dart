@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:washgo/config/theme/app_colors.dart';
@@ -10,6 +11,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:washgo/config/env/environment.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
+import 'package:washgo/features/invoices/utils/pdf_generator.dart';
 
 class PaymentSelectionPage extends StatefulWidget {
   final LaundryItem laundry;
@@ -40,7 +42,7 @@ class PaymentSelectionPage extends StatefulWidget {
 }
 
 class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
-  PaymentMethod _selectedMethod = PaymentMethod.PAYPAL;
+  PaymentMethod _selectedMethod = PaymentMethod.PAYPHONE;
   bool _preferPaypalCard = false;
   bool _isProcessing = false;
   bool _payphoneWaiting = false;
@@ -151,6 +153,79 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                           backgroundColor: Colors.green.shade600,
                                         ),
                                       );
+                                      return;
+                                    }
+
+                                    // Si no está completado en DB, consultar si se guardó el transactionId
+                                    final user = FirebaseAuth.instance.currentUser;
+                                    if (user == null) {
+                                      throw Exception('Usuario no autenticado.');
+                                    }
+                                    final idToken = await user.getIdToken();
+                                    if (idToken == null) {
+                                      throw Exception('No se pudo obtener el token de autenticación.');
+                                    }
+
+                                    final transactionId = await PayphoneService.getStoredTransaction(
+                                      orderId: _payphoneOrderId!,
+                                      idToken: idToken,
+                                      baseUrl: _getFunctionsBaseUrl(),
+                                    );
+
+                                    if (transactionId != null && transactionId.isNotEmpty) {
+                                      // 1. Obtener detalles del negocio para RUC y descripción
+                                      final businessResult = await connector
+                                          .getBusinessDetails(id: order.business.id)
+                                          .execute();
+                                      final biz = businessResult.data.business;
+                                      final String ruc = biz?.ruc ?? '20123456789';
+                                      final String description = biz?.descripcion ?? 'Lavado Profesional';
+
+                                      // 2. Generar factura localmente
+                                      final now = DateTime.now();
+                                      final uniqueSuffix = (now.millisecondsSinceEpoch % 1000000).toString().padLeft(6, '0');
+                                      final tempInvoiceNumber = 'FAC-${now.year}-$uniqueSuffix';
+                                      final serviceName = order.serviceName ?? 'Servicio de Lavandería';
+
+                                      final pdfBytes = await PdfGenerator.generateInvoicePdf(
+                                        invoiceNumber: tempInvoiceNumber,
+                                        fechaEmision: now,
+                                        businessName: order.business.nombre,
+                                        ruc: ruc,
+                                        description: description,
+                                        clientName: order.client.nombreCompleto,
+                                        clientEmail: order.client.email,
+                                        clientPhone: order.client.telefono,
+                                        employeeName: order.employee?.nombreCompleto ?? 'Sin asignar',
+                                        serviceName: serviceName,
+                                        price: order.price,
+                                        paymentMethod: 'PAYPHONE',
+                                        observations: order.observations ?? '',
+                                      );
+
+                                      final base64Pdf = base64Encode(pdfBytes);
+
+                                      // 3. Completar el pago en el backend
+                                      await PayphoneService.completePayment(
+                                        orderId: _payphoneOrderId!,
+                                        transactionId: transactionId,
+                                        base64Pdf: base64Pdf,
+                                        idToken: idToken,
+                                        baseUrl: _getFunctionsBaseUrl(),
+                                      );
+
+                                      if (!mounted) return;
+                                      Navigator.pop(context);
+                                      Navigator.pop(context);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            '¡Pago verificado y reserva confirmada!',
+                                            style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                                          ),
+                                          backgroundColor: Colors.green.shade600,
+                                        ),
+                                      );
                                     } else {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
@@ -163,12 +238,22 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                       );
                                     }
                                   } catch (e) {
+                                    final errStr = e.toString();
+                                    String message;
+                                    if (errStr.contains('DB_UNAVAILABLE')) {
+                                      message = 'La base de datos está temporalmente no disponible. '
+                                          'Tu pago fue registrado — por favor espera unos segundos y vuelve a presionar "Ya pagué – Verificar".';
+                                    } else {
+                                      message = 'Error al verificar: $e';
+                                    }
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text('Error al verificar: $e'),
+                                        content: Text(message),
                                         backgroundColor: AppColors.error,
+                                        duration: const Duration(seconds: 6),
                                       ),
                                     );
+
                                   } finally {
                                     setState(() {
                                       _isProcessing = false;
@@ -496,6 +581,41 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                     ),
                     const SizedBox(height: 12),
 
+                    // PayPhone Option Card
+                    _buildPaymentOptionCard(
+                      isSelected: _selectedMethod == PaymentMethod.PAYPHONE,
+                      title: 'PayPhone',
+                      subtitle: 'Pago con tarjeta de crédito/débito o saldo PayPhone',
+                      icon: Icons.phone_android_rounded,
+                      iconColor: const Color(0xFFFF6C00),
+                      bgColor: const Color(0xFFFF6C00).withValues(alpha: 0.08),
+                      isDisabled: false,
+                      onTap: () {
+                        setState(() {
+                          _selectedMethod = PaymentMethod.PAYPHONE;
+                          _preferPaypalCard = false;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Bank Transfer Option Card
+                    _buildPaymentOptionCard(
+                      isSelected: _selectedMethod == PaymentMethod.TRANSFERENCIA_BANCARIA,
+                      title: 'Transferencia Bancaria',
+                      subtitle: 'Paga mediante transferencia directa',
+                      icon: Icons.account_balance_rounded,
+                      iconColor: AppColors.primary,
+                      bgColor: AppColors.primary.withValues(alpha: 0.08),
+                      onTap: () {
+                        setState(() {
+                          _selectedMethod = PaymentMethod.TRANSFERENCIA_BANCARIA;
+                          _preferPaypalCard = false;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
                     // PayPal Option Card
                     _buildPaymentOptionCard(
                       isSelected: _selectedMethod == PaymentMethod.PAYPAL && !_preferPaypalCard,
@@ -525,61 +645,6 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                         setState(() {
                           _selectedMethod = PaymentMethod.PAYPAL;
                           _preferPaypalCard = true;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-
-                    /*
-                    // Cash Option Card
-                    _buildPaymentOptionCard(
-                      isSelected: _selectedMethod == PaymentMethod.CASH,
-                      title: 'Pago en Sitio',
-                      subtitle:
-                          'Pagar al llegar al local (Espera en fila normal)',
-                      icon: Icons.payments_rounded,
-                      iconColor: const Color(0xFF10B981),
-                      bgColor: const Color(0xFFECFDF5),
-                      onTap: () {
-                        setState(() {
-                          _selectedMethod = PaymentMethod.CASH;
-                          _preferPaypalCard = false;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    */
-
-                    // Bank Transfer Option Card
-                    _buildPaymentOptionCard(
-                      isSelected: _selectedMethod == PaymentMethod.TRANSFERENCIA_BANCARIA,
-                      title: 'Transferencia Bancaria',
-                      subtitle: 'Paga mediante transferencia directa',
-                      icon: Icons.account_balance_rounded,
-                      iconColor: AppColors.primary,
-                      bgColor: AppColors.primary.withValues(alpha: 0.08),
-                      onTap: () {
-                        setState(() {
-                          _selectedMethod = PaymentMethod.TRANSFERENCIA_BANCARIA;
-                          _preferPaypalCard = false;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-
-                    // PayPhone Option Card
-                    _buildPaymentOptionCard(
-                      isSelected: _selectedMethod == PaymentMethod.PAYPHONE,
-                      title: 'PayPhone',
-                      subtitle: 'Pago con tarjeta de crédito/débito o saldo PayPhone',
-                      icon: Icons.phone_android_rounded,
-                      iconColor: const Color(0xFFFF6C00),
-                      bgColor: const Color(0xFFFF6C00).withValues(alpha: 0.08),
-                      isDisabled: false,
-                      onTap: () {
-                        setState(() {
-                          _selectedMethod = PaymentMethod.PAYPHONE;
-                          _preferPaypalCard = false;
                         });
                       },
                     ),

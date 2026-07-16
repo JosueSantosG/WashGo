@@ -29,6 +29,7 @@ import 'package:washgo/features/orders/repositories/firebase_order_repository.da
 import 'package:washgo/features/orders/models/client_order.dart';
 import 'package:washgo/features/orders/widgets/reschedule_slots_sheet.dart';
 import 'package:washgo/core/utils/observations_parser.dart';
+import 'package:washgo/features/payments/repositories/bank_transfer_repository.dart';
 
 class HomePage extends StatefulWidget {
   final int initialTab;
@@ -145,7 +146,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _cancelOrder(BuildContext context, ClientOrder order) async {
-    final isPaid = order.paymentMethod != 'CASH';
+    bool isPaid = order.paymentMethod != 'CASH';
+
+    if (order.paymentMethod == 'TRANSFERENCIA_BANCARIA') {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+          ),
+        ),
+      );
+      try {
+        final proof = await BankTransferRepository().getProofStatus(order.id);
+        isPaid = proof != null;
+      } catch (e) {
+        isPaid = false;
+      }
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+    }
+
+    if (!context.mounted) return;
+
     bool shouldProceedWithCancellation = false;
 
     if (isPaid) {
@@ -326,6 +351,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         await _orderRepository.updateOrderStatus(
           orderId: order.id,
           status: OrderStatus.CANCELADO,
+          cancellationReason: 'Cancelado por el cliente',
         );
         if (!context.mounted) return;
         Navigator.pop(context);

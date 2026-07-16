@@ -336,71 +336,6 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
     );
   }
 
-  Widget _buildCertificationsCard() {
-    final certifications = [
-      {'name': 'Certificado de Detallado Premium', 'date': 'Emitido: Ene 2026', 'icon': Icons.verified_user_rounded},
-      {'name': 'Limpieza de Interiores Avanzada', 'date': 'Emitido: Feb 2026', 'icon': Icons.stars_rounded},
-      {'name': 'Manejo Seguro de Químicos y Ceras', 'date': 'Emitido: Mar 2026', 'icon': Icons.security_rounded},
-      {'name': 'Atención al Cliente Excepcional', 'date': 'Emitido: Abr 2026', 'icon': Icons.people_alt_rounded},
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Mis Certificaciones',
-          style: GoogleFonts.outfit(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.onBackground,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          '${certifications.length} certificados activos.',
-          style: GoogleFonts.outfit(
-            fontSize: 12,
-            color: AppColors.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
-          ),
-          child: Column(
-            children: certifications.map((cert) {
-              return ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(cert['icon'] as IconData, color: AppColors.primary, size: 20),
-                ),
-                title: Text(
-                  cert['name'] as String,
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                subtitle: Text(
-                  cert['date'] as String,
-                  style: const TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant),
-                ),
-                trailing: const Icon(Icons.check_circle, color: Colors.green, size: 20),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildLegalCard() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -944,14 +879,6 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                     color: AppColors.onBackground,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Especialista en Detallado',
-                  style: GoogleFonts.outfit(
-                    fontSize: 14,
-                    color: AppColors.onSurfaceVariant,
-                  ),
-                ),
                 const SizedBox(height: 16),
               ],
             ),
@@ -974,9 +901,7 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
           _buildPersonalInfoCard(),
           const SizedBox(height: 24),
 
-          // Mis Certificaciones
-          _buildCertificationsCard(),
-          const SizedBox(height: 24),
+
 
           // Legal y Cumplimiento
           _buildLegalCard(),

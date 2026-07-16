@@ -17,6 +17,7 @@ class ClientOrder {
   final String businessId;
   final String status;
   final String observations;
+  final String? cancellationReason;
   final String businessName;
   final String? businessPhone;
   final String? serviceName;
@@ -27,12 +28,14 @@ class ClientOrder {
   final bool hasReview;
   final DateTime? createdAt;
   final String? type;
+  final bool hasPaymentProof;
 
   const ClientOrder({
     required this.id,
     required this.businessId,
     required this.status,
     required this.observations,
+    this.cancellationReason,
     required this.businessName,
     this.businessPhone,
     this.serviceName,
@@ -43,5 +46,6 @@ class ClientOrder {
     this.hasReview = false,
     this.createdAt,
     this.type,
+    this.hasPaymentProof = false,
   });
 }

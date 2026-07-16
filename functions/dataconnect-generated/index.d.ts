@@ -834,15 +834,18 @@ export interface GetClientHistoryOrdersPagedData {
     costo: number;
     serviceName?: string | null;
     observations?: string | null;
+    cancellationReason?: string | null;
     type: OrderType;
     paymentMethod: PaymentMethod;
     status: OrderStatus;
     invoiceUrl?: string | null;
+    createdAt?: TimestampString | null;
     business: {
       id: UUIDString;
       nombre: string;
       latitud?: number | null;
       longitud?: number | null;
+      telefono?: string | null;
     } & Business_Key;
     employee?: {
       id: string;
@@ -861,6 +864,7 @@ export interface GetClientHistoryOrdersPagedData {
 export interface GetClientHistoryOrdersPagedVariables {
   limit: number;
   offset: number;
+  statuses?: OrderStatus[] | null;
 }
 
 export interface GetClientInvoicesData {
@@ -917,6 +921,7 @@ export interface GetClientOrdersData {
     costo: number;
     serviceName?: string | null;
     observations?: string | null;
+    cancellationReason?: string | null;
     type: OrderType;
     paymentMethod: PaymentMethod;
     status: OrderStatus;
@@ -1270,6 +1275,7 @@ export interface GetOrderByIdData {
     serviceName?: string | null;
     status: OrderStatus;
     observations?: string | null;
+    cancellationReason?: string | null;
     price: number;
     paymentMethod: PaymentMethod;
     type: OrderType;
@@ -1725,6 +1731,7 @@ export interface ServerGetOrderByIdData {
     serviceName?: string | null;
     status: OrderStatus;
     observations?: string | null;
+    cancellationReason?: string | null;
     price: number;
     paymentMethod: PaymentMethod;
     type: OrderType;
@@ -1761,6 +1768,7 @@ export interface ServerUpdateOrderStatusData {
 export interface ServerUpdateOrderStatusVariables {
   orderId: UUIDString;
   status: OrderStatus;
+  cancellationReason?: string | null;
 }
 
 export interface ServerUpdatePaymentProofData {
@@ -1847,6 +1855,7 @@ export interface SuperAdminGetCancelledOrdersSummaryData {
     id: UUIDString;
     price: number;
     paymentMethod: PaymentMethod;
+    invoiceUrl?: string | null;
   } & Order_Key)[];
 }
 
@@ -1993,6 +2002,7 @@ export interface UpdateOrderPaymentMethodAndStatusVariables {
   orderId: UUIDString;
   paymentMethod: PaymentMethod;
   status: OrderStatus;
+  cancellationReason?: string | null;
 }
 
 export interface UpdateOrderStatusData {
@@ -2002,6 +2012,7 @@ export interface UpdateOrderStatusData {
 export interface UpdateOrderStatusVariables {
   orderId: UUIDString;
   status: OrderStatus;
+  cancellationReason?: string | null;
 }
 
 export interface UpdatePrepaidServiceMetricData {

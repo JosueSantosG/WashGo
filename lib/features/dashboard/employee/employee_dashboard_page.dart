@@ -60,6 +60,8 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
   String? _invoicesErrorMessage;
   int _currentNavIndex = 0;
   StreamSubscription<List<WashGoOrder>>? _ordersSubscription;
+  Timer? _approvalPollingTimer;
+
 
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -651,6 +653,7 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
     _tabController.dispose();
     _searchController.dispose();
     _ordersSubscription?.cancel();
+    _approvalPollingTimer?.cancel();
     super.dispose();
   }
 
@@ -960,6 +963,7 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
       _businessName = currentBusinessName;
 
       if (_employeeStatus == EmployeeStatus.PENDING) {
+        _startApprovalPolling();
         if (mounted) {
           setState(() {
             _pendingQueue = [];
@@ -973,6 +977,8 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
           });
         }
       } else {
+        _approvalPollingTimer?.cancel();
+        _approvalPollingTimer = null;
         _subscribeToOrders();
 
         await Future.wait([
@@ -1013,7 +1019,11 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
               final isPendingPago = status == OrderStatus.PENDIENTE_PAGO;
               final orderEmployeeId = order.employee?.id;
 
-              if ((isEnCola || isPendingPago) && orderEmployeeId == null) {
+              final isTransferenciaConComprobante = isPendingPago &&
+                  order.paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA &&
+                  order.paymentProofStatus != null;
+
+              if ((isEnCola || isTransferenciaConComprobante) && orderEmployeeId == null) {
                 pending.add(order);
               } else if (orderEmployeeId == _employeeId) {
                 myActive.add(order);
@@ -1051,6 +1061,33 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
         );
   }
 
+  void _startApprovalPolling() {
+    _approvalPollingTimer?.cancel();
+    _approvalPollingTimer = Timer.periodic(const Duration(seconds: 15), (_) async {
+      try {
+        final user = await _authRepository.getCurrentUser();
+        if (user == null) return;
+        final newStatus = user.employeeStatus;
+        if (newStatus != EmployeeStatus.PENDING && mounted) {
+          _approvalPollingTimer?.cancel();
+          _approvalPollingTimer = null;
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('¡Has sido aprobado! Ya puedes empezar a recibir reservas.'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 4),
+              ),
+            );
+            _initializeDashboard();
+          }
+        }
+      } catch (e) {
+        debugPrint('Error en polling de aprobación: $e');
+      }
+    });
+  }
+
   Future<void> _fetchOrders() async {
     if (_businessId == null) return;
 
@@ -1067,7 +1104,11 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
         final isPendingPago = status == OrderStatus.PENDIENTE_PAGO;
         final orderEmployeeId = order.employee?.id;
 
-        if ((isEnCola || isPendingPago) && orderEmployeeId == null) {
+        final isTransferenciaConComprobante = isPendingPago &&
+            order.paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA &&
+            order.paymentProofStatus != null;
+
+        if ((isEnCola || isTransferenciaConComprobante) && orderEmployeeId == null) {
           pending.add(order);
         } else if (orderEmployeeId == _employeeId) {
           myActive.add(order);

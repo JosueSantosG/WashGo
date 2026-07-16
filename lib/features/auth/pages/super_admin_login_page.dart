@@ -17,8 +17,8 @@ class SuperAdminLoginPage extends StatefulWidget {
 }
 
 class _SuperAdminLoginPageState extends State<SuperAdminLoginPage> {
-  final TextEditingController _usernameController = TextEditingController(text: 'root');
-  final TextEditingController _passwordController = TextEditingController(text: 'admin');
+  final TextEditingController _usernameController = TextEditingController(text: 'root@washgo.com');
+  final TextEditingController _passwordController = TextEditingController(text: 'admin_superadmin');
   bool _isLoading = false;
 
   Future<void> _handleLogin() async {
@@ -33,7 +33,10 @@ class _SuperAdminLoginPageState extends State<SuperAdminLoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      if (username == 'root' && password == 'admin') {
+      final isMasterCreds = (username == 'root' && password == 'admin') ||
+          (username == 'root@washgo.com' && password == 'admin_superadmin');
+
+      if (isMasterCreds) {
         try {
           await FirebaseAuth.instance.signInWithEmailAndPassword(
             email: 'root@washgo.com',
@@ -187,8 +190,8 @@ class _SuperAdminLoginPageState extends State<SuperAdminLoginPage> {
                     // Form Fields
                     CustomTextField(
                       controller: _usernameController,
-                      label: 'Usuario',
-                      keyboardType: TextInputType.text,
+                      label: 'Usuario o Correo',
+                      keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(

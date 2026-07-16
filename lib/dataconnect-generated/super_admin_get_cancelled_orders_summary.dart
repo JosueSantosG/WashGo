@@ -23,11 +23,13 @@ class SuperAdminGetCancelledOrdersSummaryOrders {
   final String id;
   final double price;
   final EnumValue<PaymentMethod> paymentMethod;
+  final String? invoiceUrl;
   SuperAdminGetCancelledOrdersSummaryOrders.fromJson(dynamic json):
   
   id = nativeFromJson<String>(json['id']),
   price = nativeFromJson<double>(json['price']),
-  paymentMethod = paymentMethodDeserializer(json['paymentMethod']);
+  paymentMethod = paymentMethodDeserializer(json['paymentMethod']),
+  invoiceUrl = json['invoiceUrl'] == null ? null : nativeFromJson<String>(json['invoiceUrl']);
   @override
   bool operator ==(Object other) {
     if(identical(this, other)) {
@@ -40,11 +42,12 @@ class SuperAdminGetCancelledOrdersSummaryOrders {
     final SuperAdminGetCancelledOrdersSummaryOrders otherTyped = other as SuperAdminGetCancelledOrdersSummaryOrders;
     return id == otherTyped.id && 
     price == otherTyped.price && 
-    paymentMethod == otherTyped.paymentMethod;
+    paymentMethod == otherTyped.paymentMethod && 
+    invoiceUrl == otherTyped.invoiceUrl;
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, price.hashCode, paymentMethod.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, price.hashCode, paymentMethod.hashCode, invoiceUrl.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -54,6 +57,9 @@ class SuperAdminGetCancelledOrdersSummaryOrders {
     json['paymentMethod'] = 
     paymentMethodSerializer(paymentMethod)
     ;
+    if (invoiceUrl != null) {
+      json['invoiceUrl'] = nativeToJson<String?>(invoiceUrl);
+    }
     return json;
   }
 
@@ -61,6 +67,7 @@ class SuperAdminGetCancelledOrdersSummaryOrders {
     required this.id,
     required this.price,
     required this.paymentMethod,
+    this.invoiceUrl,
   });
 }
 

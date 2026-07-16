@@ -274,12 +274,14 @@ class ServicesTab extends StatelessWidget {
                                         color: Colors.orange.shade800,
                                       ),
                                       const SizedBox(width: 6),
-                                      Text(
-                                        'SUSPENDIDO — Precios propuestos:',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.orange.shade800,
+                                      Expanded(
+                                        child: Text(
+                                          'SUSPENDIDO — Precios propuestos:',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.orange.shade800,
+                                          ),
                                         ),
                                       ),
                                     ],

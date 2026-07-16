@@ -6,6 +6,7 @@ import 'package:washgo/config/routes/app_routes.dart';
 import 'package:washgo/features/auth/models/super_admin_session.dart';
 import 'package:washgo/core/session/session_manager.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
+import 'package:washgo/features/auth/models/registration_draft.dart';
 
 String? authRedirect(BuildContext context, GoRouterState state) {
   if (state.matchedLocation == AppRoutes.splash) {
@@ -27,8 +28,17 @@ String? authRedirect(BuildContext context, GoRouterState state) {
 
   final authUser = FirebaseAuth.instance.currentUser;
   final bool isLoggedIn = authUser != null;
+  final bool isRegisteringFlow = !isLoggedIn &&
+      RegistrationDraft.email.isNotEmpty &&
+      RegistrationDraft.password.isNotEmpty;
   final bool isLoggingIn =
-      state.matchedLocation == AppRoutes.login || state.matchedLocation == AppRoutes.register;
+      state.matchedLocation == AppRoutes.login ||
+      state.matchedLocation == AppRoutes.register ||
+      (isRegisteringFlow &&
+          (state.matchedLocation == AppRoutes.roleSelection ||
+           state.matchedLocation == AppRoutes.roleDetail ||
+           state.matchedLocation == AppRoutes.onboardingCliente ||
+           state.matchedLocation == AppRoutes.onboardingEmployee));
 
   final bool isPublicRoute = state.matchedLocation == AppRoutes.home ||
       state.matchedLocation == '/explore' ||
@@ -57,29 +67,59 @@ String? authRedirect(BuildContext context, GoRouterState state) {
   }
 
   if (isLoggedIn) {
+    // Force onboarding if logged in user has no phone number
     final user = SessionManager.currentUser;
     final activeRole = SessionManager.activeRole;
     if (user != null && activeRole != null) {
-      // Check if user still has the activeRole
-      final roles = user.roles
-          .map((e) => e is Known<UserRole> ? e.value : null)
-          .whereType<UserRole>()
-          .toList();
-      if (!roles.contains(activeRole)) {
-        SessionManager.activeRole = null;
-        return AppRoutes.authGate;
+      if ((activeRole == UserRole.CLIENTE || activeRole == UserRole.EMPLEADO) &&
+          (user.telefono == null || user.telefono!.trim().isEmpty)) {
+        final bool isAllowedRoute = state.matchedLocation == AppRoutes.onboardingCliente ||
+            state.matchedLocation == AppRoutes.onboardingEmployee ||
+            state.matchedLocation == AppRoutes.roleSelection ||
+            state.matchedLocation == AppRoutes.roleDetail ||
+            state.matchedLocation == AppRoutes.terms ||
+            state.matchedLocation == AppRoutes.privacy;
+        if (!isAllowedRoute) {
+          return activeRole == UserRole.CLIENTE
+              ? AppRoutes.onboardingCliente
+              : AppRoutes.onboardingEmployee;
+        }
       }
+    }
 
-      // If active role is employee, check their status
-      if (activeRole == UserRole.EMPLEADO) {
-        final status = user.employeeStatus is Known<EmployeeStatus>
-            ? (user.employeeStatus as Known<EmployeeStatus>).value
-            : EmployeeStatus.UNASSIGNED;
+    final bool isOnboardingRoute = state.matchedLocation == AppRoutes.roleSelection ||
+        state.matchedLocation == AppRoutes.roleDetail ||
+        state.matchedLocation == AppRoutes.onboardingCliente ||
+        state.matchedLocation == AppRoutes.onboardingEmployee ||
+        state.matchedLocation == AppRoutes.employeeCode ||
+        state.matchedLocation == '/select-active-role' ||
+        state.matchedLocation == AppRoutes.createLaundry;
 
-        final isEmployeeDashboard = state.matchedLocation == AppRoutes.employeeDashboard;
-        if (isEmployeeDashboard &&
-            (status == EmployeeStatus.REJECTED || status == EmployeeStatus.UNASSIGNED)) {
+    if (!isOnboardingRoute) {
+      final user = SessionManager.currentUser;
+      final activeRole = SessionManager.activeRole;
+      if (user != null && activeRole != null) {
+        // Check if user still has the activeRole
+        final roles = user.roles
+            .map((e) => e is Known<UserRole> ? e.value : null)
+            .whereType<UserRole>()
+            .toList();
+        if (!roles.contains(activeRole)) {
+          SessionManager.activeRole = null;
           return AppRoutes.authGate;
+        }
+
+        // If active role is employee, check their status
+        if (activeRole == UserRole.EMPLEADO) {
+          final status = user.employeeStatus is Known<EmployeeStatus>
+              ? (user.employeeStatus as Known<EmployeeStatus>).value
+              : EmployeeStatus.UNASSIGNED;
+
+          final isEmployeeDashboard = state.matchedLocation == AppRoutes.employeeDashboard;
+          if (isEmployeeDashboard &&
+              (status == EmployeeStatus.REJECTED || status == EmployeeStatus.UNASSIGNED)) {
+            return AppRoutes.authGate;
+          }
         }
       }
     }

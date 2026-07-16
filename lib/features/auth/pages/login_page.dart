@@ -16,8 +16,12 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _emailController = TextEditingController(text: 'juanperez@gmail.com');
-  final TextEditingController _passwordController = TextEditingController(text: '123456');
+  final TextEditingController _emailController = TextEditingController(
+    text: 'juanperez@gmail.com',
+  );
+  final TextEditingController _passwordController = TextEditingController(
+    text: 'Juan123456',
+  );
   bool _isLoading = false;
 
   Future<void> _signInWithEmail() async {
@@ -39,7 +43,33 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       context.go(AppRoutes.authGate);
     } on FirebaseAuthException catch (e) {
-      _showError(e.message ?? 'Error al iniciar sesión');
+      String errorMessage;
+      switch (e.code) {
+        case 'user-not-found':
+        case 'auth/user-not-found':
+        case 'wrong-password':
+        case 'auth/wrong-password':
+        case 'invalid-credential':
+        case 'auth/invalid-credential':
+          errorMessage = 'El correo o la contraseña son incorrectos.';
+          break;
+        case 'invalid-email':
+        case 'auth/invalid-email':
+          errorMessage = 'El formato del correo electrónico no es válido.';
+          break;
+        case 'user-disabled':
+        case 'auth/user-disabled':
+          errorMessage = 'Esta cuenta ha sido deshabilitada.';
+          break;
+        case 'too-many-requests':
+        case 'auth/too-many-requests':
+          errorMessage =
+              'Demasiados intentos fallidos. Por favor, inténtalo más tarde.';
+          break;
+        default:
+          errorMessage = e.message ?? 'Error al iniciar sesión';
+      }
+      _showError(errorMessage);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -155,6 +185,16 @@ class _LoginPageState extends State<LoginPage> {
                                     style: textTheme.headlineMedium?.copyWith(
                                       color: AppColors.primary,
                                       fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  TextButton.icon(
+                                    onPressed: () => context.go(AppRoutes.home),
+                                    icon: const Icon(Icons.map_outlined, size: 20),
+                                    label: const Text('Ir al mapa'),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: AppColors.primary,
+                                      textStyle: const TextStyle(fontWeight: FontWeight.bold),
                                     ),
                                   ),
                                 ],
@@ -366,7 +406,8 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             _FooterLink(
                               text: 'Administración',
-                              onTap: () => context.go(AppRoutes.superAdminLogin),
+                              onTap: () =>
+                                  context.go(AppRoutes.superAdminLogin),
                             ),
                           ],
                         ),

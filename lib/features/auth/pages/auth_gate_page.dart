@@ -88,6 +88,12 @@ class _AuthGatePageState extends State<AuthGatePage> {
               context.go(AppRoutes.employeeDashboard);
               break;
           }
+        } else if (activeRole == UserRole.CLIENTE) {
+          if (user.telefono == null || user.telefono!.trim().isEmpty) {
+            context.go(AppRoutes.onboardingCliente);
+          } else {
+            _checkPendingBookingIntentOrGoHome();
+          }
         } else if (activeRole == UserRole.ADMINISTRADOR) {
           if (user.currentBusinessId == null) {
             context.go('/create-laundry');
@@ -95,7 +101,7 @@ class _AuthGatePageState extends State<AuthGatePage> {
             context.go('/owner-dashboard');
           }
         } else {
-          // El usuario es CLIENTE o SUPER_ADMIN
+          // El usuario es SUPER_ADMIN, etc.
           _checkPendingBookingIntentOrGoHome();
         }
       } else {

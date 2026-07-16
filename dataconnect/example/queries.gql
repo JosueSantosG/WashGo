@@ -107,6 +107,7 @@ query GetClientOrders @auth(level: USER) {
     costo
     serviceName
     observations
+    cancellationReason
     type
     paymentMethod
     status
@@ -438,11 +439,11 @@ query GetEmployeeHistoryOrdersPaged($businessId: UUID!, $employeeId: String!, $l
   }
 }
 
-query GetClientHistoryOrdersPaged($limit: Int!, $offset: Int!) @auth(level: USER) {
+query GetClientHistoryOrdersPaged($limit: Int!, $offset: Int!, $statuses: [OrderStatus!]) @auth(level: USER) {
   orders(
     where: {
       clientId: { eq_expr: "auth.uid" }
-      status: { in: [COMPLETADO, CANCELADO] }
+      status: { in: $statuses }
     }
     limit: $limit
     offset: $offset
@@ -453,15 +454,18 @@ query GetClientHistoryOrdersPaged($limit: Int!, $offset: Int!) @auth(level: USER
     costo
     serviceName
     observations
+    cancellationReason
     type
     paymentMethod
     status
     invoiceUrl
+    createdAt
     business {
       id
       nombre
       latitud
       longitud
+      telefono
     }
     employee {
       id
@@ -889,6 +893,7 @@ query GetOrderById($id: UUID!) @auth(level: USER) {
     serviceName
     status
     observations
+    cancellationReason
     price
     paymentMethod
     type
@@ -915,6 +920,7 @@ query ServerGetOrderById($id: UUID!) @auth(level: NO_ACCESS) {
     serviceName
     status
     observations
+    cancellationReason
     price
     paymentMethod
     type
@@ -1349,6 +1355,7 @@ query SuperAdminGetCancelledOrdersSummary($startOfMonth: Timestamp!, $endOfMonth
     id
     price
     paymentMethod
+    invoiceUrl
   }
 }
 

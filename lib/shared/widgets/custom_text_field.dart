@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter/services.dart';
 import 'package:washgo/config/theme/app_colors.dart';
 
 class CustomTextField extends StatefulWidget {
@@ -8,6 +8,7 @@ class CustomTextField extends StatefulWidget {
   final TextInputType keyboardType;
   final TextEditingController? controller;
   final IconData? prefixIcon;
+  final List<TextInputFormatter>? inputFormatters;
 
   const CustomTextField({
     super.key,
@@ -16,6 +17,7 @@ class CustomTextField extends StatefulWidget {
     this.keyboardType = TextInputType.text,
     this.controller,
     this.prefixIcon,
+    this.inputFormatters,
   });
 
   @override
@@ -32,6 +34,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
       obscureText: widget.isPassword ? _obscureText : false,
       keyboardType: widget.keyboardType,
       style: const TextStyle(color: AppColors.onSurface),
+      inputFormatters: widget.inputFormatters,
       decoration: InputDecoration(
         labelText: widget.label,
         prefixIcon: widget.prefixIcon != null ? Icon(widget.prefixIcon) : null,

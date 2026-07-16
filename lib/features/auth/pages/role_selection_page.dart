@@ -1,3 +1,4 @@
+import 'package:washgo/config/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
@@ -5,15 +6,54 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:washgo/core/session/session_manager.dart';
 import 'package:washgo/features/auth/repositories/auth_repository.dart';
 import 'package:washgo/features/auth/repositories/firebase_auth_repository.dart';
+import 'package:washgo/config/routes/app_routes.dart';
+import 'package:washgo/features/auth/models/registration_draft.dart';
 
-class RoleSelectionPage extends StatelessWidget {
+class RoleSelectionPage extends StatefulWidget {
   const RoleSelectionPage({super.key});
+
+  @override
+  State<RoleSelectionPage> createState() => _RoleSelectionPageState();
+}
+
+class _RoleSelectionPageState extends State<RoleSelectionPage> {
+  bool _isLoading = false;
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFFD32F2F),
+      ),
+    );
+  }
+
+  void _showSuccess(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFF388E3C),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9FF),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF151C27)),
+          onPressed: () {
+            if (FirebaseAuth.instance.currentUser != null) {
+              _confirmSignOut(context);
+            } else {
+              context.go(AppRoutes.register);
+            }
+          },
+        ),
         title: const Text(
           'Selección de Rol',
           style: TextStyle(color: Color(0xFF151C27)),
@@ -29,61 +69,92 @@ class RoleSelectionPage extends StatelessWidget {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              '¿Cómo quieres usar WashGo?',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF151C27),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Stepper
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Paso 2 de 3',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 16.0),
+                          child: LinearProgressIndicator(
+                            value: 0.66,
+                            backgroundColor: AppColors.outlineVariant,
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              AppColors.primary,
+                            ),
+                            minHeight: 8,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+
+                  const Text(
+                    '¿Cómo quieres usar WashGo?',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF151C27),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  _RoleCard(
+                    title: 'Cliente',
+                    description:
+                        'Quiero lavar mi auto y encontrar los mejores servicios.',
+                    icon: Icons.directions_car,
+                    onTap: _isLoading
+                        ? () {}
+                        : () => _handleRoleSelected(UserRole.CLIENTE),
+                  ),
+                  const SizedBox(height: 16),
+                  _RoleCard(
+                    title: 'Empleado',
+                    description:
+                        'Trabajo en un autolavado o soy lavador independiente.',
+                    icon: Icons.local_car_wash,
+                    onTap: _isLoading
+                        ? () {}
+                        : () => _handleRoleSelected(UserRole.EMPLEADO),
+                  ),
+                  const SizedBox(height: 16),
+                  _RoleCard(
+                    title: 'Administrador',
+                    description:
+                        'Soy dueño de un autolavado y quiero gestionar mi negocio.',
+                    icon: Icons.storefront,
+                    onTap: _isLoading
+                        ? () {}
+                        : () => _handleRoleSelected(UserRole.ADMINISTRADOR),
+                  ),
+                ],
               ),
-              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 32),
-            _RoleCard(
-              title: 'Cliente',
-              description:
-                  'Quiero lavar mi auto y encontrar los mejores servicios.',
-              icon: Icons.directions_car,
-              onTap: () async {
-                await _saveUserRole(UserRole.CLIENTE);
-                if (context.mounted) {
-                  context.go('/onboarding-cliente');
-                }
-              },
+          ),
+          if (_isLoading)
+            const Center(
+              child: CircularProgressIndicator(),
             ),
-            const SizedBox(height: 16),
-            _RoleCard(
-              title: 'Empleado',
-              description:
-                  'Trabajo en un autolavado o soy lavador independiente.',
-              icon: Icons.local_car_wash,
-              onTap: () async {
-                await _saveUserRole(UserRole.EMPLEADO);
-                if (context.mounted) {
-                  context.go('/onboarding-employee');
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-            _RoleCard(
-              title: 'Administrador',
-              description:
-                  'Soy dueño de un autolavado y quiero gestionar mi negocio.',
-              icon: Icons.storefront,
-              onTap: () async {
-                await _saveUserRole(UserRole.ADMINISTRADOR);
-                if (context.mounted) {
-                  context.go('/create-laundry');
-                }
-              },
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -121,41 +192,8 @@ class RoleSelectionPage extends StatelessWidget {
     }
   }
 
-  Future<void> _saveUserRole(UserRole role) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null && user.email != null) {
-      try {
-        final AuthRepository authRepository = FirebaseAuthRepository();
-        // Fetch existing roles to append instead of replacing
-        final existingUser = await authRepository.getCurrentUser();
-        List<UserRole> existingRoles = [];
-        if (existingUser != null) {
-          existingRoles = existingUser.roles;
-        }
-
-        if (!existingRoles.contains(role)) {
-          existingRoles.add(role);
-        }
-
-        // Si elige Empleado o Administrador, automáticamente se le asigna también el rol de Cliente
-        if (role == UserRole.EMPLEADO || role == UserRole.ADMINISTRADOR) {
-          if (!existingRoles.contains(UserRole.CLIENTE)) {
-            existingRoles.add(UserRole.CLIENTE);
-          }
-        }
-
-        await authRepository.upsertUser(
-          email: user.email!,
-          nombreCompleto: user.displayName ?? 'Usuario',
-          roles: existingRoles,
-        );
-            
-        // Automatically set it as active session role
-        SessionManager.activeRole = role;
-      } catch (e) {
-        debugPrint('Error guardando rol de usuario: $e');
-      }
-    }
+  void _handleRoleSelected(UserRole role) {
+    context.push('${AppRoutes.roleDetail}?role=${role.name}');
   }
 }
 

@@ -870,7 +870,26 @@ ExampleConnector.instance.getClientHistoryOrdersPaged(
 ).execute();
 ```
 
+#### Optional Arguments
+We return a builder for each query. For GetClientHistoryOrdersPaged, we created `GetClientHistoryOrdersPagedBuilder`. For queries and mutations with optional parameters, we return a builder class.
+The builder pattern allows Data Connect to distinguish between fields that haven't been set and fields that have been set to null. A field can be set by calling its respective setter method like below:
+```dart
+class GetClientHistoryOrdersPagedVariablesBuilder {
+  ...
+   GetClientHistoryOrdersPagedVariablesBuilder statuses(List<OrderStatus>? t) {
+   _statuses.value = t;
+   return this;
+  }
 
+  ...
+}
+ExampleConnector.instance.getClientHistoryOrdersPaged(
+  limit: limit,
+  offset: offset,
+)
+.statuses(statuses)
+.execute();
+```
 
 #### Return Type
 `execute()` returns a `QueryResult<GetClientHistoryOrdersPagedData, GetClientHistoryOrdersPagedVariables>`
@@ -3292,7 +3311,26 @@ ExampleConnector.instance.updateOrderStatus(
 ).execute();
 ```
 
+#### Optional Arguments
+We return a builder for each query. For UpdateOrderStatus, we created `UpdateOrderStatusBuilder`. For queries and mutations with optional parameters, we return a builder class.
+The builder pattern allows Data Connect to distinguish between fields that haven't been set and fields that have been set to null. A field can be set by calling its respective setter method like below:
+```dart
+class UpdateOrderStatusVariablesBuilder {
+  ...
+   UpdateOrderStatusVariablesBuilder cancellationReason(String? t) {
+   _cancellationReason.value = t;
+   return this;
+  }
 
+  ...
+}
+ExampleConnector.instance.updateOrderStatus(
+  orderId: orderId,
+  status: status,
+)
+.cancellationReason(cancellationReason)
+.execute();
+```
 
 #### Return Type
 `execute()` returns a `OperationResult<UpdateOrderStatusData, UpdateOrderStatusVariables>`
@@ -3341,7 +3379,27 @@ ExampleConnector.instance.updateOrderPaymentMethodAndStatus(
 ).execute();
 ```
 
+#### Optional Arguments
+We return a builder for each query. For UpdateOrderPaymentMethodAndStatus, we created `UpdateOrderPaymentMethodAndStatusBuilder`. For queries and mutations with optional parameters, we return a builder class.
+The builder pattern allows Data Connect to distinguish between fields that haven't been set and fields that have been set to null. A field can be set by calling its respective setter method like below:
+```dart
+class UpdateOrderPaymentMethodAndStatusVariablesBuilder {
+  ...
+   UpdateOrderPaymentMethodAndStatusVariablesBuilder cancellationReason(String? t) {
+   _cancellationReason.value = t;
+   return this;
+  }
 
+  ...
+}
+ExampleConnector.instance.updateOrderPaymentMethodAndStatus(
+  orderId: orderId,
+  paymentMethod: paymentMethod,
+  status: status,
+)
+.cancellationReason(cancellationReason)
+.execute();
+```
 
 #### Return Type
 `execute()` returns a `OperationResult<UpdateOrderPaymentMethodAndStatusData, UpdateOrderPaymentMethodAndStatusVariables>`
@@ -6600,7 +6658,26 @@ ExampleConnector.instance.serverUpdateOrderStatus(
 ).execute();
 ```
 
+#### Optional Arguments
+We return a builder for each query. For ServerUpdateOrderStatus, we created `ServerUpdateOrderStatusBuilder`. For queries and mutations with optional parameters, we return a builder class.
+The builder pattern allows Data Connect to distinguish between fields that haven't been set and fields that have been set to null. A field can be set by calling its respective setter method like below:
+```dart
+class ServerUpdateOrderStatusVariablesBuilder {
+  ...
+   ServerUpdateOrderStatusVariablesBuilder cancellationReason(String? t) {
+   _cancellationReason.value = t;
+   return this;
+  }
 
+  ...
+}
+ExampleConnector.instance.serverUpdateOrderStatus(
+  orderId: orderId,
+  status: status,
+)
+.cancellationReason(cancellationReason)
+.execute();
+```
 
 #### Return Type
 `execute()` returns a `OperationResult<ServerUpdateOrderStatusData, ServerUpdateOrderStatusVariables>`

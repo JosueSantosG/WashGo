@@ -4,8 +4,13 @@ class UpdateOrderPaymentMethodAndStatusVariablesBuilder {
   String orderId;
   PaymentMethod paymentMethod;
   OrderStatus status;
+  Optional<String> _cancellationReason = Optional.optional(nativeFromJson, nativeToJson);
 
-  final FirebaseDataConnect _dataConnect;
+  final FirebaseDataConnect _dataConnect;  UpdateOrderPaymentMethodAndStatusVariablesBuilder cancellationReason(String? t) {
+   _cancellationReason.value = t;
+   return this;
+  }
+
   UpdateOrderPaymentMethodAndStatusVariablesBuilder(this._dataConnect, {required  this.orderId,required  this.paymentMethod,required  this.status,});
   Deserializer<UpdateOrderPaymentMethodAndStatusData> dataDeserializer = (dynamic json)  => UpdateOrderPaymentMethodAndStatusData.fromJson(jsonDecode(json));
   Serializer<UpdateOrderPaymentMethodAndStatusVariables> varsSerializer = (UpdateOrderPaymentMethodAndStatusVariables vars) => jsonEncode(vars.toJson());
@@ -14,7 +19,7 @@ class UpdateOrderPaymentMethodAndStatusVariablesBuilder {
   }
 
   MutationRef<UpdateOrderPaymentMethodAndStatusData, UpdateOrderPaymentMethodAndStatusVariables> ref() {
-    UpdateOrderPaymentMethodAndStatusVariables vars= UpdateOrderPaymentMethodAndStatusVariables(orderId: orderId,paymentMethod: paymentMethod,status: status,);
+    UpdateOrderPaymentMethodAndStatusVariables vars= UpdateOrderPaymentMethodAndStatusVariables(orderId: orderId,paymentMethod: paymentMethod,status: status,cancellationReason: _cancellationReason,);
     return _dataConnect.mutation("UpdateOrderPaymentMethodAndStatus", dataDeserializer, varsSerializer, vars);
   }
 }
@@ -94,12 +99,22 @@ class UpdateOrderPaymentMethodAndStatusVariables {
   final String orderId;
   final PaymentMethod paymentMethod;
   final OrderStatus status;
+  late final Optional<String>cancellationReason;
   @Deprecated('fromJson is deprecated for Variable classes as they are no longer required for deserialization.')
   UpdateOrderPaymentMethodAndStatusVariables.fromJson(Map<String, dynamic> json):
   
   orderId = nativeFromJson<String>(json['orderId']),
   paymentMethod = PaymentMethod.values.byName(json['paymentMethod']),
-  status = OrderStatus.values.byName(json['status']);
+  status = OrderStatus.values.byName(json['status']) {
+  
+  
+  
+  
+  
+    cancellationReason = Optional.optional(nativeFromJson, nativeToJson);
+    cancellationReason.value = json['cancellationReason'] == null ? null : nativeFromJson<String>(json['cancellationReason']);
+  
+  }
   @override
   bool operator ==(Object other) {
     if(identical(this, other)) {
@@ -112,11 +127,12 @@ class UpdateOrderPaymentMethodAndStatusVariables {
     final UpdateOrderPaymentMethodAndStatusVariables otherTyped = other as UpdateOrderPaymentMethodAndStatusVariables;
     return orderId == otherTyped.orderId && 
     paymentMethod == otherTyped.paymentMethod && 
-    status == otherTyped.status;
+    status == otherTyped.status && 
+    cancellationReason == otherTyped.cancellationReason;
     
   }
   @override
-  int get hashCode => Object.hashAll([orderId.hashCode, paymentMethod.hashCode, status.hashCode]);
+  int get hashCode => Object.hashAll([orderId.hashCode, paymentMethod.hashCode, status.hashCode, cancellationReason.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -128,6 +144,9 @@ class UpdateOrderPaymentMethodAndStatusVariables {
     json['status'] = 
     status.name
     ;
+    if(cancellationReason.state == OptionalState.set) {
+      json['cancellationReason'] = cancellationReason.toJson();
+    }
     return json;
   }
 
@@ -135,6 +154,7 @@ class UpdateOrderPaymentMethodAndStatusVariables {
     required this.orderId,
     required this.paymentMethod,
     required this.status,
+    required this.cancellationReason,
   });
 }
 

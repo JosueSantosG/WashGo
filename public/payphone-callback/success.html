@@ -137,16 +137,33 @@
             const urlParams = new URLSearchParams(window.location.search);
             const transactionId = urlParams.get('id') || '';
             const orderId = urlParams.get('clientTransactionId') || '';
-            
+
+            // Guardar el transactionId en Firestore via Cloud Function
+            if (orderId && transactionId) {
+                var baseUrl = window.location.origin === 'http://localhost:5000'
+                    ? 'http://127.0.0.1:5001/washgo-app-8392/us-central1'
+                    : 'https://us-central1-washgo-app-8392.cloudfunctions.net';
+
+                fetch(baseUrl + '/payphone/store-transaction', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId: orderId, transactionId: transactionId })
+                }).then(function(r) {
+                    if (!r.ok) console.error('store-transaction failed:', r.status);
+                }).catch(function(e) {
+                    console.error('store-transaction error:', e);
+                });
+            }
+
             // Redirigir de vuelta a la app usando el esquema personalizado de PayPhone
-            const redirectUrl = `washgo://payphone-callback/success?transactionId=${encodeURIComponent(transactionId)}&orderId=${encodeURIComponent(orderId)}`;
-            
+            const redirectUrl = 'washgo://payphone-callback/success?transactionId=' + encodeURIComponent(transactionId) + '&orderId=' + encodeURIComponent(orderId);
+
             // Intentar redireccionar
             window.location.href = redirectUrl;
-            
+
             // Fallback por si la redirección automática no se activa
-            setTimeout(() => {
-                const btn = document.getElementById('redirect-btn');
+            setTimeout(function() {
+                var btn = document.getElementById('redirect-btn');
                 if (btn) {
                     btn.href = redirectUrl;
                     btn.style.display = 'inline-block';

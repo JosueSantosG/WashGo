@@ -3,8 +3,13 @@ part of 'example.dart';
 class UpdateOrderStatusVariablesBuilder {
   String orderId;
   OrderStatus status;
+  Optional<String> _cancellationReason = Optional.optional(nativeFromJson, nativeToJson);
 
-  final FirebaseDataConnect _dataConnect;
+  final FirebaseDataConnect _dataConnect;  UpdateOrderStatusVariablesBuilder cancellationReason(String? t) {
+   _cancellationReason.value = t;
+   return this;
+  }
+
   UpdateOrderStatusVariablesBuilder(this._dataConnect, {required  this.orderId,required  this.status,});
   Deserializer<UpdateOrderStatusData> dataDeserializer = (dynamic json)  => UpdateOrderStatusData.fromJson(jsonDecode(json));
   Serializer<UpdateOrderStatusVariables> varsSerializer = (UpdateOrderStatusVariables vars) => jsonEncode(vars.toJson());
@@ -13,7 +18,7 @@ class UpdateOrderStatusVariablesBuilder {
   }
 
   MutationRef<UpdateOrderStatusData, UpdateOrderStatusVariables> ref() {
-    UpdateOrderStatusVariables vars= UpdateOrderStatusVariables(orderId: orderId,status: status,);
+    UpdateOrderStatusVariables vars= UpdateOrderStatusVariables(orderId: orderId,status: status,cancellationReason: _cancellationReason,);
     return _dataConnect.mutation("UpdateOrderStatus", dataDeserializer, varsSerializer, vars);
   }
 }
@@ -92,11 +97,20 @@ class UpdateOrderStatusData {
 class UpdateOrderStatusVariables {
   final String orderId;
   final OrderStatus status;
+  late final Optional<String>cancellationReason;
   @Deprecated('fromJson is deprecated for Variable classes as they are no longer required for deserialization.')
   UpdateOrderStatusVariables.fromJson(Map<String, dynamic> json):
   
   orderId = nativeFromJson<String>(json['orderId']),
-  status = OrderStatus.values.byName(json['status']);
+  status = OrderStatus.values.byName(json['status']) {
+  
+  
+  
+  
+    cancellationReason = Optional.optional(nativeFromJson, nativeToJson);
+    cancellationReason.value = json['cancellationReason'] == null ? null : nativeFromJson<String>(json['cancellationReason']);
+  
+  }
   @override
   bool operator ==(Object other) {
     if(identical(this, other)) {
@@ -108,11 +122,12 @@ class UpdateOrderStatusVariables {
 
     final UpdateOrderStatusVariables otherTyped = other as UpdateOrderStatusVariables;
     return orderId == otherTyped.orderId && 
-    status == otherTyped.status;
+    status == otherTyped.status && 
+    cancellationReason == otherTyped.cancellationReason;
     
   }
   @override
-  int get hashCode => Object.hashAll([orderId.hashCode, status.hashCode]);
+  int get hashCode => Object.hashAll([orderId.hashCode, status.hashCode, cancellationReason.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -121,12 +136,16 @@ class UpdateOrderStatusVariables {
     json['status'] = 
     status.name
     ;
+    if(cancellationReason.state == OptionalState.set) {
+      json['cancellationReason'] = cancellationReason.toJson();
+    }
     return json;
   }
 
   UpdateOrderStatusVariables({
     required this.orderId,
     required this.status,
+    required this.cancellationReason,
   });
 }
 

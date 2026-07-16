@@ -113,7 +113,8 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
   final _capacidadController = TextEditingController(text: '1');
   final _anticipacionController = TextEditingController(text: '0');
 
-  final ReservationConfigRepository _reservationConfigRepository = FirebaseReservationConfigRepository();
+  final ReservationConfigRepository _reservationConfigRepository =
+      FirebaseReservationConfigRepository();
   bool _isReservationConfigured = false;
 
   List<EmployeeRequest> _requests = [];
@@ -273,7 +274,9 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
 
       List<EmployeeRequest> requests = [];
       try {
-        requests = await _businessRepository.getPendingEmployeeRequests(_businessId!);
+        requests = await _businessRepository.getPendingEmployeeRequests(
+          _businessId!,
+        );
       } catch (e) {
         debugPrint('Error fetching pending employee requests: $e');
       }
@@ -294,7 +297,9 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
 
       List<Map<String, dynamic>> businessHours = [];
       try {
-        businessHours = await _businessRepository.getBusinessHours(_businessId!);
+        businessHours = await _businessRepository.getBusinessHours(
+          _businessId!,
+        );
       } catch (e) {
         debugPrint('Error fetching business hours: $e');
       }
@@ -341,9 +346,15 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final mondayOffset = now.weekday - 1;
-      final startOfWeek = DateTime(now.year, now.month, now.day).subtract(Duration(days: mondayOffset));
+      final startOfWeek = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).subtract(Duration(days: mondayOffset));
       final startOfMonth = DateTime(now.year, now.month, 1);
-      final queryStartDate = startOfWeek.isBefore(startOfMonth) ? startOfWeek : startOfMonth;
+      final queryStartDate = startOfWeek.isBefore(startOfMonth)
+          ? startOfWeek
+          : startOfMonth;
 
       List<dynamic> invoices = [];
       try {
@@ -354,13 +365,13 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
       } catch (e) {
         debugPrint('Error fetching business invoices: $e');
       }
-      
+
       double weeklyEarnings = 0.0;
       double cashEarnings = 0.0;
       double electronicEarnings = 0.0;
       int todayInvoicesCount = 0;
       int completedServicesCount = 0;
-      
+
       for (final invoice in invoices) {
         if (invoice.invoiceStatus == InvoiceStatus.GENERATED) {
           completedServicesCount++;
@@ -380,53 +391,68 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
             invoiceDate.isAtSameMomentAs(today)) {
           todayInvoicesCount++;
         }
-        
+
         if (invoice.invoiceStatus == InvoiceStatus.GENERATED &&
-            invoice.fechaEmision.isAfter(startOfWeek.subtract(const Duration(seconds: 1))) &&
-            invoice.fechaEmision.isBefore(now.add(const Duration(seconds: 1)))) {
+            invoice.fechaEmision.isAfter(
+              startOfWeek.subtract(const Duration(seconds: 1)),
+            ) &&
+            invoice.fechaEmision.isBefore(
+              now.add(const Duration(seconds: 1)),
+            )) {
           weeklyEarnings += invoice.total;
         }
       }
-      
+
       _todayInvoicesCount = todayInvoicesCount;
       _weeklyEarnings = weeklyEarnings;
       _completedServicesCount = completedServicesCount;
       _cashEarnings = cashEarnings;
       _electronicEarnings = electronicEarnings;
-      
+
       try {
         // Cancel previous stream
         _ordersSubscription?.cancel();
         // Watch active business orders
-        _ordersSubscription = _orderRepository.watchBusinessOrders(_businessId!).listen((orders) {
-          if (mounted) {
-            setState(() {
-              _allOrders = orders;
-              _dashboardStats = OwnerDashboardStats.calculate(orders);
-              _activeOrders = orders.where((o) => 
-                o.status == OrderStatus.PENDIENTE_PAGO ||
-                o.status == OrderStatus.EN_COLA ||
-                o.status == OrderStatus.ACEPTADO ||
-                o.status == OrderStatus.EN_CAMINO ||
-                o.status == OrderStatus.EN_SERVICIO
-              ).toList();
+        _ordersSubscription = _orderRepository
+            .watchBusinessOrders(_businessId!)
+            .listen((orders) {
+              if (mounted) {
+                setState(() {
+                  _allOrders = orders;
+                  _dashboardStats = OwnerDashboardStats.calculate(orders);
+                  _activeOrders = orders
+                      .where(
+                        (o) =>
+                            o.status == OrderStatus.PENDIENTE_PAGO ||
+                            o.status == OrderStatus.EN_COLA ||
+                            o.status == OrderStatus.ACEPTADO ||
+                            o.status == OrderStatus.EN_CAMINO ||
+                            o.status == OrderStatus.EN_SERVICIO,
+                      )
+                      .toList();
 
-              final todayActiveCount = _activeOrders.where(_isOrderToday).length;
-              _todayOrdersCount = _todayInvoicesCount + todayActiveCount;
+                  final todayActiveCount = _activeOrders
+                      .where(_isOrderToday)
+                      .length;
+                  _todayOrdersCount = _todayInvoicesCount + todayActiveCount;
+                });
+              }
             });
-          }
-        });
       } catch (e) {
         debugPrint('Error watching business orders: $e');
       }
 
       try {
-        final resConfig = await _reservationConfigRepository.getConfig(_businessId!);
+        final resConfig = await _reservationConfigRepository.getConfig(
+          _businessId!,
+        );
         if (mounted) {
           setState(() {
             if (resConfig != null) {
-              _capacidadController.text = resConfig.capacidadSimultanea.toString();
-              _anticipacionController.text = resConfig.tiempoAnticipacionMinutos.toString();
+              _capacidadController.text = resConfig.capacidadSimultanea
+                  .toString();
+              _anticipacionController.text = resConfig.tiempoAnticipacionMinutos
+                  .toString();
               _isReservationConfigured = resConfig.isConfigured;
             } else {
               _capacidadController.text = '1';
@@ -462,7 +488,9 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
     try {
       final user = await _authRepository.getCurrentUser();
       if (user != null) {
-        final result = await ExampleConnector.instance.getUserNotifications(userId: user.uid).execute();
+        final result = await ExampleConnector.instance
+            .getUserNotifications(userId: user.uid)
+            .execute();
         if (mounted) {
           setState(() {
             _notifications = result.data.notifications;
@@ -517,7 +545,11 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
 
     try {
       await Future.wait(
-        unread.map((n) => ExampleConnector.instance.markNotificationAsRead(id: n.id).execute())
+        unread.map(
+          (n) => ExampleConnector.instance
+              .markNotificationAsRead(id: n.id)
+              .execute(),
+        ),
       );
     } catch (e) {
       debugPrint('Error marking all notifications as read: $e');
@@ -550,11 +582,17 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
     }
 
     final businessPhoneVal = _telefonoController.text.trim();
-    final cleanBusinessPhone = businessPhoneVal.replaceAll(RegExp(r'\s+|-|\+'), '');
-    if (cleanBusinessPhone.length < 7 || int.tryParse(cleanBusinessPhone) == null) {
+    final cleanBusinessPhone = businessPhoneVal.replaceAll(
+      RegExp(r'\s+|-|\+'),
+      '',
+    );
+    if (cleanBusinessPhone.length < 7 ||
+        int.tryParse(cleanBusinessPhone) == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Ingresa un número de teléfono de local válido (mínimo 7 dígitos).'),
+          content: Text(
+            'Ingresa un número de teléfono de local válido (mínimo 7 dígitos).',
+          ),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -579,7 +617,9 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
     if (capacidadText.isEmpty || anticipacionText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('La capacidad simultánea y tiempo de anticipación son requeridos.'),
+          content: Text(
+            'La capacidad simultánea y tiempo de anticipación son requeridos.',
+          ),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -593,7 +633,9 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
     if (capacidad == null || capacidad < 1) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('La capacidad simultánea debe ser un número entero mayor o igual a 1.'),
+          content: Text(
+            'La capacidad simultánea debe ser un número entero mayor o igual a 1.',
+          ),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -604,7 +646,9 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
     if (anticipacion == null || anticipacion < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('El tiempo de anticipación debe ser un número entero mayor o igual a 0.'),
+          content: Text(
+            'El tiempo de anticipación debe ser un número entero mayor o igual a 0.',
+          ),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -804,7 +848,10 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                 if (_business?.status == 'PENDING_APPROVAL')
                   SliverToBoxAdapter(
                     child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.orange.shade50,
@@ -812,16 +859,90 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Icon(Icons.info_outline, color: Colors.orange),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: Text(
-                              'Tu local está pendiente de aprobación. Todavía los clientes no pueden verlo.\n\nSe te enviará una notificación cuando haya sido aprobado.',
-                              style: GoogleFonts.inter(
-                                color: Colors.orange.shade800,
-                                fontSize: 13,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Tu local está pendiente de aprobación. Todavía los clientes no pueden verlo.\n\nSe te enviará una notificación cuando haya sido aprobado.',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.orange.shade800,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                if (_business?.businessCode != null &&
+                                    _business!.businessCode.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  Divider(color: Colors.orange.shade200),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Mientras tanto puedes compartir este código con tus empleados para que puedan registrarse y vincularse a este local.',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.orange.shade800,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  InkWell(
+                                    onTap: () {
+                                      Clipboard.setData(
+                                        ClipboardData(
+                                          text: _business!.businessCode,
+                                        ),
+                                      );
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Código "${_business!.businessCode}" copiado al portapapeles',
+                                          ),
+                                          backgroundColor: AppColors.primary,
+                                          behavior: SnackBarBehavior.floating,
+                                        ),
+                                      );
+                                    },
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        border: Border.all(
+                                          color: Colors.orange.shade300,
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            _business!.businessCode,
+                                            style: GoogleFonts.spaceMono(
+                                              color: Colors.orange.shade900,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 1.2,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Icon(
+                                            Icons.copy_rounded,
+                                            size: 16,
+                                            color: Colors.orange.shade700,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                         ],
@@ -919,10 +1040,7 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.star_rounded),
-                activeIcon: Icon(
-                  Icons.star_rounded,
-                  color: AppColors.primary,
-                ),
+                activeIcon: Icon(Icons.star_rounded, color: AppColors.primary),
                 label: 'Reseñas',
               ),
               BottomNavigationBarItem(
@@ -955,8 +1073,7 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
           'Administra el personal, aprueba solicitudes y comparte el código de acceso.';
     } else if (_selectedIndex == 3) {
       title = 'Facturación';
-      subtitle =
-          'Consulta y administra las facturas de tu negocio.';
+      subtitle = 'Consulta y administra las facturas de tu negocio.';
     } else if (_selectedIndex == 4) {
       title = 'Reseñas';
       subtitle =
@@ -978,7 +1095,10 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
           alignment: Alignment.center,
           children: [
             IconButton(
-              icon: const Icon(Icons.notifications_rounded, color: Colors.white),
+              icon: const Icon(
+                Icons.notifications_rounded,
+                color: Colors.white,
+              ),
               onPressed: _showNotificationsSheet,
             ),
             if (_unreadCount > 0)
@@ -1232,7 +1352,7 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                     ),
                   ),
                   const Divider(height: 24),
-                  
+
                   // Notifications List
                   Expanded(
                     child: _notifications.isEmpty
@@ -1266,42 +1386,54 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                             ),
                           )
                         : ListView.separated(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             itemCount: _notifications.length,
-                            separatorBuilder: (context, index) => const SizedBox(height: 12),
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(height: 12),
                             itemBuilder: (context, index) {
                               final notification = _notifications[index];
-                              
+
                               // Categorize by approval/rejection or general
-                              final titleLower = notification.titulo.toLowerCase();
-                              final messageLower = notification.mensaje.toLowerCase();
-                              
+                              final titleLower = notification.titulo
+                                  .toLowerCase();
+                              final messageLower = notification.mensaje
+                                  .toLowerCase();
+
                               Color cardBg = Colors.white;
                               Color iconColor = AppColors.primary;
                               IconData iconData = Icons.notifications_rounded;
                               Color borderSideColor = Colors.transparent;
 
-                              if (titleLower.contains('aproba') || 
-                                  messageLower.contains('aproba') || 
-                                  titleLower.contains('acepta') || 
+                              if (titleLower.contains('aproba') ||
+                                  messageLower.contains('aproba') ||
+                                  titleLower.contains('acepta') ||
                                   messageLower.contains('acepta')) {
                                 cardBg = const Color(0xFFECFDF5); // Emerald-50
                                 iconColor = AppColors.success;
                                 iconData = Icons.check_circle_rounded;
-                                borderSideColor = AppColors.success.withValues(alpha: 0.15);
-                              } else if (titleLower.contains('recha') || 
-                                         messageLower.contains('recha') || 
-                                         titleLower.contains('cancela') || 
-                                         messageLower.contains('cancela')) {
+                                borderSideColor = AppColors.success.withValues(
+                                  alpha: 0.15,
+                                );
+                              } else if (titleLower.contains('recha') ||
+                                  messageLower.contains('recha') ||
+                                  titleLower.contains('cancela') ||
+                                  messageLower.contains('cancela')) {
                                 cardBg = const Color(0xFFFEF2F2); // Red-50
                                 iconColor = AppColors.error;
                                 iconData = Icons.cancel_rounded;
-                                borderSideColor = AppColors.error.withValues(alpha: 0.15);
+                                borderSideColor = AppColors.error.withValues(
+                                  alpha: 0.15,
+                                );
                               } else if (!notification.leida) {
                                 cardBg = const Color(0xFFF0F9FF); // Sky-50
                                 iconColor = AppColors.primary;
                                 iconData = Icons.info_rounded;
-                                borderSideColor = AppColors.primary.withValues(alpha: 0.15);
+                                borderSideColor = AppColors.primary.withValues(
+                                  alpha: 0.15,
+                                );
                               }
 
                               return InkWell(
@@ -1309,7 +1441,9 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                                   if (!notification.leida) {
                                     await _markAsRead(notification.id);
                                     setSheetState(() {});
-                                    setState(() {}); // Update the main badge too
+                                    setState(
+                                      () {},
+                                    ); // Update the main badge too
                                   }
                                 },
                                 borderRadius: BorderRadius.circular(16),
@@ -1318,14 +1452,17 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                                     color: cardBg,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                      color: borderSideColor != Colors.transparent 
-                                          ? borderSideColor 
+                                      color:
+                                          borderSideColor != Colors.transparent
+                                          ? borderSideColor
                                           : Colors.grey.shade200,
                                       width: 1,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.02),
+                                        color: Colors.black.withValues(
+                                          alpha: 0.02,
+                                        ),
                                         blurRadius: 8,
                                         offset: const Offset(0, 2),
                                       ),
@@ -1334,12 +1471,16 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                                   child: Padding(
                                     padding: const EdgeInsets.all(16),
                                     child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         // Unread indicator dot
                                         if (!notification.leida)
                                           Container(
-                                            margin: const EdgeInsets.only(top: 6, right: 8),
+                                            margin: const EdgeInsets.only(
+                                              top: 6,
+                                              right: 8,
+                                            ),
                                             width: 8,
                                             height: 8,
                                             decoration: const BoxDecoration(
@@ -1349,12 +1490,14 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                                           )
                                         else
                                           const SizedBox(width: 16),
-                                        
+
                                         // Category icon
                                         Container(
                                           padding: const EdgeInsets.all(10),
                                           decoration: BoxDecoration(
-                                            color: iconColor.withValues(alpha: 0.1),
+                                            color: iconColor.withValues(
+                                              alpha: 0.1,
+                                            ),
                                             shape: BoxShape.circle,
                                           ),
                                           child: Icon(
@@ -1364,34 +1507,44 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                                           ),
                                         ),
                                         const SizedBox(width: 16),
-                                        
+
                                         // Notification content
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
                                                 children: [
                                                   Expanded(
                                                     child: Text(
                                                       notification.titulo,
                                                       style: GoogleFonts.inter(
-                                                        fontWeight: notification.leida 
-                                                            ? FontWeight.w600 
+                                                        fontWeight:
+                                                            notification.leida
+                                                            ? FontWeight.w600
                                                             : FontWeight.bold,
                                                         fontSize: 14,
-                                                        color: AppColors.textPrimary,
+                                                        color: AppColors
+                                                            .textPrimary,
                                                       ),
                                                     ),
                                                   ),
                                                   const SizedBox(width: 8),
                                                   Text(
-                                                    _formatDateTime(notification.fechaCreacion.toDateTime()),
+                                                    _formatDateTime(
+                                                      notification.fechaCreacion
+                                                          .toDateTime(),
+                                                    ),
                                                     style: GoogleFonts.inter(
                                                       fontSize: 11,
-                                                      color: AppColors.textSecondary,
+                                                      color: AppColors
+                                                          .textSecondary,
                                                     ),
                                                   ),
                                                 ],
@@ -1401,7 +1554,8 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                                                 notification.mensaje,
                                                 style: GoogleFonts.inter(
                                                   fontSize: 13,
-                                                  color: AppColors.textSecondary,
+                                                  color:
+                                                      AppColors.textSecondary,
                                                   height: 1.4,
                                                 ),
                                               ),
@@ -1464,13 +1618,15 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                       ),
                     ),
                     const SizedBox(height: 24),
-      
+
                     // Profile Header
                     Row(
                       children: [
                         CircleAvatar(
                           radius: 36,
-                          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                          backgroundColor: AppColors.primary.withValues(
+                            alpha: 0.1,
+                          ),
                           backgroundImage: _userPhoto != null
                               ? CachedNetworkImageProvider(_userPhoto!)
                               : null,
@@ -1520,7 +1676,9 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(alpha: 0.1),
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.1,
+                                  ),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Row(
@@ -1552,13 +1710,14 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                     const SizedBox(height: 24),
                     const Divider(color: AppColors.outlineVariant),
                     const SizedBox(height: 16),
-      
+
                     // Business Information Widget
                     if (_businessName != null) ...[
                       Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          onTap: () => _showBusinessSwitcher(isFromProfile: true),
+                          onTap: () =>
+                              _showBusinessSwitcher(isFromProfile: true),
                           borderRadius: BorderRadius.circular(16),
                           child: Container(
                             padding: const EdgeInsets.all(16),
@@ -1580,7 +1739,9 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                                     borderRadius: BorderRadius.circular(12),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.02),
+                                        color: Colors.black.withValues(
+                                          alpha: 0.02,
+                                        ),
                                         blurRadius: 8,
                                       ),
                                     ],
@@ -1594,7 +1755,8 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
                                         children: [
@@ -1638,9 +1800,13 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                                     ),
                                     onPressed: () {
                                       Clipboard.setData(
-                                        ClipboardData(text: _businessCode ?? ''),
+                                        ClipboardData(
+                                          text: _businessCode ?? '',
+                                        ),
                                       );
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         SnackBar(
                                           content: Text(
                                             'Código de negocio $_businessCode copiado al portapapeles.',
@@ -1696,8 +1862,15 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                                     hintText: 'Ingresa tu teléfono personal',
                                     border: InputBorder.none,
                                     isDense: true,
-                                    prefixIcon: Icon(Icons.phone_android_rounded, size: 20, color: AppColors.primary),
-                                    prefixIconConstraints: BoxConstraints(minWidth: 32, minHeight: 20),
+                                    prefixIcon: Icon(
+                                      Icons.phone_android_rounded,
+                                      size: 20,
+                                      color: AppColors.primary,
+                                    ),
+                                    prefixIconConstraints: BoxConstraints(
+                                      minWidth: 32,
+                                      minHeight: 20,
+                                    ),
                                   ),
                                   style: GoogleFonts.inter(
                                     fontSize: 14,
@@ -1722,31 +1895,50 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                                         size: 28,
                                       ),
                                       onPressed: () async {
-                                        final phone = _ownerPhoneController.text.trim();
+                                        final phone = _ownerPhoneController.text
+                                            .trim();
                                         if (phone.isEmpty) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             const SnackBar(
-                                              content: Text('El teléfono personal es obligatorio.'),
+                                              content: Text(
+                                                'El teléfono personal es obligatorio.',
+                                              ),
                                               backgroundColor: AppColors.error,
-                                              behavior: SnackBarBehavior.floating,
+                                              behavior:
+                                                  SnackBarBehavior.floating,
                                             ),
                                           );
                                           return;
                                         }
-                                        final cleanVal = phone.replaceAll(RegExp(r'\s+|-|\+'), '');
-                                        if (cleanVal.length < 7 || int.tryParse(cleanVal) == null) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                        final cleanVal = phone.replaceAll(
+                                          RegExp(r'\s+|-|\+'),
+                                          '',
+                                        );
+                                        if (cleanVal.length < 7 ||
+                                            int.tryParse(cleanVal) == null) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             const SnackBar(
-                                              content: Text('Ingresa un número de teléfono personal válido (mínimo 7 dígitos).'),
+                                              content: Text(
+                                                'Ingresa un número de teléfono personal válido (mínimo 7 dígitos).',
+                                              ),
                                               backgroundColor: AppColors.error,
-                                              behavior: SnackBarBehavior.floating,
+                                              behavior:
+                                                  SnackBarBehavior.floating,
                                             ),
                                           );
                                           return;
                                         }
-                                        setSheetState(() => _isSavingPhone = true);
+                                        setSheetState(
+                                          () => _isSavingPhone = true,
+                                        );
                                         try {
-                                          await _authRepository.updateUserPhone(phone);
+                                          await _authRepository.updateUserPhone(
+                                            phone,
+                                          );
                                           setState(() {
                                             _userPhone = phone;
                                           });
@@ -1754,28 +1946,45 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                                             _isSavingPhone = false;
                                           });
                                           if (context.mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
                                               SnackBar(
                                                 content: Row(
                                                   children: const [
-                                                    Icon(Icons.check_circle, color: Colors.white),
+                                                    Icon(
+                                                      Icons.check_circle,
+                                                      color: Colors.white,
+                                                    ),
                                                     SizedBox(width: 8),
-                                                    Text('Teléfono personal actualizado.'),
+                                                    Text(
+                                                      'Teléfono personal actualizado.',
+                                                    ),
                                                   ],
                                                 ),
-                                                backgroundColor: Colors.green.shade600,
-                                                behavior: SnackBarBehavior.floating,
+                                                backgroundColor:
+                                                    Colors.green.shade600,
+                                                behavior:
+                                                    SnackBarBehavior.floating,
                                               ),
                                             );
                                           }
                                         } catch (e) {
-                                          setSheetState(() => _isSavingPhone = false);
+                                          setSheetState(
+                                            () => _isSavingPhone = false,
+                                          );
                                           if (context.mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
                                               SnackBar(
-                                                content: Text('Error al actualizar: $e'),
-                                                backgroundColor: AppColors.error,
-                                                behavior: SnackBarBehavior.floating,
+                                                content: Text(
+                                                  'Error al actualizar: $e',
+                                                ),
+                                                backgroundColor:
+                                                    AppColors.error,
+                                                behavior:
+                                                    SnackBarBehavior.floating,
                                               ),
                                             );
                                           }
@@ -1788,7 +1997,7 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                       ),
                     ),
                     const SizedBox(height: 24),
-      
+
                     // Role selector (if has other roles)
                     if (_userRoles.length > 1) ...[
                       _buildOptionSectionTitle('Otros Roles Disponibles'),
@@ -1799,7 +2008,7 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                             final String roleName;
                             final IconData roleIcon;
                             final String roleDescription;
-      
+
                             switch (role) {
                               case UserRole.CLIENTE:
                                 roleName = 'Cliente';
@@ -1819,14 +2028,16 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                                 roleDescription =
                                     'Cambiar a perfil de ${role.name.toLowerCase()}';
                             }
-      
+
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 12.0),
                               child: Material(
                                 color: Colors.transparent,
                                 child: InkWell(
                                   onTap: () {
-                                    Navigator.pop(context); // Close bottom sheet
+                                    Navigator.pop(
+                                      context,
+                                    ); // Close bottom sheet
                                     SessionManager.activeRole = role;
                                     context.go('/auth-gate');
                                   },
@@ -1877,7 +2088,8 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                                                 roleDescription,
                                                 style: GoogleFonts.inter(
                                                   fontSize: 11,
-                                                  color: AppColors.onSurfaceVariant,
+                                                  color: AppColors
+                                                      .onSurfaceVariant,
                                                 ),
                                               ),
                                             ],
@@ -1897,11 +2109,11 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                           }),
                       const SizedBox(height: 16),
                     ],
-      
+
                     // Sign Out & Settings Actions
                     _buildOptionSectionTitle('Configuración de cuenta'),
                     const SizedBox(height: 8),
-      
+
                     // Change role if they have more roles
                     if (_userRoles.length > 1)
                       _buildActionTile(
@@ -1913,7 +2125,7 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                           context.go('/select-active-role');
                         },
                       ),
-      
+
                     _buildActionTile(
                       icon: Icons.logout_rounded,
                       title: 'Cerrar Sesión',
@@ -2325,7 +2537,10 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -2377,7 +2592,8 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
         completedServicesCount: _completedServicesCount,
         cashEarnings: _cashEarnings,
         electronicEarnings: _electronicEarnings,
-        dashboardStats: _dashboardStats ?? OwnerDashboardStats.calculate(_allOrders),
+        dashboardStats:
+            _dashboardStats ?? OwnerDashboardStats.calculate(_allOrders),
       ),
     );
   }
@@ -2400,6 +2616,7 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
     } catch (_) {}
     return false;
   }
+
   // ================= TAB 5: CONFIGURACION =================
   Widget _buildConfiguracionTab() {
     return FadeTransition(
@@ -2614,16 +2831,24 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
       text: service?.descripcion,
     );
     final precioPequenoController = TextEditingController(
-      text: service?.precioOwnerPequeno.toString() ?? (service?.precioPequeno.toString() ?? ''),
+      text:
+          service?.precioOwnerPequeno.toString() ??
+          (service?.precioPequeno.toString() ?? ''),
     );
     final precioMedianoController = TextEditingController(
-      text: service?.precioOwnerMediano.toString() ?? (service?.precioMediano.toString() ?? ''),
+      text:
+          service?.precioOwnerMediano.toString() ??
+          (service?.precioMediano.toString() ?? ''),
     );
     final precioGrandeController = TextEditingController(
-      text: service?.precioOwnerGrande.toString() ?? (service?.precioGrande.toString() ?? ''),
+      text:
+          service?.precioOwnerGrande.toString() ??
+          (service?.precioGrande.toString() ?? ''),
     );
     final precioMotoController = TextEditingController(
-      text: service?.precioOwnerMoto.toString() ?? (service?.precioMoto.toString() ?? ''),
+      text:
+          service?.precioOwnerMoto.toString() ??
+          (service?.precioMoto.toString() ?? ''),
     );
     final duracionController = TextEditingController(
       text: service?.duracionMinutos.toString(),
@@ -2673,7 +2898,10 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                       alignment: Alignment.centerLeft,
                       child: Text(
                         'Precios por Categoría',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -2682,7 +2910,9 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                         Expanded(
                           child: TextFormField(
                             controller: precioPequenoController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                             decoration: const InputDecoration(
                               labelText: 'Pequeño (\$)',
                               border: OutlineInputBorder(),
@@ -2694,7 +2924,9 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                         Expanded(
                           child: TextFormField(
                             controller: precioMedianoController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                             decoration: const InputDecoration(
                               labelText: 'Mediano (\$)',
                               border: OutlineInputBorder(),
@@ -2710,7 +2942,9 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                         Expanded(
                           child: TextFormField(
                             controller: precioGrandeController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                             decoration: const InputDecoration(
                               labelText: 'Grande (\$)',
                               border: OutlineInputBorder(),
@@ -2722,7 +2956,9 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                         Expanded(
                           child: TextFormField(
                             controller: precioMotoController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                             decoration: const InputDecoration(
                               labelText: 'Moto (\$)',
                               border: OutlineInputBorder(),
@@ -2755,15 +2991,16 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                               border: OutlineInputBorder(),
                               prefixIcon: Icon(Icons.home_work_outlined),
                             ),
-                            items: const [
-                              DropdownMenuItem(
+                            items: [
+                              const DropdownMenuItem(
                                 value: ServiceType.LOCAL,
                                 child: Text('En Local'),
                               ),
-                              DropdownMenuItem(
-                                value: ServiceType.DOMICILIO,
-                                child: Text('A Domicilio'),
-                              ),
+                              if (selectedTipo == ServiceType.DOMICILIO)
+                                const DropdownMenuItem(
+                                  value: ServiceType.DOMICILIO,
+                                  child: Text('A Domicilio'),
+                                ),
                             ],
                             onChanged: (val) {
                               if (val != null) {
@@ -2792,13 +3029,17 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                     final nombre = nombreController.text.trim();
                     final descripcion = descripcionController.text.trim();
                     final precioPequeno =
-                        double.tryParse(precioPequenoController.text.trim()) ?? 0.0;
+                        double.tryParse(precioPequenoController.text.trim()) ??
+                        0.0;
                     final precioMediano =
-                        double.tryParse(precioMedianoController.text.trim()) ?? 0.0;
+                        double.tryParse(precioMedianoController.text.trim()) ??
+                        0.0;
                     final precioGrande =
-                        double.tryParse(precioGrandeController.text.trim()) ?? 0.0;
+                        double.tryParse(precioGrandeController.text.trim()) ??
+                        0.0;
                     final precioMoto =
-                        double.tryParse(precioMotoController.text.trim()) ?? 0.0;
+                        double.tryParse(precioMotoController.text.trim()) ??
+                        0.0;
                     final duracion =
                         int.tryParse(duracionController.text.trim()) ?? 0;
 
@@ -2823,8 +3064,10 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
 
                     if (isEdit) {
                       // Check if it's an approved business and price actually changed
-                      final isApprovedBusiness = _business?.status == 'APPROVED';
-                      final isPriceChanged = service.precioOwnerPequeno != precioPequeno ||
+                      final isApprovedBusiness =
+                          _business?.status == 'APPROVED';
+                      final isPriceChanged =
+                          service.precioOwnerPequeno != precioPequeno ||
                           service.precioOwnerMediano != precioMediano ||
                           service.precioOwnerGrande != precioGrande ||
                           service.precioOwnerMoto != precioMoto;
@@ -2838,7 +3081,10 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                             ),
                             title: Row(
                               children: [
-                                Icon(Icons.warning_amber_rounded, color: Colors.orange.shade700),
+                                Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: Colors.orange.shade700,
+                                ),
                                 const SizedBox(width: 8),
                                 const Text('¿Deseas suspender y solicitar?'),
                               ],
@@ -2855,7 +3101,9 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                                 onPressed: () => Navigator.of(ctx).pop(),
                                 child: Text(
                                   'Cancelar',
-                                  style: GoogleFonts.inter(color: Colors.grey.shade600),
+                                  style: GoogleFonts.inter(
+                                    color: Colors.grey.shade600,
+                                  ),
                                 ),
                               ),
                               ElevatedButton(

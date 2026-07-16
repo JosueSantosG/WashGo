@@ -19,11 +19,12 @@ abstract class OrderRepository {
   Stream<List<WashGoOrder>> watchBusinessOrders(String businessId);
   Stream<List<ClientOrder>> watchClientOrders();
   Future<void> acceptOrder({required String orderId, required String employeeId});
-  Future<void> updateOrderStatus({required String orderId, required OrderStatus status});
+  Future<void> updateOrderStatus({required String orderId, required OrderStatus status, String? cancellationReason});
   Future<void> updateOrderPaymentMethodAndStatus({
     required String orderId,
     required PaymentMethod paymentMethod,
     required OrderStatus status,
+    String? cancellationReason,
   });
   Future<void> rescheduleOrder({required String orderId, required String observations});
   Future<QueuePosition> getQueuePosition({required String businessId, required String orderId});
@@ -34,6 +35,7 @@ abstract class OrderRepository {
     required int offset,
   });
   Future<List<ClientOrder>> getClientHistoryOrdersPaged({
+    required List<OrderStatus> statuses,
     required int limit,
     required int offset,
   });

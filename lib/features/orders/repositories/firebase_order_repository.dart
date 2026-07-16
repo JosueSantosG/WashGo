@@ -72,6 +72,7 @@ class FirebaseOrderRepository implements OrderRepository {
         businessId: o.business.id,
         status: o.status.stringValue,
         observations: o.observations ?? '',
+        cancellationReason: o.cancellationReason,
         businessName: o.business.nombre,
         businessPhone: o.business.telefono,
         serviceName: o.serviceName,
@@ -82,6 +83,7 @@ class FirebaseOrderRepository implements OrderRepository {
         hasReview: o.review_on_order != null,
         createdAt: o.createdAt?.toDateTime(),
         type: o.type.stringValue,
+        hasPaymentProof: o.paymentProof_on_order != null,
       );
     }).toList();
     final result = mapped.reversed.toList();
@@ -415,6 +417,7 @@ class FirebaseOrderRepository implements OrderRepository {
                   businessId: o.business.id,
                   status: o.status.stringValue,
                   observations: o.observations ?? '',
+                  cancellationReason: o.cancellationReason,
                   businessName: o.business.nombre,
                   businessPhone: o.business.telefono,
                   serviceName: o.serviceName,
@@ -425,6 +428,7 @@ class FirebaseOrderRepository implements OrderRepository {
                   hasReview: o.review_on_order != null,
                   createdAt: o.createdAt?.toDateTime(),
                   type: o.type.stringValue,
+                  hasPaymentProof: o.paymentProof_on_order != null,
                 );
               }).toList();
 
@@ -518,9 +522,11 @@ class FirebaseOrderRepository implements OrderRepository {
   Future<void> updateOrderStatus({
     required String orderId,
     required OrderStatus status,
+    String? cancellationReason,
   }) async {
     await _connector
         .updateOrderStatus(orderId: orderId, status: status)
+        .cancellationReason(cancellationReason)
         .execute();
 
     if (status == OrderStatus.COMPLETADO) {
@@ -547,6 +553,7 @@ class FirebaseOrderRepository implements OrderRepository {
     required String orderId,
     required PaymentMethod paymentMethod,
     required OrderStatus status,
+    String? cancellationReason,
   }) async {
     await _connector
         .updateOrderPaymentMethodAndStatus(
@@ -554,6 +561,7 @@ class FirebaseOrderRepository implements OrderRepository {
           paymentMethod: paymentMethod,
           status: status,
         )
+        .cancellationReason(cancellationReason)
         .execute();
 
     if (status == OrderStatus.COMPLETADO) {
@@ -758,12 +766,17 @@ class FirebaseOrderRepository implements OrderRepository {
 
   @override
   Future<List<ClientOrder>> getClientHistoryOrdersPaged({
+    required List<OrderStatus> statuses,
     required int limit,
     required int offset,
   }) async {
     try {
       final response = await _connector
-          .getClientHistoryOrdersPaged(limit: limit, offset: offset)
+          .getClientHistoryOrdersPaged(
+            limit: limit,
+            offset: offset,
+          )
+          .statuses(statuses)
           .ref()
           .execute(fetchPolicy: QueryFetchPolicy.serverOnly);
 
@@ -783,17 +796,22 @@ class FirebaseOrderRepository implements OrderRepository {
           businessId: o.business.id,
           status: o.status.stringValue,
           observations: o.observations ?? '',
+          cancellationReason: o.cancellationReason,
           businessName: o.business.nombre,
-          businessPhone: null,
+          businessPhone: o.business.telefono,
           serviceName: o.serviceName ?? '',
           price: o.price,
           employee: employee,
           paymentMethod: o.paymentMethod.stringValue,
           invoiceUrl: o.invoiceUrl,
           hasReview: o.review_on_order != null,
+          createdAt: o.createdAt?.toDateTime(),
+          type: o.type.stringValue,
+          hasPaymentProof: false,
         );
       }).toList();
     } catch (e) {
+      print('Error en getClientHistoryOrdersPaged: $e');
       return [];
     }
   }
@@ -924,7 +942,12 @@ class FirebaseOrderRepository implements OrderRepository {
       final String status = order is ClientOrder ? order.status.toUpperCase() : order.status.name.toUpperCase();
       if (status == 'PENDIENTE_PAGO') {
         final paymentMethod = order is ClientOrder ? order.paymentMethod.toUpperCase() : order.paymentMethod.name.toUpperCase();
-        if (paymentMethod == 'PAYPHONE' || paymentMethod == 'PAYPAL') {
+        if (paymentMethod == 'PAYPHONE' || paymentMethod == 'PAYPAL' || paymentMethod == 'TRANSFERENCIA_BANCARIA') {
+          final bool hasProof = order is ClientOrder
+              ? order.hasPaymentProof
+              : (order is WashGoOrder && order.paymentProofStatus != null);
+          if (hasProof) continue;
+
           DateTime? orderCreatedAt;
           if (order is ClientOrder) {
             orderCreatedAt = order.createdAt;
@@ -933,7 +956,11 @@ class FirebaseOrderRepository implements OrderRepository {
             final diff = now.difference(orderCreatedAt);
             if (diff.inMinutes >= 30) {
               try {
-                await updateOrderStatus(orderId: orderId, status: OrderStatus.CANCELADO);
+                await updateOrderStatus(
+                  orderId: orderId,
+                  status: OrderStatus.CANCELADO,
+                  cancellationReason: 'No pagó',
+                );
                 final metadataRepo = FirebaseReservationMetadataRepository();
                 await metadataRepo.deleteReservation(orderId);
                 print('Lazy expired order $orderId due to stale payment (created at $orderCreatedAt)');
@@ -952,7 +979,11 @@ class FirebaseOrderRepository implements OrderRepository {
         if (schedTime != null) {
           if (now.difference(schedTime).inMinutes > 15) {
             try {
-              await updateOrderStatus(orderId: orderId, status: OrderStatus.CANCELADO);
+              await updateOrderStatus(
+                orderId: orderId,
+                status: OrderStatus.CANCELADO,
+                cancellationReason: 'No asistió',
+              );
               final metadataRepo = FirebaseReservationMetadataRepository();
               await metadataRepo.deleteReservation(orderId);
               print('Lazy expired order $orderId due to no-show (scheduled at $schedTime)');

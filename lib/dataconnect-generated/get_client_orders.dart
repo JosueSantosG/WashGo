@@ -23,6 +23,7 @@ class GetClientOrdersOrders {
   final double costo;
   final String? serviceName;
   final String? observations;
+  final String? cancellationReason;
   final EnumValue<OrderType> type;
   final EnumValue<PaymentMethod> paymentMethod;
   final EnumValue<OrderStatus> status;
@@ -39,6 +40,7 @@ class GetClientOrdersOrders {
   costo = nativeFromJson<double>(json['costo']),
   serviceName = json['serviceName'] == null ? null : nativeFromJson<String>(json['serviceName']),
   observations = json['observations'] == null ? null : nativeFromJson<String>(json['observations']),
+  cancellationReason = json['cancellationReason'] == null ? null : nativeFromJson<String>(json['cancellationReason']),
   type = orderTypeDeserializer(json['type']),
   paymentMethod = paymentMethodDeserializer(json['paymentMethod']),
   status = orderStatusDeserializer(json['status']),
@@ -63,6 +65,7 @@ class GetClientOrdersOrders {
     costo == otherTyped.costo && 
     serviceName == otherTyped.serviceName && 
     observations == otherTyped.observations && 
+    cancellationReason == otherTyped.cancellationReason && 
     type == otherTyped.type && 
     paymentMethod == otherTyped.paymentMethod && 
     status == otherTyped.status && 
@@ -75,7 +78,7 @@ class GetClientOrdersOrders {
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, price.hashCode, costo.hashCode, serviceName.hashCode, observations.hashCode, type.hashCode, paymentMethod.hashCode, status.hashCode, invoiceUrl.hashCode, createdAt.hashCode, business.hashCode, employee.hashCode, review_on_order.hashCode, paymentProof_on_order.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, price.hashCode, costo.hashCode, serviceName.hashCode, observations.hashCode, cancellationReason.hashCode, type.hashCode, paymentMethod.hashCode, status.hashCode, invoiceUrl.hashCode, createdAt.hashCode, business.hashCode, employee.hashCode, review_on_order.hashCode, paymentProof_on_order.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -88,6 +91,9 @@ class GetClientOrdersOrders {
     }
     if (observations != null) {
       json['observations'] = nativeToJson<String?>(observations);
+    }
+    if (cancellationReason != null) {
+      json['cancellationReason'] = nativeToJson<String?>(cancellationReason);
     }
     json['type'] = 
     orderTypeSerializer(type)
@@ -123,6 +129,7 @@ class GetClientOrdersOrders {
     required this.costo,
     this.serviceName,
     this.observations,
+    this.cancellationReason,
     required this.type,
     required this.paymentMethod,
     required this.status,

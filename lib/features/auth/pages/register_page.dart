@@ -1,10 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:washgo/config/theme/app_colors.dart';
 import 'package:washgo/shared/widgets/custom_text_field.dart';
-import 'package:washgo/features/auth/repositories/auth_repository.dart';
-import 'package:washgo/features/auth/repositories/firebase_auth_repository.dart';
+import 'package:washgo/config/routes/app_routes.dart';
+import 'package:washgo/features/auth/models/registration_draft.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -19,6 +18,50 @@ class _RegisterPageState extends State<RegisterPage> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController.addListener(_onPasswordChanged);
+    _confirmPasswordController.addListener(_onConfirmPasswordChanged);
+  }
+
+  void _onPasswordChanged() {
+    setState(() {});
+  }
+
+  void _onConfirmPasswordChanged() {
+    setState(() {});
+  }
+
+  bool get _hasMinLength => _passwordController.text.length >= 8;
+  bool get _hasUppercase => _passwordController.text.contains(RegExp(r'[A-Z]'));
+  bool get _hasLowercase => _passwordController.text.contains(RegExp(r'[a-z]'));
+  bool get _hasNumber => _passwordController.text.contains(RegExp(r'[0-9]'));
+  bool get _passwordsMatch =>
+      _passwordController.text == _confirmPasswordController.text;
+  bool get _isConfirmPasswordNotEmpty =>
+      _confirmPasswordController.text.isNotEmpty;
+
+  Widget _buildRequirementRow(String text, bool isMet) {
+    return Row(
+      children: [
+        Icon(
+          isMet ? Icons.check_circle_outline : Icons.radio_button_unchecked,
+          size: 16,
+          color: isMet ? Colors.green.shade600 : AppColors.outline,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: isMet ? Colors.green.shade800 : AppColors.onSurfaceVariant,
+            fontWeight: isMet ? FontWeight.w500 : FontWeight.normal,
+          ),
+        ),
+      ],
+    );
+  }
 
   Future<void> _signUp() async {
     final name = _nameController.text.trim();
@@ -39,20 +82,10 @@ class _RegisterPageState extends State<RegisterPage> {
     }
 
     // Validar contraseña segura
-    if (password.length < 8) {
-      _showError('La contraseña debe tener al menos 8 caracteres.');
-      return;
-    }
-    if (!password.contains(RegExp(r'[A-Z]'))) {
-      _showError('La contraseña debe contener al menos una letra mayúscula.');
-      return;
-    }
-    if (!password.contains(RegExp(r'[a-z]'))) {
-      _showError('La contraseña debe contener al menos una letra minúscula.');
-      return;
-    }
-    if (!password.contains(RegExp(r'[0-9]'))) {
-      _showError('La contraseña debe contener al menos un número.');
+    if (!_hasMinLength || !_hasUppercase || !_hasLowercase || !_hasNumber) {
+      _showError(
+        'Por favor, asegúrate de cumplir con todos los requisitos de la contraseña.',
+      );
       return;
     }
 
@@ -66,29 +99,12 @@ class _RegisterPageState extends State<RegisterPage> {
     });
 
     try {
-      final credential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: password);
+      RegistrationDraft.name = name;
+      RegistrationDraft.email = email;
+      RegistrationDraft.password = password;
 
-      // Actualizar el perfil del usuario con el nombre
-      await credential.user?.updateDisplayName(name);
-
-      // Guardar información del usuario en Data Connect (el teléfono se registrará en el onboarding)
-      final AuthRepository authRepository = FirebaseAuthRepository();
-      await authRepository.upsertUser(
-        email: email,
-        nombreCompleto: name,
-        roles: [], // Roles se asignarán en la selección de roles
-      );
-
-      _showSuccess('Cuenta creada exitosamente');
-      // No necesitamos navegar manualmente, el AuthGate debería detectar el cambio de estado.
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'weak-password') {
-        _showError('La contraseña proporcionada es demasiado débil.');
-      } else if (e.code == 'email-already-in-use') {
-        _showError('Ya existe una cuenta con ese correo.');
-      } else {
-        _showError('Error de autenticación: ${e.message}');
+      if (mounted) {
+        context.go(AppRoutes.roleSelection);
       }
     } catch (e) {
       _showError('Ocurrió un error inesperado: $e');
@@ -108,18 +124,14 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  void _showSuccess(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.green.shade600),
-    );
-  }
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _passwordController.removeListener(_onPasswordChanged);
     _passwordController.dispose();
+    _confirmPasswordController.removeListener(_onConfirmPasswordChanged);
     _confirmPasswordController.dispose();
     super.dispose();
   }
@@ -181,6 +193,36 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                             const SizedBox(height: 24),
 
+                            // Stepper
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Paso 1 de 3',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.onSurfaceVariant,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 16.0),
+                                    child: LinearProgressIndicator(
+                                      value: 0.33,
+                                      backgroundColor: AppColors.outlineVariant,
+                                      valueColor: const AlwaysStoppedAnimation<Color>(
+                                        AppColors.primary,
+                                      ),
+                                      minHeight: 8,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+
                             // Texts
                             Text(
                               'Crea una cuenta',
@@ -216,12 +258,76 @@ class _RegisterPageState extends State<RegisterPage> {
                               label: 'Contraseña',
                               isPassword: true,
                             ),
+                            const SizedBox(height: 8),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4.0,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'La contraseña debe cumplir con:',
+                                    style: textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _buildRequirementRow(
+                                    'Mínimo 8 caracteres',
+                                    _hasMinLength,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  _buildRequirementRow(
+                                    'Al menos una letra mayúscula',
+                                    _hasUppercase,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  _buildRequirementRow(
+                                    'Al menos una letra minúscula',
+                                    _hasLowercase,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  _buildRequirementRow(
+                                    'Al menos un número',
+                                    _hasNumber,
+                                  ),
+                                ],
+                              ),
+                            ),
                             const SizedBox(height: 16),
                             CustomTextField(
                               controller: _confirmPasswordController,
                               label: 'Confirmar contraseña',
                               isPassword: true,
                             ),
+                            if (_isConfirmPasswordNotEmpty &&
+                                !_passwordsMatch) ...[
+                              const SizedBox(height: 8),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4.0,
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.error_outline,
+                                      size: 16,
+                                      color: Colors.red,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Las contraseñas no coinciden',
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: Colors.red.shade800,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 32),
 
                             // Register Button
@@ -237,7 +343,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                           strokeWidth: 2,
                                         ),
                                       )
-                                    : const Text('Registrarse'),
+                                    : const Text('Siguiente'),
                               ),
                             ),
 
@@ -274,4 +380,3 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 }
-

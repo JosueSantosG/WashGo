@@ -151,7 +151,7 @@ mutation AcceptOrder($orderId: UUID!, $employeeId: String!) @auth(level: USER, i
   })
 }
 
-mutation UpdateOrderStatus($orderId: UUID!, $status: OrderStatus!) @auth(level: USER) @transaction {
+mutation UpdateOrderStatus($orderId: UUID!, $status: OrderStatus!, $cancellationReason: String) @auth(level: USER) @transaction {
   query @redact {
     order(key: { id: $orderId }) {
       clientId
@@ -168,10 +168,11 @@ mutation UpdateOrderStatus($orderId: UUID!, $status: OrderStatus!) @auth(level: 
   }
   order_update(key: { id: $orderId }, data: {
     status: $status
+    cancellationReason: $cancellationReason
   })
 }
 
-mutation UpdateOrderPaymentMethodAndStatus($orderId: UUID!, $paymentMethod: PaymentMethod!, $status: OrderStatus!) @auth(level: USER) @transaction {
+mutation UpdateOrderPaymentMethodAndStatus($orderId: UUID!, $paymentMethod: PaymentMethod!, $status: OrderStatus!, $cancellationReason: String) @auth(level: USER) @transaction {
   query @redact {
     order(key: { id: $orderId }) {
       clientId
@@ -189,6 +190,7 @@ mutation UpdateOrderPaymentMethodAndStatus($orderId: UUID!, $paymentMethod: Paym
   order_update(key: { id: $orderId }, data: {
     paymentMethod: $paymentMethod
     status: $status
+    cancellationReason: $cancellationReason
   })
 }
 
@@ -1295,10 +1297,12 @@ mutation ServerUpdatePaymentProof(
 # 5. Update order status from server side (NO_ACCESS level)
 mutation ServerUpdateOrderStatus(
   $orderId: UUID!,
-  $status: OrderStatus!
+  $status: OrderStatus!,
+  $cancellationReason: String
 ) @auth(level: NO_ACCESS) {
   order_update(key: { id: $orderId }, data: {
     status: $status
+    cancellationReason: $cancellationReason
   })
 }
 

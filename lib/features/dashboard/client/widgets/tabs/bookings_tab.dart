@@ -19,6 +19,8 @@ import 'package:washgo/core/session/booking_intent_manager.dart';
 import 'package:washgo/features/orders/repositories/firebase_order_repository.dart';
 import 'package:washgo/dataconnect-generated/example.dart' hide PaymentProofStatus;
 import 'package:latlong2/latlong.dart';
+import 'package:washgo/features/dashboard/client/pages/client_order_history_page.dart';
+
 
 class BookingsTab extends StatefulWidget {
   final List<ClientOrder> orders;
@@ -326,9 +328,6 @@ class _BookingsTabState extends State<BookingsTab> {
     final activeOrders = widget.orders
         .where((order) => order.status != 'COMPLETADO' && order.status != 'CANCELADO')
         .toList();
-    final historyOrders = widget.orders
-        .where((order) => order.status == 'COMPLETADO' || order.status == 'CANCELADO')
-        .toList();
     final pendingReviewOrders = widget.orders
         .where((order) => order.status == 'COMPLETADO' && !order.hasReview)
         .toList();
@@ -352,13 +351,38 @@ class _BookingsTabState extends State<BookingsTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Mis Reservas',
-                      style: GoogleFonts.inter(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.onSurface,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Mis Reservas',
+                          style: GoogleFonts.inter(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.onSurface,
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ClientOrderHistoryPage(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.history_rounded, size: 18),
+                          label: const Text('Historial'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(color: AppColors.primary.withValues(alpha: 0.2)),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -431,66 +455,6 @@ class _BookingsTabState extends State<BookingsTab> {
                 ),
               ),
             ),
-
-            // Section: History
-            SliverPadding(
-              padding: const EdgeInsets.all(24),
-              sliver: SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'HISTORIAL DE LAVADOS',
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                        color: AppColors.outline,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    if (widget.isLoading && widget.orders.isEmpty)
-                      const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
-                        ),
-                      )
-                    else if (historyOrders.isEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(vertical: 24),
-                        width: double.infinity,
-                        alignment: Alignment.center,
-                        child: Text(
-                          'No tienes lavados anteriores completados.',
-                          style: GoogleFonts.inter(
-                            color: AppColors.onSurfaceVariant,
-                            fontSize: 13,
-                          ),
-                        ),
-                      )
-                    else
-                      ...historyOrders.map((order) {
-                        final parsed = ParsedObservations.parse(
-                          order.observations,
-                        );
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _buildHistoryCard(
-                            order: order,
-                            washType: order.serviceName ?? 'Lavado Completo',
-                            vehicle: parsed.vehicleDetails,
-                            date: '${parsed.scheduleType} (${parsed.dateTime})',
-                            isEco: order.businessName.toLowerCase().contains(
-                              'eco',
-                            ),
-                          ),
-                        );
-                      }),
-                  ],
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -551,6 +515,55 @@ class _BookingsTabState extends State<BookingsTab> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodBadge(String paymentMethod) {
+    IconData icon;
+    Color color;
+    String label;
+
+    switch (paymentMethod) {
+      case 'PAYPHONE':
+        icon = Icons.smartphone_rounded;
+        color = const Color(0xFF2563EB); // blue-600
+        label = 'PayPhone';
+      case 'PAYPAL':
+        icon = Icons.account_balance_wallet_rounded;
+        color = const Color(0xFF4F46E5); // indigo-600
+        label = 'PayPal';
+      case 'TRANSFERENCIA_BANCARIA':
+        icon = Icons.account_balance_rounded;
+        color = const Color(0xFF059669); // emerald-600
+        label = 'Transferencia Bancaria';
+      default:
+        icon = Icons.payments_rounded;
+        color = Colors.grey.shade600;
+        label = 'Efectivo';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            'Método de pago: $label',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
             ),
           ),
         ],
@@ -689,7 +702,11 @@ class _BookingsTabState extends State<BookingsTab> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
+
+          // Método de pago
+          _buildPaymentMethodBadge(order.paymentMethod),
+          const SizedBox(height: 2),
 
           // Estado de comprobante de pago (Transferencia Bancaria)
           if (order.paymentMethod == 'TRANSFERENCIA_BANCARIA' &&
@@ -769,9 +786,28 @@ class _BookingsTabState extends State<BookingsTab> {
                               Icon(Icons.cloud_upload_outlined, color: Colors.blue.shade700, size: 20),
                               const SizedBox(width: 10),
                               Expanded(
-                                child: Text(
-                                  'Pendiente de comprobante — Sube tu comprobante de pago para que el dueño lo revise.',
-                                  style: TextStyle(fontSize: 13, color: Colors.blue.shade900),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Pendiente de comprobante — Sube tu comprobante de pago para que el dueño lo revise.',
+                                      style: TextStyle(fontSize: 13, color: Colors.blue.shade900),
+                                    ),
+                                    if (order.createdAt != null) ...[
+                                      const SizedBox(height: 4),
+                                      PaymentCountdownText(
+                                        createdAt: order.createdAt!,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.blue.shade700,
+                                        ),
+                                        onExpired: () {
+                                          widget.onRefresh();
+                                        },
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -1105,7 +1141,7 @@ class _BookingsTabState extends State<BookingsTab> {
                       Text(
                         pos == 1
                             ? '¡Eres el siguiente en la cola! El personal iniciará tu lavado muy pronto.'
-                            : 'Hay ${pos - 1} vehículo(s) antes que tú. El tiempo de espera es dinámico y depende de la rapidez del personal.',
+                            : 'Hay ${pos - 1} cliente(s) antes que tú. El tiempo de espera es dinámico y depende de la rapidez del personal.',
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           color: AppColors.onSurfaceVariant,
@@ -1767,188 +1803,6 @@ class _BookingsTabState extends State<BookingsTab> {
     );
   }
 
-  Widget _buildHistoryCard({
-    required ClientOrder order,
-    required String washType,
-    required String vehicle,
-    required String date,
-    required bool isEco,
-  }) {
-    final isCancelled = order.status == 'CANCELADO';
-    final isCompleted = order.status == 'COMPLETADO';
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        border: Border.all(color: Colors.grey.shade100),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: isCancelled
-                ? Colors.red.shade50
-                : (isEco
-                    ? Colors.green.shade50
-                    : AppColors.primary.withValues(alpha: 0.05)),
-            child: Icon(
-              isCancelled
-                  ? Icons.cancel_rounded
-                  : (isEco ? Icons.eco_rounded : Icons.local_car_wash_rounded),
-              color: isCancelled
-                  ? Colors.red.shade700
-                  : (isEco ? Colors.green.shade700 : AppColors.primary),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  order.businessName,
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: AppColors.onSurface,
-                  ),
-                ),
-                Text(
-                  '$washType • $vehicle',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: AppColors.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  date,
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    color: AppColors.outline,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '\$${order.price.toStringAsFixed(2)}',
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: AppColors.onSurface,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isCancelled ? Colors.red.shade50 : Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  isCancelled ? 'Cancelado' : 'Completado',
-                  style: GoogleFonts.inter(
-                    color: isCancelled ? Colors.red.shade700 : Colors.green.shade700,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              if (isCompleted && order.invoiceUrl != null && order.invoiceUrl!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: () => _showInvoiceOptions(context, order.id, order.invoiceUrl!),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.receipt_long_rounded,
-                          size: 12,
-                          color: AppColors.primary,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Factura',
-                          style: GoogleFonts.inter(
-                            color: AppColors.primary,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-              if (isCompleted && !order.hasReview) ...[
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: () {
-                    ReviewBottomSheet.show(
-                      context,
-                      orderId: order.id,
-                      businessId: order.businessId,
-                      employeeId: order.employee?.id,
-                      businessName: order.businessName,
-                      onReviewSubmitted: () => widget.onRefresh(),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.amber.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.amber.withValues(alpha: 0.2)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          size: 12,
-                          color: Colors.amber,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Calificar',
-                          style: GoogleFonts.inter(
-                            color: Colors.amber.shade800,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ]
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildGuestPlaceholder(BuildContext context) {
     return Center(
@@ -2024,11 +1878,13 @@ class _BookingsTabState extends State<BookingsTab> {
 class PaymentCountdownText extends StatefulWidget {
   final DateTime createdAt;
   final VoidCallback onExpired;
+  final TextStyle? style;
 
   const PaymentCountdownText({
     super.key,
     required this.createdAt,
     required this.onExpired,
+    this.style,
   });
 
   @override
@@ -2037,13 +1893,13 @@ class PaymentCountdownText extends StatefulWidget {
 
 class _PaymentCountdownTextState extends State<PaymentCountdownText> {
   Timer? _timer;
-  int _remainingMinutes = 30;
+  Duration _remainingDuration = Duration.zero;
 
   @override
   void initState() {
     super.initState();
     _calculateRemainingTime();
-    _timer = Timer.periodic(const Duration(seconds: 30), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 10), (timer) {
       if (mounted) {
         _calculateRemainingTime();
       }
@@ -2053,13 +1909,13 @@ class _PaymentCountdownTextState extends State<PaymentCountdownText> {
   void _calculateRemainingTime() {
     final now = DateTime.now();
     final difference = now.difference(widget.createdAt);
-    final remaining = 30 - difference.inMinutes;
-    if (remaining <= 0) {
+    final remaining = const Duration(minutes: 30) - difference;
+    if (remaining <= Duration.zero) {
       _timer?.cancel();
       widget.onExpired();
     } else {
       setState(() {
-        _remainingMinutes = remaining;
+        _remainingDuration = remaining;
       });
     }
   }
@@ -2072,9 +1928,11 @@ class _PaymentCountdownTextState extends State<PaymentCountdownText> {
 
   @override
   Widget build(BuildContext context) {
+    final minutes = (_remainingDuration.inSeconds / 60).ceil();
+
     return Text(
-      'Tiempo restante: $_remainingMinutes ${_remainingMinutes == 1 ? 'minuto' : 'minutos'}',
-      style: GoogleFonts.inter(
+      'Tiempo restante: $minutes ${minutes == 1 ? 'minuto' : 'minutos'}',
+      style: widget.style ?? GoogleFonts.inter(
         fontSize: 12,
         fontWeight: FontWeight.w600,
         color: AppColors.error,

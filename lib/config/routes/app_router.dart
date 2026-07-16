@@ -18,6 +18,7 @@ import 'package:washgo/features/auth/pages/employee_onboarding_page.dart';
 import 'package:washgo/features/auth/pages/login_page.dart';
 import 'package:washgo/features/auth/pages/register_page.dart';
 import 'package:washgo/features/auth/pages/role_selection_page.dart';
+import 'package:washgo/features/auth/pages/role_detail_page.dart';
 import 'package:washgo/features/dashboard/client/home_page.dart';
 import 'package:washgo/features/dashboard/owner/owner_dashboard_page.dart';
 import 'package:washgo/features/dashboard/owner/owner_invoice_detail_page.dart';
@@ -136,6 +137,17 @@ GoRouter _createAppRouter() {
     GoRoute(
       path: AppRoutes.roleSelection,
       builder: (context, state) => const RoleSelectionPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.roleDetail,
+      builder: (context, state) {
+        final roleStr = state.uri.queryParameters['role'] ?? 'CLIENTE';
+        final role = UserRole.values.firstWhere(
+          (e) => e.name == roleStr,
+          orElse: () => UserRole.CLIENTE,
+        );
+        return RoleDetailPage(role: role);
+      },
     ),
     GoRoute(
       path: AppRoutes.onboardingCliente,

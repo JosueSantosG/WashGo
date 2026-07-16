@@ -47,4 +47,62 @@ class PayphoneService {
       }
     }
   }
+
+  static Future<String?> getStoredTransaction({
+    required String orderId,
+    required String idToken,
+    required String baseUrl,
+  }) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/orders/$orderId/payphone-transaction'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+    if (response.statusCode != 200) {
+      try {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Error al obtener la transacción.');
+      } catch (_) {
+        throw Exception('Error del servidor: ${response.statusCode}');
+      }
+    }
+    final data = jsonDecode(response.body);
+    return data['transactionId'] as String?;
+  }
+
+  static Future<void> completePayment({
+    required String orderId,
+    required String transactionId,
+    required String base64Pdf,
+    required String idToken,
+    required String baseUrl,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/orders/complete-payphone-payment'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'orderId': orderId,
+        'transactionId': transactionId,
+        'base64Pdf': base64Pdf,
+      }),
+    );
+    if (response.statusCode != 200) {
+      try {
+        final errorData = jsonDecode(response.body);
+        final errorCode = errorData['error'] ?? '';
+        // 503 = Data Connect temporarily unavailable (emulator restart, etc.)
+        if (response.statusCode == 503 || errorCode == 'DATA_CONNECT_UNAVAILABLE') {
+          throw Exception('DB_UNAVAILABLE: ${errorData['message'] ?? 'Base de datos no disponible.'}');
+        }
+        throw Exception(errorCode.isNotEmpty ? errorCode : 'Error al completar el pago.');
+      } catch (e) {
+        if (e.toString().contains('DB_UNAVAILABLE')) rethrow;
+        throw Exception('Error del servidor al completar el pago: ${response.statusCode}');
+      }
+    }
+  }
 }

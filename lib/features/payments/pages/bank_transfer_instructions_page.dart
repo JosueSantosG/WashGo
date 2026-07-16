@@ -90,6 +90,8 @@ class _BankTransferInstructionsPageState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildHeader(),
+                    const SizedBox(height: 16),
+                    _buildWarningBanner(),
                     const SizedBox(height: 24),
                     _buildBankAccountCard(
                       'Banco Guayaquil',
@@ -154,6 +156,52 @@ class _BankTransferInstructionsPageState
               fontSize: 13,
               color: Colors.white.withValues(alpha: 0.9),
               height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWarningBanner() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.warning_amber_rounded,
+            color: Color(0xFFD97706),
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Límite de tiempo importante',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF92400E),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Tienes 30 minutos desde la creación de la reserva para realizar el pago y subir tu comprobante. De lo contrario, se cancelará automáticamente.',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: const Color(0xFFB45309),
+                    height: 1.4,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
