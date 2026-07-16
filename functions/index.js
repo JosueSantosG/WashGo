@@ -465,12 +465,16 @@ app.post("/orders/complete-paypal-payment", authenticate, async (req, res) => {
       observations: "Pago completado a través de PayPal",
     });
 
+    // Re-set status to EN_COLA so the order enters the service queue
+    // instead of jumping straight to COMPLETADO (which skips employee workflow).
+    await serverUpdateOrderStatus({ orderId, status: "EN_COLA" });
+
     return res.json({
       success: true,
       invoiceId,
       numeroUnico,
       invoiceUrl: signedUrl,
-      orderStatus: "COMPLETADO",
+      orderStatus: "EN_COLA",
     });
   } catch (error) {
     console.error("Complete PayPal Payment Error:", error.response?.data || error.message);
@@ -578,12 +582,16 @@ app.post("/orders/complete-payphone-payment", authenticate, async (req, res) => 
       observations: "Pago completado a través de PayPhone",
     });
 
+    // Re-set status to EN_COLA so the order enters the service queue
+    // instead of jumping straight to COMPLETADO (which skips employee workflow).
+    await serverUpdateOrderStatus({ orderId, status: "EN_COLA" });
+
     return res.json({
       success: true,
       invoiceId,
       numeroUnico,
       invoiceUrl: signedUrl,
-      orderStatus: "COMPLETADO",
+      orderStatus: "EN_COLA",
     });
   } catch (error) {
     console.error("Complete PayPhone Payment Error:", error.response?.data || error.message);
