@@ -640,31 +640,32 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
         ),
 
         // Environment Indicator Banner
-        Container(
-          color: _isSandbox ? const Color(0xFFFFF9E6) : const Color(0xFFECFDF5),
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              Icon(
-                _isSandbox ? Icons.science_outlined : Icons.verified_user_outlined,
-                color: _isSandbox ? const Color(0xFFD97706) : const Color(0xFF059669),
-                size: 16,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  _isSandbox ? 'Modo Real: PayPal Sandbox Activo' : 'Modo Real: Producción En Vivo',
-                  style: GoogleFonts.inter(
-                    color: _isSandbox ? const Color(0xFFB45309) : const Color(0xFF047857),
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+        if (_isSandbox)
+          Container(
+            color: const Color(0xFFFFF9E6),
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.science_outlined,
+                  color: Color(0xFFD97706),
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Modo Real: PayPal Sandbox Activo',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFFB45309),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
 
         // Order Summary Bar
         Container(
