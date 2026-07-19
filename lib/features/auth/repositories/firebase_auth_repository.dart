@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:firebase_data_connect/firebase_data_connect.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
 import 'package:washgo/features/auth/models/washgo_user.dart';
 import 'package:washgo/features/auth/models/business_summary.dart';
@@ -10,7 +11,7 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   Future<List<UserRole>> getCurrentUserRoles() async {
-    final response = await _connector.getCurrentUser().execute();
+    final response = await _connector.getCurrentUser().ref().execute(fetchPolicy: QueryFetchPolicy.serverOnly);
     if (response.data.user != null) {
       final rolesEnum = response.data.user!.roles;
       return rolesEnum
@@ -23,7 +24,7 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   Future<WashGoUser?> getCurrentUser() async {
-    final response = await _connector.getCurrentUser().execute();
+    final response = await _connector.getCurrentUser().ref().execute(fetchPolicy: QueryFetchPolicy.serverOnly);
     final user = response.data.user;
     if (user == null) return null;
 

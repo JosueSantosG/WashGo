@@ -17,7 +17,8 @@ import 'package:washgo/features/laundries/repositories/reservation_config_reposi
 import 'package:washgo/features/laundries/repositories/firebase_reservation_config_repository.dart';
 
 class CreateLaundryPage extends StatefulWidget {
-  const CreateLaundryPage({super.key});
+  final bool isFirstTimeSetup;
+  const CreateLaundryPage({super.key, this.isFirstTimeSetup = false});
 
   @override
   State<CreateLaundryPage> createState() => _CreateLaundryPageState();
@@ -119,6 +120,7 @@ class _CreateLaundryPageState extends State<CreateLaundryPage> {
       }
     }
   }
+
 
   String _generateBusinessCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -1104,30 +1106,43 @@ class _CreateLaundryPageState extends State<CreateLaundryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: 'Cerrar Sesión / Volver',
-          onPressed: () => _confirmSignOut(context),
-        ),
-        title: Text(
-          'Configuración del Negocio',
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout_rounded),
-            tooltip: 'Cerrar Sesión',
-            onPressed: () => _confirmSignOut(context),
+    return PopScope(
+      canPop: !widget.isFirstTimeSetup,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        context.go(AppRoutes.ownerDashboard);
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            tooltip: 'Volver',
+            onPressed: () {
+              if (widget.isFirstTimeSetup) {
+                context.go(AppRoutes.ownerDashboard);
+              } else {
+                Navigator.pop(context);
+              }
+            },
           ),
-        ],
-      ),
+          title: Text(
+            'Configuración del Negocio',
+            style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+          ),
+          centerTitle: true,
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          actions: [
+            if (widget.isFirstTimeSetup)
+              IconButton(
+                icon: const Icon(Icons.logout_rounded),
+                tooltip: 'Cerrar Sesión',
+                onPressed: () => _confirmSignOut(context),
+              ),
+          ],
+        ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Form(
@@ -1786,6 +1801,7 @@ class _CreateLaundryPageState extends State<CreateLaundryPage> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

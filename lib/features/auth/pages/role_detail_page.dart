@@ -187,7 +187,7 @@ class _RoleDetailPageState extends State<RoleDetailPage> {
           _showSuccess('Cuenta de Administrador creada exitosamente');
 
           if (mounted) {
-            context.go('/create-laundry');
+            context.go(AppRoutes.ownerDashboard);
           }
         } else {
           // Client or Employee: proceed to onboarding steps without creating account yet
@@ -219,7 +219,7 @@ class _RoleDetailPageState extends State<RoleDetailPage> {
     } else if (role == UserRole.EMPLEADO) {
       context.go('/onboarding-employee');
     } else if (role == UserRole.ADMINISTRADOR) {
-      context.go('/create-laundry');
+      context.go(AppRoutes.ownerDashboard);
     }
   }
 

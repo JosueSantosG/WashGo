@@ -141,8 +141,8 @@
             // Guardar el transactionId en Firestore via Cloud Function
             if (orderId && transactionId) {
                 var baseUrl = window.location.origin === 'http://localhost:5000'
-                    ? 'http://127.0.0.1:5001/washgo-app-8392/us-central1'
-                    : 'https://us-central1-washgo-app-8392.cloudfunctions.net';
+                    ? 'http://127.0.0.1:5001/washgov1/us-central1'
+                    : 'https://us-central1-washgov1.cloudfunctions.net';
 
                 fetch(baseUrl + '/payphone/store-transaction', {
                     method: 'POST',

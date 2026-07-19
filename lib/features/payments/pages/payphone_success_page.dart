@@ -150,14 +150,14 @@ class _PayphoneSuccessPageState extends State<PayphoneSuccessPage> {
         throw Exception('Error al validar la transacción con PayPhone.');
       }
     } catch (e) {
-      final errStr = e.toString();
+      final errStr = e.toString().replaceAll('Exception:', '').trim();
       setState(() {
         _isLoading = false;
         if (errStr.contains('DB_UNAVAILABLE')) {
           _errorMessage = '⚠️ Tu pago fue registrado por PayPhone, pero la base de datos está temporalmente no disponible.\n\n'
               'Tu ID de transacción fue guardado de forma segura. Regresa a la app y presiona "Ya pagué – Verificar" para confirmar tu reserva.';
         } else {
-          _errorMessage = 'Error al completar el pago: $e'
+          _errorMessage = 'Error al completar el pago'
               '\n\nSi el pago fue aprobado en PayPhone, regresa a la app y presiona "Ya pagué – Verificar".';
         }
       });

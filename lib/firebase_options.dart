@@ -20,8 +20,6 @@ class DefaultFirebaseOptions {
       return web;
     }
     switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-        return android;
       case TargetPlatform.iOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for ios - '
@@ -50,19 +48,12 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDlTXwhFVAxcmhb8qZzQar9xpSTQjVHya8',
-    appId: '1:822631956035:web:fd4b9b4bd52483e1175ef6',
-    messagingSenderId: '822631956035',
-    projectId: 'washgo-app-8392',
-    authDomain: 'washgo-app-8392.firebaseapp.com',
-    storageBucket: 'washgo-app-8392.firebasestorage.app',
-  );
-
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDe5Dp2SL_7_04UOCEpxF8wWrroZptsRjs',
-    appId: '1:822631956035:android:d63160c51c8dc202175ef6',
-    messagingSenderId: '822631956035',
-    projectId: 'washgo-app-8392',
-    storageBucket: 'washgo-app-8392.firebasestorage.app',
+    apiKey: 'AIzaSyDtS_l-4dRJUn8na6SnOFnXrszpmTtt2R4',
+    appId: '1:847264908676:web:40d7fe3c282ef7989e89d1',
+    messagingSenderId: '847264908676',
+    projectId: 'washgov1',
+    authDomain: 'washgov1.firebaseapp.com',
+    storageBucket: 'washgov1.firebasestorage.app',
+    measurementId: 'G-FHQ7C2BVQ6',
   );
 }

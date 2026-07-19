@@ -130,79 +130,32 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                     _isProcessing = true;
                                   });
                                   try {
-                                    final user = FirebaseAuth.instance.currentUser;
-                                    if (user == null) {
-                                      throw Exception('Usuario no autenticado.');
-                                    }
-                                    final idToken = await user.getIdToken(true);
-                                    if (idToken == null) {
-                                      throw Exception('No se pudo obtener token de autenticación.');
-                                    }
-                                    final baseUrl = _getFunctionsBaseUrl();
                                     final orderId = _payphoneOrderId!;
 
-                                    // 1. Try fetching stored transactionId from Firestore bridge
-                                    String? transactionId;
-                                    try {
-                                      transactionId = await PayphoneService.getStoredTransaction(
-                                        orderId: orderId,
-                                        baseUrl: baseUrl,
-                                        idToken: idToken,
-                                      );
-                                    } catch (_) {
-                                      // Fall through to Data Connect check
-                                    }
-
-
-                                    // 3. If we have a transactionId, verify with PayPhone first
-                                    if (transactionId != null && transactionId.isNotEmpty) {
-                                      try {
-                                        final verification = await PayphoneService.verifyTransaction(
-                                          transactionId: transactionId,
-                                          orderId: orderId,
-                                          idToken: idToken,
-                                          baseUrl: baseUrl,
-                                        );
-                                        if (verification['verified'] == true) {
-                                          if (!context.mounted) return;
-                                          await context.push(
-                                            '/payphone-callback/success'
-                                            '?transactionId=$transactionId'
-                                            '&orderId=$orderId',
-                                          );
-                                          return;
-                                        }
-                                        // PayPhone says not approved — show message, don't navigate
-                                        if (!context.mounted) return;
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'PayPhone no ha confirmado el pago. Estado: ${verification['status'] ?? 'Desconocido'}. Si ya pagaste, espera unos segundos e intenta de nuevo.',
-                                              style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-                                            ),
-                                            backgroundColor: Colors.orange.shade800,
-                                          ),
-                                        );
-                                        return;
-                                      } catch (_) {
-                                        // If verify endpoint fails (e.g. auth issue), fall through to original behavior
-                                        // so the user isn't locked out
-                                      }
-                                    }
-
-                                    // 4. Fallback: check Data Connect order status
+                                    // Check the order status in Data Connect.
+                                    // The server-side /payphone-callback/success already verified
+                                    // the payment with PayPhone and updated the order to EN_COLA.
+                                    // We just need to poll and reflect the result.
                                     final connector = ExampleConnector.instance;
                                     final orderResult = await connector
                                         .getOrderById(id: orderId)
                                         .execute();
                                     final order = orderResult.data.order;
+
                                     if (order == null) {
                                       throw Exception('No se encontró el pedido.');
                                     }
+
                                     final orderStatus = order.status.stringValue;
-                                    if (orderStatus == 'COMPLETADO' || orderStatus == 'EN_COLA') {
+
+                                    if (orderStatus == 'EN_COLA' || orderStatus == 'COMPLETADO') {
+                                      // Server already confirmed the payment — close the flow
                                       if (!mounted) return;
-                                      Navigator.pop(context);
+                                      setState(() {
+                                        _payphoneWaiting = false;
+                                        _payphoneOrderId = null;
+                                        _payphonePaymentUrl = null;
+                                      });
                                       Navigator.pop(context);
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
@@ -211,20 +164,25 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                             style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                                           ),
                                           backgroundColor: Colors.green.shade600,
+                                          duration: const Duration(seconds: 4),
                                         ),
                                       );
                                     } else {
+                                      // Payment not yet confirmed — ask user to wait and retry
+                                      if (!context.mounted) return;
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
                                           content: Text(
-                                            'El pago aún no ha sido reportado como completado. Completa el pago en el navegador.',
+                                            'El pago aún no ha sido confirmado. Si ya pagaste en PayPhone, espera unos segundos e intenta de nuevo.',
                                             style: GoogleFonts.inter(fontWeight: FontWeight.w600),
                                           ),
                                           backgroundColor: Colors.orange.shade800,
+                                          duration: const Duration(seconds: 5),
                                         ),
                                       );
                                     }
                                   } catch (e) {
+                                    if (!context.mounted) return;
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text('Error al verificar: $e'),
@@ -232,9 +190,11 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                       ),
                                     );
                                   } finally {
-                                    setState(() {
-                                      _isProcessing = false;
-                                    });
+                                    if (mounted) {
+                                      setState(() {
+                                        _isProcessing = false;
+                                      });
+                                    }
                                   }
                                 },
                           style: ElevatedButton.styleFrom(
@@ -558,6 +518,41 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                     ),
                     const SizedBox(height: 12),
 
+                    // PayPhone Option Card
+                    _buildPaymentOptionCard(
+                      isSelected: _selectedMethod == PaymentMethod.PAYPHONE,
+                      title: 'PayPhone',
+                      subtitle: 'Pago con tarjeta de crédito/débito o saldo PayPhone',
+                      icon: Icons.phone_android_rounded,
+                      iconColor: const Color(0xFFFF6C00),
+                      bgColor: const Color(0xFFFF6C00).withValues(alpha: 0.08),
+                      isDisabled: false,
+                      onTap: () {
+                        setState(() {
+                          _selectedMethod = PaymentMethod.PAYPHONE;
+                          _preferPaypalCard = false;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Bank Transfer Option Card
+                    _buildPaymentOptionCard(
+                      isSelected: _selectedMethod == PaymentMethod.TRANSFERENCIA_BANCARIA,
+                      title: 'Transferencia Bancaria',
+                      subtitle: 'Paga mediante transferencia directa',
+                      icon: Icons.account_balance_rounded,
+                      iconColor: AppColors.primary,
+                      bgColor: AppColors.primary.withValues(alpha: 0.08),
+                      onTap: () {
+                        setState(() {
+                          _selectedMethod = PaymentMethod.TRANSFERENCIA_BANCARIA;
+                          _preferPaypalCard = false;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
                     // PayPal Option Card
                     _buildPaymentOptionCard(
                       isSelected: _selectedMethod == PaymentMethod.PAYPAL && !_preferPaypalCard,
@@ -587,61 +582,6 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                         setState(() {
                           _selectedMethod = PaymentMethod.PAYPAL;
                           _preferPaypalCard = true;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-
-                    /*
-                    // Cash Option Card
-                    _buildPaymentOptionCard(
-                      isSelected: _selectedMethod == PaymentMethod.CASH,
-                      title: 'Pago en Sitio',
-                      subtitle:
-                          'Pagar al llegar al local (Espera en fila normal)',
-                      icon: Icons.payments_rounded,
-                      iconColor: const Color(0xFF10B981),
-                      bgColor: const Color(0xFFECFDF5),
-                      onTap: () {
-                        setState(() {
-                          _selectedMethod = PaymentMethod.CASH;
-                          _preferPaypalCard = false;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    */
-
-                    // Bank Transfer Option Card
-                    _buildPaymentOptionCard(
-                      isSelected: _selectedMethod == PaymentMethod.TRANSFERENCIA_BANCARIA,
-                      title: 'Transferencia Bancaria',
-                      subtitle: 'Paga mediante transferencia directa',
-                      icon: Icons.account_balance_rounded,
-                      iconColor: AppColors.primary,
-                      bgColor: AppColors.primary.withValues(alpha: 0.08),
-                      onTap: () {
-                        setState(() {
-                          _selectedMethod = PaymentMethod.TRANSFERENCIA_BANCARIA;
-                          _preferPaypalCard = false;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-
-                    // PayPhone Option Card
-                    _buildPaymentOptionCard(
-                      isSelected: _selectedMethod == PaymentMethod.PAYPHONE,
-                      title: 'PayPhone',
-                      subtitle: 'Pago con tarjeta de crédito/débito o saldo PayPhone',
-                      icon: Icons.phone_android_rounded,
-                      iconColor: const Color(0xFFFF6C00),
-                      bgColor: const Color(0xFFFF6C00).withValues(alpha: 0.08),
-                      isDisabled: false,
-                      onTap: () {
-                        setState(() {
-                          _selectedMethod = PaymentMethod.PAYPHONE;
-                          _preferPaypalCard = false;
                         });
                       },
                     ),

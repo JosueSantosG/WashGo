@@ -198,7 +198,10 @@ GoRouter _createAppRouter() {
     ),
     GoRoute(
       path: AppRoutes.createLaundry,
-      builder: (context, state) => const CreateLaundryPage(),
+      builder: (context, state) {
+        final isFirstTime = (state.extra as bool?) ?? false;
+        return CreateLaundryPage(isFirstTimeSetup: isFirstTime);
+      },
     ),
     GoRoute(
       path: '/select-active-role',

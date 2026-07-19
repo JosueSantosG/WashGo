@@ -441,7 +441,7 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
         if (e.toString().contains('CORS_ERROR')) {
           _errorMessage = 'CORS_ERROR';
         } else {
-          _errorMessage = e.toString().replaceAll('Exception:', '').trim();
+          _errorMessage = 'Error al procesar el pago';
         }
         _currentStep = 6; // Error step
       });
@@ -547,7 +547,7 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
         }
 
         setState(() {
-          _errorMessage = '$errDetail Asegúrate de aprobar el pago en PayPal antes de presionar verificar.';
+          _errorMessage = 'El pago no se ha completado. Asegúrate de aprobar el pago en PayPal antes de presionar verificar.';
           _currentStep = 5; // Return to verify step with error message
           _isCapturing = false;
         });
@@ -569,7 +569,7 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
         if (e.toString().contains('CORS_ERROR')) {
           _errorMessage = 'CORS_ERROR';
         } else {
-          _errorMessage = 'Error al capturar: $e';
+          _errorMessage = 'Error al verificar el pago';
         }
         _currentStep = 5; // Return to verify step with error message
         _isCapturing = false;

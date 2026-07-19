@@ -63,7 +63,7 @@ class _ProofStatusPageState extends State<ProofStatusPage> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = 'Error al cargar el estado del pago';
           _isLoading = false;
         });
       }

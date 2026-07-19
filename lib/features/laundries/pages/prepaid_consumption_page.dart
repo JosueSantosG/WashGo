@@ -70,7 +70,7 @@ class _PrepaidConsumptionPageState extends State<PrepaidConsumptionPage>
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error al cargar los datos de consumo: ${e.toString()}';
+        _errorMessage = 'Error al cargar los datos';
         _isLoading = false;
       });
     }

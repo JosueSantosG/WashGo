@@ -95,11 +95,7 @@ class _AuthGatePageState extends State<AuthGatePage> {
             _checkPendingBookingIntentOrGoHome();
           }
         } else if (activeRole == UserRole.ADMINISTRADOR) {
-          if (user.currentBusinessId == null) {
-            context.go('/create-laundry');
-          } else {
-            context.go('/owner-dashboard');
-          }
+          context.go('/owner-dashboard');
         } else {
           // El usuario es SUPER_ADMIN, etc.
           _checkPendingBookingIntentOrGoHome();

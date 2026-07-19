@@ -149,8 +149,8 @@ app.post("/paypal/create-order", authenticate, async (req, res) => {
           },
         ],
         application_context: {
-          return_url: `https://washgo-app-8392.web.app/paypal-callback/success?orderId=${orderId}`,
-          cancel_url: `https://washgo-app-8392.web.app/paypal-callback/cancel?orderId=${orderId}`,
+          return_url: `https://washgov1.web.app/paypal-callback/success?orderId=${orderId}`,
+          cancel_url: `https://washgov1.web.app/paypal-callback/cancel?orderId=${orderId}`,
           user_action: "PAY_NOW",
           shipping_preference: "NO_SHIPPING",
         },
@@ -198,7 +198,7 @@ app.post("/payphone/prepare", authenticate, async (req, res) => {
     // Check if we should use mock simulation
     if (!token || !storeId || token === "mock") {
       console.log("[PayPhone] Using simulated prepare flow for order:", orderId);
-      const origin = req.get("origin") || "https://washgo-app-8392.web.app";
+      const origin = req.get("origin") || "https://washgov1.web.app";
       const baseUrl = origin.endsWith("/") ? origin.slice(0, -1) : origin;
       
       // If running locally, use hash routing format to avoid local dev server 404s
@@ -236,7 +236,7 @@ app.post("/payphone/prepare", authenticate, async (req, res) => {
         reference: `Orden WashGo #${orderId.substring(0, 8)}`,
         currency: "USD",
         // After payment, PayPhone redirects the user's browser here with ?id=TRANSACTION_ID&clientTransactionId=ORDER_ID
-        redirectUrl: `https://us-central1-${admin.app().options.projectId || 'washgo-app-8392'}.cloudfunctions.net/api/payphone-callback/success`,
+        redirectUrl: `https://us-central1-${admin.app().options.projectId || 'washgov1'}.cloudfunctions.net/api/payphone-callback/success`,
       },
     });
 
@@ -263,12 +263,14 @@ app.post("/payphone/prepare", authenticate, async (req, res) => {
 
 // 1b-1. PayPhone Callback — redirect target after successful payment
 // PayPhone redirects the user's browser here (GET) with ?id=TRANSACTION_ID&clientTransactionId=ORDER_ID
-// Stores the transactionId in Firestore so the Flutter app can recover it via the Verificar flow.
+// Stores the transactionId in Firestore, verifies with PayPhone API, and updates the order to EN_COLA.
+// The Flutter client only needs to poll the order status — no client-side completion required.
 app.get("/payphone-callback/success", async (req, res) => {
   const transactionId = req.query.id;
   const orderId = req.query.clientTransactionId;
 
   if (orderId && transactionId) {
+    // 1. Store transactionId in Firestore (safety net for the "Verificar" fallback)
     try {
       await admin.firestore().collection("payphone_transactions").doc(orderId).set({
         transactionId,
@@ -278,6 +280,51 @@ app.get("/payphone-callback/success", async (req, res) => {
     } catch (err) {
       console.error(`[PayPhone-callback] Error storing transactionId: ${err.message}`);
     }
+
+    // 2. Verify payment with PayPhone API and update order to EN_COLA
+    // This runs asynchronously and never blocks the HTML response.
+    (async () => {
+      try {
+        const token = process.env.PAYPHONE_TOKEN;
+        const isMock = !token || token === "mock";
+        let approved = isMock; // mock transactions are always approved
+
+        if (!isMock) {
+          const confirmResponse = await axios({
+            url: "https://pay.payphonetodoesposible.com/api/button/V2/Confirm",
+            method: "post",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            data: {
+              id: parseInt(transactionId) || transactionId,
+              clientTxId: orderId,
+            },
+          });
+          approved = confirmResponse.data.transactionStatus === "Approved";
+          console.log(`[PayPhone-callback] PayPhone status for ${transactionId}: ${confirmResponse.data.transactionStatus}`);
+        }
+
+        if (approved) {
+          // Idempotency: only update if still in PENDIENTE_PAGO
+          const orderResult = await serverGetOrderById({ id: orderId });
+          const order = orderResult.data.order;
+          if (order && order.status === "PENDIENTE_PAGO") {
+            await serverUpdateOrderStatus({ orderId, status: "EN_COLA" });
+            console.log(`[PayPhone-callback] Order ${orderId} successfully updated to EN_COLA`);
+          } else if (order) {
+            console.log(`[PayPhone-callback] Order ${orderId} already in status ${order.status}, skipping update`);
+          }
+        } else {
+          console.warn(`[PayPhone-callback] Payment not approved for order ${orderId}, order not updated`);
+        }
+      } catch (completionErr) {
+        // Never crash the HTML response — log and move on.
+        // The Flutter "Verificar" button still works as a fallback via the stored transactionId.
+        console.error(`[PayPhone-callback] Error completing order ${orderId}: ${completionErr.message}`);
+      }
+    })();
   }
 
   res.set("Content-Type", "text/html");
@@ -321,7 +368,7 @@ app.get("/payphone/:transactionId/verify", authenticate, async (req, res) => {
     const token = process.env.PAYPHONE_TOKEN;
 
     // Mock/simulated mode — mock transactions are always "approved"
-    if (!token || token === "mock" || transactionId.startsWith("mock-")) {
+    if (!token || token === "mock") {
       return res.json({ verified: true, status: "Approved", simulated: true });
     }
 
@@ -579,7 +626,7 @@ app.post("/orders/complete-payphone-payment", authenticate, async (req, res) => 
     const token = process.env.PAYPHONE_TOKEN;
 
     // Check if simulated
-    if (!token || token === "mock" || (typeof transactionId === "string" && transactionId.startsWith("mock-"))) {
+    if (!token || token === "mock") {
       console.log("[PayPhone] Completing simulated transaction:", transactionId);
     } else {
       // Real API Confirmation
@@ -649,7 +696,7 @@ app.get("/orders/:orderId/payphone-transaction", authenticate, async (req, res) 
       if (process.env.FIRESTORE_EMULATOR_HOST) {
         try {
           const prodResponse = await axios.get(
-            `https://us-central1-washgo-app-8392.cloudfunctions.net/api/payphone/transaction/${encodeURIComponent(orderId)}`,
+            `https://us-central1-washgov1.cloudfunctions.net/api/payphone/transaction/${encodeURIComponent(orderId)}`,
             { timeout: 5000 }
           );
           if (prodResponse.data?.transactionId) {

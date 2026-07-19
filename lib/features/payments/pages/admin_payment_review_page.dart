@@ -73,7 +73,7 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
         if (!mounted) return;
         setState(() {
           if (_pendingProofs.isEmpty) {
-            _error = e.toString();
+            _error = 'Error al cargar los comprobantes';
           } else {
             debugPrint("Error watching pending proofs: $e");
           }
@@ -127,7 +127,7 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = 'Error al cargar los comprobantes';
           _isLoading = false;
         });
       }
@@ -173,7 +173,7 @@ class _AdminPaymentReviewPageState extends State<AdminPaymentReviewPage> {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error al revisar el comprobante: $e'),
+          content: const Text('Error al revisar el comprobante'),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(

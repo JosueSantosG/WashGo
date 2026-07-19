@@ -996,7 +996,7 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'Error al cargar el dashboard: ${e.toString()}';
+          _errorMessage = 'Error al cargar el panel';
         });
       }
     }

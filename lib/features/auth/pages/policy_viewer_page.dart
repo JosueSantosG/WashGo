@@ -86,7 +86,7 @@ class PolicyViewerPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Última actualización: 12 de Julio, 2026',
+                        'Última actualización: 19 de Julio, 2026',
                         style: textTheme.labelSmall?.copyWith(
                           color: AppColors.outline,
                           fontWeight: FontWeight.w500,
@@ -143,7 +143,13 @@ class PolicyViewerPage extends StatelessWidget {
           'WashGo no se hace responsable por daños directos, indirectos, incidentales o consecuentes derivados del uso del servicio, de la calidad del lavado realizado por los negocios asociados, o de altercados entre usuarios en los establecimientos.'),
       _sectionHeader(textTheme, '7. Modificaciones a los Términos'),
       _sectionBody(textTheme,
-          'Nos reservamos el derecho de modificar estos términos en any momento. La notificación de cambios se realizará publicando los nuevos términos en la aplicación. El uso continuado de la plataforma después de dichas modificaciones constituirá su consentimiento a los nuevos términos.'),
+          'Nos reservamos el derecho de modificar estos términos en cualquier momento. La notificación de cambios se realizará publicando los nuevos términos en la aplicación. El uso continuado de la plataforma después de dichas modificaciones constituirá su consentimiento a los nuevos términos.'),
+      _sectionHeader(textTheme, '8. Regulación para Empleados Multi-Sucursal'),
+      _sectionBody(textTheme,
+          'Los empleados pueden postularse y pertenecer de manera simultánea a múltiples locales o sucursales independientes en WashGo. El empleado es responsable de seleccionar la sucursal activa correcta en su aplicación antes de iniciar su jornada o registrar asistencia. Asimismo, los empleados conservan el derecho de desvincularse voluntariamente de cualquier local en cualquier momento a través de su perfil, regresando a un estado sin asignar si no les quedan sucursales activas.'),
+      _sectionHeader(textTheme, '9. Consecuencias de la Eliminación de Cuenta para Propietarios'),
+      _sectionBody(textTheme,
+          'Si un propietario decide eliminar su cuenta, acepta que todos sus locales asociados serán desactivados definitiva e inmediatamente y sus empleados serán desvinculados de dichos locales. La eliminación no exime al propietario de obligaciones de pago pendientes con WashGo, empleados o procesadores de pago externos.'),
     ];
   }
 
@@ -167,18 +173,19 @@ class PolicyViewerPage extends StatelessWidget {
           '• Cumplir con requerimientos legales y fiscales aplicables en Ecuador.'),
       _sectionHeader(textTheme, '3. Compartición de Datos'),
       _sectionBody(textTheme,
-          'No vendemos ni alquilamos su información personal a terceros. Sus datos se comparten únicamente entre las partes involucradas en una reserva (por ejemplo, proporcionar el nombre del cliente y tipo de vehículo al negocio de lavado) o con proveedores de infraestructura esenciales (como Firebase y pasarelas de pago autorizadas como PayPal) bajo estrictas medidas de confidencialidad.'),
+          'No vendemos ni alquilamos su información personal a terceros. Sus datos se comparten únicamente entre las partes involucradas en una reserva (por ejemplo, proporcionar el nombre del cliente y tipo de vehículo al negocio de lavado), con los propietarios de locales asociados en el caso de los Empleados (quienes verán su nombre, teléfono y registros de actividad laboral en dicha sucursal), o con proveedores de infraestructura esenciales (como Firebase y pasarelas de pago autorizadas como PayPal o PayPhone) bajo estrictas medidas de confidencialidad.'),
       _sectionHeader(textTheme, '4. Seguridad de los Datos'),
       _sectionBody(textTheme,
           'Implementamos medidas de seguridad técnicas y organizativas para proteger su información contra accesos no autorizados, pérdida o alteración. Esto incluye encriptación SSL/TLS, políticas estrictas de autenticación mediante Firebase Auth y reglas robustas de base de datos a nivel de servidor.'),
       _sectionHeader(textTheme, '5. Derechos del Usuario (ARCO)'),
       _sectionBody(textTheme,
           'Usted tiene derecho a acceder, rectificar, cancelar u oponerse al tratamiento de sus datos personales. Puede actualizar su información de perfil directamente en la sección "Mi Perfil" dentro de la aplicación móvil.'),
-      _sectionHeader(textTheme, '6. Eliminación de Cuenta e Información'),
+      _sectionHeader(textTheme, '6. Eliminación de Cuenta y Anonimización'),
       _sectionBody(textTheme,
-          'Si desea eliminar su cuenta y borrar de forma permanente toda su información personal y registros históricos de la plataforma WashGo, puede hacerlo de las siguientes maneras:\n'
-          '• En la Aplicación: Diríjase a la sección "Mi Perfil" > "Seguridad y Datos" y seleccione la opción "Eliminar mi cuenta".\n'
-          '• Por Correo Electrónico: Envíe una solicitud formal de eliminación de datos a soporte@washgo.app indicando su dirección de correo electrónico registrada. Su cuenta y datos serán eliminados de nuestros servidores activos en un plazo máximo de 10 días hábiles, reteniendo únicamente registros anónimos o aquellos exigidos por ley por propósitos fiscales y contables.'),
+          'Si desea eliminar su cuenta de la plataforma WashGo, puede hacerlo de las siguientes maneras:\n'
+          '• En la Aplicación: Diríjase a la sección de configuración de su perfil y seleccione la opción "Eliminar mi cuenta".\n'
+          '• Por Correo Electrónico: Envíe una solicitud formal de eliminación de datos a soporte@washgo.app.\n\n'
+          'Al procesarse la solicitud, eliminaremos permanentemente sus credenciales de inicio de sesión (Firebase Auth) y anonimizaremos sus datos de perfil (nombre, correo electrónico, teléfono y foto de perfil) en nuestra base de datos, reemplazándolos con registros genéricos ("Usuario Eliminado"). Para cumplir con regulaciones fiscales, contables y de auditoría de los locales y clientes, mantendremos de forma indefinida los históricos de transacciones, órdenes de servicio y facturas en formato estrictamente anonimizado, sin posibilidad de volver a vincularlos a su identidad.'),
     ];
   }
 

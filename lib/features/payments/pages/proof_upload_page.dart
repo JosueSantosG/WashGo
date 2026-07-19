@@ -47,7 +47,7 @@ class _ProofUploadPageState extends State<ProofUploadPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al seleccionar imagen: $e')),
+        const SnackBar(content: Text('Error al seleccionar imagen')),
       );
     }
   }
@@ -147,8 +147,8 @@ class _ProofUploadPageState extends State<ProofUploadPage> {
       if (!mounted) return;
       setState(() => _isUploading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al subir comprobante: $e'),
+        const SnackBar(
+          content: Text('Error al subir comprobante'),
           backgroundColor: AppColors.error,
         ),
       );

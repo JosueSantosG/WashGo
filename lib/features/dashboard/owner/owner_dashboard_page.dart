@@ -72,6 +72,7 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
   double? _longitud;
   List<WashGoBusiness> _myBusinesses = [];
   WashGoBusiness? _business;
+  bool _hasNoBusiness = false;
 
   // Operating Hours state
   TimeOfDay _horaApertura = const TimeOfDay(hour: 8, minute: 0);
@@ -195,6 +196,7 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _hasNoBusiness = false;
     });
 
     try {
@@ -231,7 +233,23 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
         }
       }
 
-      if (user == null || businessId == null) {
+      if (user == null) {
+        setState(() {
+          _errorMessage = 'Usuario no autenticado.';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      if (myBusinesses.isEmpty) {
+        setState(() {
+          _hasNoBusiness = true;
+          _isLoading = false;
+        });
+        return;
+      }
+
+      if (businessId == null) {
         setState(() {
           _errorMessage =
               'No tienes ningún negocio asociado.\nPor favor crea uno primero.';
@@ -475,7 +493,7 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
       debugPrint('ERROR LOADING DASHBOARD: $e');
       debugPrint(stackTrace.toString());
       setState(() {
-        _errorMessage = 'Error al cargar el panel: $e\n$stackTrace';
+        _errorMessage = 'Error al cargar el panel';
       });
     } finally {
       setState(() {
@@ -840,6 +858,8 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
       backgroundColor: const Color(0xFFF3F4F6),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
+          : _hasNoBusiness
+          ? _buildNoBusinessState()
           : _errorMessage != null
           ? _buildErrorState()
           : CustomScrollView(
@@ -2490,6 +2510,148 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
           color: AppColors.outline,
         ),
         onTap: onTap,
+      ),
+    );
+  }
+
+  Widget _buildNoBusinessState() {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF3F4F6),
+      appBar: AppBar(
+        title: Text(
+          'WashGo - Dueño',
+          style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout_rounded),
+            tooltip: 'Cerrar Sesión',
+            onPressed: () async {
+              final router = GoRouter.of(context);
+              await FirebaseAuth.instance.signOut();
+              SessionManager.activeRole = null;
+              router.go('/login');
+            },
+          ),
+        ],
+      ),
+      body: Center(
+        child: SingleChildScrollView(
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            margin: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.storefront_rounded,
+                    size: 64,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  '¡Bienvenido a WashGo!',
+                  style: GoogleFonts.inter(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Para acceder como dueño debes registrar tu local y configurar sus servicios.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: AppColors.onSurfaceVariant,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final result = await context.push(AppRoutes.createLaundry, extra: true);
+                    if (result == true) {
+                      _loadDashboardData();
+                    }
+                  },
+                  icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white),
+                  label: const Text('Registrar Local'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    textStyle: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    SessionManager.activeRole = UserRole.CLIENTE;
+                    context.go('/auth-gate');
+                  },
+                  icon: const Icon(Icons.directions_car_filled_rounded, color: AppColors.primary),
+                  label: const Text('Ingresar como Cliente'),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.primary, width: 1.5),
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    textStyle: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                TextButton.icon(
+                  onPressed: () async {
+                    final router = GoRouter.of(context);
+                    await FirebaseAuth.instance.signOut();
+                    SessionManager.activeRole = null;
+                    router.go('/login');
+                  },
+                  icon: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 18),
+                  label: const Text(
+                    'Cerrar Sesión',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

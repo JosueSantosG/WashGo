@@ -111,7 +111,7 @@ class _PaypalSuccessPageState extends State<PaypalSuccessPage> {
       }
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Error al completar el pago: $e';
+        _errorMessage = 'Error al completar el pago';
       });
     }
   }

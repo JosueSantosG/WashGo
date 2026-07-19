@@ -46,12 +46,13 @@ class DefaultFirebaseOptions {
         );
       case AppEnvironment.prod:
         return const FirebaseOptions(
-          apiKey: 'AIzaSyDlTXwhFVAxcmhb8qZzQar9xpSTQjVHya8',
-          appId: '1:822631956035:web:fd4b9b4bd52483e1175ef6',
-          messagingSenderId: '822631956035',
-          projectId: 'washgo-app-8392',
-          authDomain: 'washgo-app-8392.firebaseapp.com',
-          storageBucket: 'washgo-app-8392.firebasestorage.app',
+          apiKey: 'AIzaSyDtS_l-4dRJUn8na6SnOFnXrszpmTtt2R4',
+          appId: '1:847264908676:web:40d7fe3c282ef7989e89d1',
+          messagingSenderId: '847264908676',
+          projectId: 'washgov1',
+          authDomain: 'washgov1.firebaseapp.com',
+          storageBucket: 'washgov1.firebasestorage.app',
+          measurementId: 'G-FHQ7C2BVQ6',
         );
     }
   }
