@@ -380,8 +380,8 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al exportar CSV: $e'),
+          const SnackBar(
+            content: Text('Error al exportar CSV'),
             backgroundColor: AppColors.error,
           ),
         );

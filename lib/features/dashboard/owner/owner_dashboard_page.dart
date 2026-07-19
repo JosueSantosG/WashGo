@@ -742,8 +742,8 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al guardar datos: $e'),
+          const SnackBar(
+            content: Text('Error al guardar datos'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -812,8 +812,8 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al aprobar: $e'),
+          const SnackBar(
+            content: Text('Error al aprobar'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -842,8 +842,8 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al rechazar: $e'),
+          const SnackBar(
+            content: Text('Error al rechazar'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -2854,8 +2854,8 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al crear servicio: $e'),
+          const SnackBar(
+            content: Text('Error al crear servicio'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -2912,8 +2912,8 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al actualizar servicio: $e'),
+          const SnackBar(
+            content: Text('Error al actualizar servicio'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -2939,8 +2939,8 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al eliminar servicio: $e'),
+          const SnackBar(
+            content: Text('Error al eliminar servicio'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -2976,8 +2976,8 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al cambiar estado del servicio: $e'),
+          const SnackBar(
+            content: Text('Error al cambiar estado del servicio'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),

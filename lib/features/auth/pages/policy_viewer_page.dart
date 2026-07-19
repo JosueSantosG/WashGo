@@ -150,6 +150,9 @@ class PolicyViewerPage extends StatelessWidget {
       _sectionHeader(textTheme, '9. Consecuencias de la Eliminación de Cuenta para Propietarios'),
       _sectionBody(textTheme,
           'Si un propietario decide eliminar su cuenta, acepta que todos sus locales asociados serán desactivados definitiva e inmediatamente y sus empleados serán desvinculados de dichos locales. La eliminación no exime al propietario de obligaciones de pago pendientes con WashGo, empleados o procesadores de pago externos.'),
+      _sectionHeader(textTheme, '10. Fallas en Procesamiento de Pagos y Mensajería de Errores'),
+      _sectionBody(textTheme,
+          'Ante fallas en la red o caídas del sistema de base de datos, la plataforma mostrará mensajes de error simplificados para no exponer datos técnicos o de seguridad sensibles. Si un pago es debitado de su cuenta de PayPhone o PayPal pero la aplicación muestra un error de base de datos, el cliente debe utilizar la opción "Ya pagué – Verificar" o contactar al soporte de WashGo presentando su comprobante de pago digital para la acreditación manual de la orden.'),
     ];
   }
 

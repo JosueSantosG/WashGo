@@ -1128,8 +1128,8 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al refrescar pedidos: $e'),
+          const SnackBar(
+            content: Text('Error al refrescar pedidos'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -1197,8 +1197,8 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
           _isAvailable = !value; // Revert on error
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al cambiar disponibilidad: $e'),
+          const SnackBar(
+            content: Text('Error al cambiar disponibilidad'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -1356,8 +1356,8 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
       if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al cambiar el estado del pedido: $e'),
+        const SnackBar(
+          content: Text('Error al cambiar el estado del pedido'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -3227,8 +3227,8 @@ class _CreateWalkInOrderDialogState extends State<_CreateWalkInOrderDialog> {
           _clientExists = null;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al buscar cliente: $e'),
+          const SnackBar(
+            content: Text('Error al buscar cliente'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -3260,7 +3260,7 @@ class _CreateWalkInOrderDialogState extends State<_CreateWalkInOrderDialog> {
       if (mounted) {
         setState(() {
           _isLoadingServices = false;
-          _serviceError = 'Error al cargar servicios: $e';
+          _serviceError = 'Error al cargar servicios';
         });
       }
     }
@@ -3340,8 +3340,8 @@ class _CreateWalkInOrderDialogState extends State<_CreateWalkInOrderDialog> {
           _isSubmitting = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al registrar pedido: $e'),
+          const SnackBar(
+            content: Text('Error al registrar pedido'),
             backgroundColor: AppColors.error,
           ),
         );

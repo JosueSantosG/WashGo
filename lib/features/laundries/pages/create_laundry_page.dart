@@ -1050,8 +1050,8 @@ class _CreateLaundryPageState extends State<CreateLaundryPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al registrar lavandería: $e'),
+        const SnackBar(
+          content: Text('Error al registrar lavandería'),
           backgroundColor: AppColors.error,
         ),
       );

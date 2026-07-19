@@ -528,15 +528,14 @@ class ProfileTab extends StatelessWidget {
                 children: [
                   Text(
                     'Términos y Condiciones de Uso de WashGo\n\n'
-                    'Bienvenido a WashGo. Al utilizar nuestra aplicación, aceptas cumplir con los siguientes términos y condiciones. Por favor, léelos atentamente.\n\n'
-                    '1. Descripción del Servicio\n'
-                    'WashGo facilita la reserva y gestión de servicios de lavado de vehículos a domicilio o en establecimientos asociados.\n\n'
-                    '2. Registro de Usuario\n'
-                    'Para utilizar el servicio, debes registrarte proporcionando información verídica, incluyendo tu nombre, correo electrónico y número de teléfono. Eres responsable de mantener la seguridad de tu cuenta.\n\n'
-                    '3. Cancelaciones y Reembolsos\n'
-                    'Las cancelaciones de servicios están sujetas a políticas específicas que pueden conllevar cargos según el tiempo de anticipación con el que se realicen.\n\n'
-                    '4. Responsabilidad\n'
-                    'WashGo no se responsabiliza por daños indirectos que no sean directamente atribuibles a negligencia grave de la plataforma o sus afiliados autorizados.',
+                    'Al utilizar nuestra aplicación, aceptas cumplir con los siguientes términos y condiciones:\n\n'
+                    '1. Descripción del Servicio: WashGo es una plataforma tecnológica que actúa como intermediario facilitador de reservas, pagos y gestión de flujos de trabajo de lavado de vehículos.\n\n'
+                    '2. Registro y Cuentas: Eres responsable de mantener la seguridad y confidencialidad de tus credenciales de acceso.\n\n'
+                    '3. Cancelaciones y Reembolsos: Las cancelaciones de servicios están sujetas a políticas y tiempos de anticipación del local asociado.\n\n'
+                    '4. Responsabilidad: WashGo no se responsabiliza por la calidad del lavado realizado por los negocios asociados ni por altercados entre usuarios en los establecimientos.\n\n'
+                    '5. Eliminación de Cuenta: Si decides eliminar tu cuenta, tus accesos se cancelarán inmediatamente. Para dueños de locales, esto implica la desactivación definitiva de sus locales y desvinculación de empleados. Los históricos de órdenes y transacciones financieras se mantendrán de forma estrictamente anonimizada para fines legales y de auditoría fiscal.\n\n'
+                    '6. Regulación para Empleados: Los empleados pueden postularse y pertenecer a múltiples locales asociados independientes. El empleado es responsable de seleccionar la sucursal activa correcta antes de registrar asistencia o iniciar jornada.\n\n'
+                    '7. Fallas en Procesamiento de Pagos y Mensajes de Error: Ante fallas de red, la plataforma mostrará mensajes de error simplificados. Si tu pago digital mediante PayPhone o PayPal fue debitado de tu cuenta pero la aplicación arrojó un error, el cliente debe utilizar la opción "Ya pagué – Verificar" o contactar al soporte de WashGo presentando su comprobante de pago digital para la acreditación manual de la orden.',
                     style: GoogleFonts.inter(fontSize: 14, height: 1.5),
                   ),
                 ],
@@ -590,15 +589,11 @@ class ProfileTab extends StatelessWidget {
                 children: [
                   Text(
                     'Política de Privacidad de WashGo\n\n'
-                    'En WashGo, nos comprometemos a proteger tu privacidad y datos personales.\n\n'
-                    '1. Datos que recopilamos\n'
-                    'Recopilamos información de registro (nombre, correo, teléfono), información del vehículo (placa, marca, modelo) y datos de ubicación para facilitar el servicio de lavado.\n\n'
-                    '2. Uso de la información\n'
-                    'Utilizamos tus datos para procesar tus reservas, comunicarnos contigo sobre tus servicios y mejorar nuestra plataforma.\n\n'
-                    '3. Derechos GDPR / ARCO\n'
-                    'De acuerdo con las normativas locales e internacionales de protección de datos (como el GDPR), tienes derecho a Acceder, Rectificar, Cancelar y Oponerse (derechos ARCO) al tratamiento de tus datos personales. Puedes solicitar la eliminación completa de tu cuenta y datos asociados en cualquier momento desde la sección de configuración de la app.\n\n'
-                    '4. Conservación de datos\n'
-                    'Si decides eliminar tu cuenta, todos tus datos personales serán purgados de forma permanente de nuestras bases de datos activas dentro de los plazos establecidos por la ley.',
+                    'En WashGo, nos comprometemos a proteger tu privacidad y datos personales:\n\n'
+                    '1. Datos Recopilados: Información de registro (nombre, correo, teléfono), datos del vehículo, ubicación en tiempo real (con consentimiento), archivos/cámara (para comprobantes de transferencia) e historial de pagos y transacciones.\n\n'
+                    '2. Uso de la Información: Conectar a clientes con locales de lavado, validar transacciones de pago/saldos, y brindar soporte técnico.\n\n'
+                    '3. Compartición de Datos: Se comparten datos únicamente con las partes involucradas en una reserva, proveedores esenciales (Firebase, PayPal, PayPhone), y con los propietarios en el caso de los empleados (quienes verán registros de actividad laboral e información básica de contacto únicamente en esa sucursal).\n\n'
+                    '4. Eliminación de Cuenta y Anonimización: Puedes solicitar la eliminación de tu cuenta desde la app o vía soporte@washgo.app. Se purgarán tus credenciales de Firebase Auth de forma permanente y se anonimizará tu perfil (reemplazando tus datos por "Usuario Eliminado"). Los registros de transacciones y órdenes históricas permanecerán guardados para cumplimiento contable de manera estrictamente anonimizada.',
                     style: GoogleFonts.inter(fontSize: 14, height: 1.5),
                   ),
                 ],
