@@ -1823,7 +1823,7 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
               );
             }
 
-            if (paymentMethod == PaymentMethod.PAYPHONE) {
+            if (paymentMethod == PaymentMethod.PAYPHONE || paymentMethod == PaymentMethod.PAYPAL) {
               return orderId;
             }
 

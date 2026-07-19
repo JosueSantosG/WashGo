@@ -5,6 +5,7 @@ import 'package:washgo/dataconnect-generated/example.dart';
 import 'package:washgo/config/theme/app_colors.dart';
 import 'package:washgo/core/session/session_manager.dart';
 import 'package:washgo/config/routes/app_routes.dart';
+import 'package:washgo/features/auth/models/super_admin_session.dart';
 import 'package:washgo/features/auth/repositories/auth_repository.dart';
 import 'package:washgo/features/auth/repositories/firebase_auth_repository.dart';
 import 'package:washgo/core/session/booking_intent_manager.dart';
@@ -96,8 +97,10 @@ class _AuthGatePageState extends State<AuthGatePage> {
           }
         } else if (activeRole == UserRole.ADMINISTRADOR) {
           context.go('/owner-dashboard');
+        } else if (activeRole == UserRole.SUPER_ADMIN) {
+          SuperAdminSession.isLoggedIn = true;
+          context.go(AppRoutes.superAdminDashboard);
         } else {
-          // El usuario es SUPER_ADMIN, etc.
           _checkPendingBookingIntentOrGoHome();
         }
       } else {
@@ -423,6 +426,7 @@ class _AuthGatePageState extends State<AuthGatePage> {
                       try {
                         await FirebaseAuth.instance.signOut();
                         SessionManager.activeRole = null;
+                        SuperAdminSession.logout();
                         router.go('/role-selection');
                       } catch (e) {
                         debugPrint('Error al cerrar sesión: $e');

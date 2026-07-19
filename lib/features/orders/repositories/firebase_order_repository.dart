@@ -102,8 +102,8 @@ class FirebaseOrderRepository implements OrderRepository {
     required String observations,
   }) async {
     final status = (paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA ||
-            paymentMethod == PaymentMethod.PAYPAL ||
-            paymentMethod == PaymentMethod.PAYPHONE)
+            paymentMethod == PaymentMethod.PAYPHONE ||
+            paymentMethod == PaymentMethod.PAYPAL)
         ? OrderStatus.PENDIENTE_PAGO
         : OrderStatus.EN_COLA;
 

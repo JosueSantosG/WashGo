@@ -15,8 +15,10 @@ String? authRedirect(BuildContext context, GoRouterState state) {
 
   final bool isSuperAdminRoute = state.matchedLocation.startsWith('/superadmin') || state.matchedLocation == AppRoutes.adminPaymentReview;
   if (isSuperAdminRoute) {
-    if ((state.matchedLocation == AppRoutes.superAdminDashboard || state.matchedLocation == AppRoutes.adminPaymentReview) && !SuperAdminSession.isLoggedIn) {
-      return AppRoutes.superAdminLogin;
+    final isSuperAdminAuthenticated = SuperAdminSession.isLoggedIn ||
+        SessionManager.activeRole == UserRole.SUPER_ADMIN;
+    if ((state.matchedLocation == AppRoutes.superAdminDashboard || state.matchedLocation == AppRoutes.adminPaymentReview) && !isSuperAdminAuthenticated) {
+      return AppRoutes.login;
     }
     return null;
   }

@@ -404,11 +404,6 @@ class _LoginPageState extends State<LoginPage> {
                               text: 'Privacidad',
                               onTap: () => context.push(AppRoutes.privacy),
                             ),
-                            _FooterLink(
-                              text: 'Administración',
-                              onTap: () =>
-                                  context.go(AppRoutes.superAdminLogin),
-                            ),
                           ],
                         ),
                       ],

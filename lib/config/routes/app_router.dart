@@ -26,7 +26,6 @@ import 'package:washgo/features/invoices/models/invoice.dart';
 import 'package:washgo/features/dashboard/employee/employee_dashboard_page.dart';
 import 'package:washgo/features/laundries/pages/create_laundry_page.dart';
 import 'package:washgo/features/maps/pages/map_picker_page.dart';
-import 'package:washgo/features/auth/pages/super_admin_login_page.dart';
 import 'package:washgo/features/dashboard/admin/super_admin_dashboard_page.dart';
 import 'package:washgo/features/laundries/pages/prepaid_consumption_page.dart';
 import 'package:latlong2/latlong.dart';
@@ -208,10 +207,6 @@ GoRouter _createAppRouter() {
       builder: (context, state) => const ActiveRoleSelectionPage(),
     ),
     GoRoute(
-      path: AppRoutes.superAdminLogin,
-      builder: (context, state) => const SuperAdminLoginPage(),
-    ),
-    GoRoute(
       path: AppRoutes.superAdminDashboard,
       builder: (context, state) => const SuperAdminDashboardPage(),
     ),
@@ -248,7 +243,12 @@ GoRouter _createAppRouter() {
       builder: (context, state) {
         final token = state.uri.queryParameters['token'];
         final payerId = state.uri.queryParameters['PayerID'];
-        return PaypalSuccessPage(token: token, payerId: payerId);
+        final washgoOrderId = state.uri.queryParameters['washgoOrderId'];
+        return PaypalSuccessPage(
+          token: token,
+          payerId: payerId,
+          washgoOrderId: washgoOrderId,
+        );
       },
     ),
     GoRoute(
@@ -256,7 +256,12 @@ GoRouter _createAppRouter() {
       builder: (context, state) {
         final token = state.uri.queryParameters['token'];
         final payerId = state.uri.queryParameters['PayerID'];
-        return PaypalSuccessPage(token: token, payerId: payerId);
+        final washgoOrderId = state.uri.queryParameters['washgoOrderId'];
+        return PaypalSuccessPage(
+          token: token,
+          payerId: payerId,
+          washgoOrderId: washgoOrderId,
+        );
       },
     ),
     GoRoute(

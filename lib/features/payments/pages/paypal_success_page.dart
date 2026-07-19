@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:washgo/config/theme/app_colors.dart';
 import 'package:washgo/core/services/paypal_service.dart';
+import 'package:washgo/core/utils/web_helper.dart';
+import 'package:washgo/dataconnect-generated/example.dart';
+import 'package:washgo/features/orders/repositories/firebase_order_repository.dart';
 
 class PaypalSuccessPage extends StatefulWidget {
   final String? token;
   final String? payerId;
+  final String? washgoOrderId;
 
   const PaypalSuccessPage({
     super.key,
     this.token,
     this.payerId,
+    this.washgoOrderId,
   });
 
   @override
@@ -74,6 +80,18 @@ class _PaypalSuccessPageState extends State<PaypalSuccessPage> {
           _payerEmail = payer['email_address'];
         }
 
+        if (widget.washgoOrderId != null) {
+          try {
+            final orderRepo = FirebaseOrderRepository();
+            await orderRepo.updateOrderStatus(
+              orderId: widget.washgoOrderId!,
+              status: OrderStatus.EN_COLA,
+            );
+          } catch (e) {
+            debugPrint('Error updating WashGo order status to EN_COLA: $e');
+          }
+        }
+
         setState(() {
           _isLoading = false;
         });
@@ -88,6 +106,17 @@ class _PaypalSuccessPageState extends State<PaypalSuccessPage> {
 
         if (errDetail.toLowerCase().contains('already captured') ||
             (errorCode != null && errorCode.toLowerCase().contains('already_captured'))) {
+          if (widget.washgoOrderId != null) {
+            try {
+              final orderRepo = FirebaseOrderRepository();
+              await orderRepo.updateOrderStatus(
+                orderId: widget.washgoOrderId!,
+                status: OrderStatus.EN_COLA,
+              );
+            } catch (e) {
+              debugPrint('Error updating WashGo order status to EN_COLA: $e');
+            }
+          }
           setState(() {
             _transactionId = 'PAYID-$orderId';
             _isLoading = false;
@@ -103,6 +132,17 @@ class _PaypalSuccessPageState extends State<PaypalSuccessPage> {
     } catch (e) {
       final errorStr = e.toString().toLowerCase();
       if (errorStr.contains('already_captured') || errorStr.contains('already captured')) {
+        if (widget.washgoOrderId != null) {
+          try {
+            final orderRepo = FirebaseOrderRepository();
+            await orderRepo.updateOrderStatus(
+              orderId: widget.washgoOrderId!,
+              status: OrderStatus.EN_COLA,
+            );
+          } catch (e) {
+            debugPrint('Error updating WashGo order status to EN_COLA: $e');
+          }
+        }
         setState(() {
           _transactionId = 'PAYID-$orderId';
           _isLoading = false;
@@ -231,7 +271,10 @@ class _PaypalSuccessPageState extends State<PaypalSuccessPage> {
           width: double.infinity,
           height: 48,
           child: ElevatedButton(
-            onPressed: () => context.go('/'),
+            onPressed: () {
+              closeBrowserWindow();
+              context.go('/');
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
@@ -319,7 +362,14 @@ class _PaypalSuccessPageState extends State<PaypalSuccessPage> {
           width: double.infinity,
           height: 48,
           child: ElevatedButton(
-            onPressed: () => context.go('/'),
+            onPressed: () {
+              closeBrowserWindow();
+              Future.delayed(const Duration(milliseconds: 500), () {
+                if (context.mounted) {
+                  context.go('/');
+                }
+              });
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.success,
               foregroundColor: Colors.white,
@@ -329,7 +379,7 @@ class _PaypalSuccessPageState extends State<PaypalSuccessPage> {
               ),
             ),
             child: Text(
-              'Volver al Inicio',
+              'Aceptar y Volver',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,

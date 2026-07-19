@@ -146,7 +146,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _cancelOrder(BuildContext context, ClientOrder order) async {
-    bool isPaid = order.paymentMethod != 'CASH';
+    bool isPaid = order.paymentMethod != 'CASH' && order.status != 'PENDIENTE_PAGO';
 
     if (order.paymentMethod == 'TRANSFERENCIA_BANCARIA') {
       showDialog(

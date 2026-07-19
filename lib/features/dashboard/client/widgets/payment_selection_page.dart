@@ -131,25 +131,59 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                   });
                                   try {
                                     final orderId = _payphoneOrderId!;
-
-                                    // Check the order status in Data Connect.
-                                    // The server-side /payphone-callback/success already verified
-                                    // the payment with PayPhone and updated the order to EN_COLA.
-                                    // We just need to poll and reflect the result.
                                     final connector = ExampleConnector.instance;
-                                    final orderResult = await connector
+
+                                    // 1. Initial check (passive)
+                                    var orderResult = await connector
                                         .getOrderById(id: orderId)
                                         .execute();
-                                    final order = orderResult.data.order;
+                                    var order = orderResult.data.order;
 
                                     if (order == null) {
                                       throw Exception('No se encontró el pedido.');
                                     }
 
-                                    final orderStatus = order.status.stringValue;
+                                    var orderStatus = order.status.stringValue;
 
+                                    // 2. Active verification if status is still pending
+                                    if (orderStatus != 'EN_COLA' && orderStatus != 'COMPLETADO') {
+                                      final user = FirebaseAuth.instance.currentUser;
+                                      if (user != null) {
+                                        final idToken = await user.getIdToken(true);
+                                        if (idToken != null) {
+                                          final storedTxId = await PayphoneService.getStoredTransaction(
+                                            orderId: orderId,
+                                            baseUrl: _getFunctionsBaseUrl(),
+                                            idToken: idToken,
+                                          );
+                                          if (storedTxId != null) {
+                                            try {
+                                              await PayphoneService.completePayment(
+                                                orderId: orderId,
+                                                transactionId: storedTxId,
+                                                base64Pdf: "",
+                                                idToken: idToken,
+                                                baseUrl: _getFunctionsBaseUrl(),
+                                              );
+
+                                              // Fetch again to see if status updated
+                                              orderResult = await connector
+                                                  .getOrderById(id: orderId)
+                                                  .execute();
+                                              order = orderResult.data.order;
+                                              if (order != null) {
+                                                orderStatus = order.status.stringValue;
+                                              }
+                                            } catch (e) {
+                                              debugPrint('[PayPhone verification] Proactive complete payment failed: $e');
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+
+                                    // 3. Final status assessment
                                     if (orderStatus == 'EN_COLA' || orderStatus == 'COMPLETADO') {
-                                      // Server already confirmed the payment — close the flow
                                       if (!mounted) return;
                                       setState(() {
                                         _payphoneWaiting = false;
@@ -168,7 +202,6 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                         ),
                                       );
                                     } else {
-                                      // Payment not yet confirmed — ask user to wait and retry
                                       if (!context.mounted) return;
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
@@ -650,6 +683,11 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                           });
                           try {
                             if (_selectedMethod == PaymentMethod.PAYPAL) {
+                              final orderId = await widget.onPaymentCompleted(_selectedMethod);
+                              if (orderId == null || orderId.isEmpty) {
+                                throw Exception('No se pudo crear el pedido.');
+                              }
+
                               final paypalService = PaypalService();
                               final paypalResult = await paypalService.startPaymentFlow(
                                 context: context,
@@ -657,12 +695,34 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                 serviceName: widget.serviceName,
                                 businessName: widget.laundry.name,
                                 preferCard: _preferPaypalCard,
+                                washgoOrderId: orderId,
                               );
                               
                               if (!paypalResult.isSuccess) {
                                 throw Exception(paypalResult.errorMessage ?? 'Pago con PayPal no completado.');
                               }
-                              await widget.onPaymentCompleted(_selectedMethod);
+
+                              if (context.mounted) {
+                                Navigator.pop(context); // Pop PaymentSelectionPage
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        const Icon(Icons.check_circle_rounded, color: Colors.white),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            '¡Pago verificado y reserva confirmada!',
+                                            style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    backgroundColor: Colors.green.shade600,
+                                  ),
+                                );
+                                context.go('/reservas');
+                              }
                             } else if (_selectedMethod == PaymentMethod.PAYPHONE) {
                               // 1. Create the order as PENDIENTE_PAGO using the callback
                               final orderId = await widget.onPaymentCompleted(_selectedMethod);

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:washgo/config/theme/app_colors.dart';
+import 'package:washgo/core/utils/web_helper.dart';
+
 
 class PaypalCancelPage extends StatelessWidget {
   final String paymentMethod;
@@ -73,7 +75,10 @@ class PaypalCancelPage extends StatelessWidget {
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton(
-                        onPressed: () => context.go('/'),
+                        onPressed: () {
+                          closeBrowserWindow();
+                          context.go('/');
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
@@ -96,7 +101,10 @@ class PaypalCancelPage extends StatelessWidget {
                       width: double.infinity,
                       height: 48,
                       child: OutlinedButton(
-                        onPressed: () => context.go('/'),
+                        onPressed: () {
+                          closeBrowserWindow();
+                          context.go('/');
+                        },
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFFE2E8F0)),
                           foregroundColor: AppColors.textPrimary,

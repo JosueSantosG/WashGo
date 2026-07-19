@@ -3,9 +3,10 @@ import 'package:flutter/foundation.dart';
 enum AppEnvironment { dev, staging, prod }
 
 class Environment {
+  static const String _env = String.fromEnvironment('ENV', defaultValue: 'dev');
+
   static AppEnvironment get current {
-    const envStr = String.fromEnvironment('ENV', defaultValue: 'dev');
-    switch (envStr.toLowerCase()) {
+    switch (_env.toLowerCase()) {
       case 'staging':
         return AppEnvironment.staging;
       case 'prod':

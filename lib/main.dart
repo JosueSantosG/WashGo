@@ -1,4 +1,4 @@
-﻿import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -17,6 +17,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await BookingIntentManager.instance.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  debugPrint('--- APP CONFIGURATION INFO ---');
+  debugPrint('Active Environment current: ${Environment.current}');
+  debugPrint('DefaultFirebaseOptions Project ID: ${DefaultFirebaseOptions.currentPlatform.projectId}');
+  debugPrint('------------------------------');
 
   // Configure Crashlytics
   if (!kIsWeb) {

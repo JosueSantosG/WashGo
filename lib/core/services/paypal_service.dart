@@ -8,6 +8,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter/foundation.dart';
 import 'package:washgo/core/utils/web_helper.dart';
+import 'package:washgo/dataconnect-generated/example.dart';
+import 'package:washgo/features/orders/repositories/firebase_order_repository.dart';
 
 class PaypalPaymentResult {
   final bool isSuccess;
@@ -84,6 +86,7 @@ class PaypalBackendService {
     required String serviceName,
     required String businessName,
     bool preferCard = false,
+    String? washgoOrderId,
   }) async {
     final token = await _getAccessToken();
     
@@ -97,6 +100,11 @@ class PaypalBackendService {
           cancelUrl = '$origin/paypal-callback/cancel';
         }
       } catch (_) {}
+    }
+    
+    if (washgoOrderId != null) {
+      returnUrl = '$returnUrl?washgoOrderId=$washgoOrderId';
+      cancelUrl = '$cancelUrl?washgoOrderId=$washgoOrderId';
     }
     
     try {
@@ -222,7 +230,7 @@ class PaypalService {
   factory PaypalService() => _instance;
   PaypalService._internal();
 
-  bool _useRealApi = false;
+  bool _useRealApi = true;
   bool _isSandbox = true;
 
   bool get useRealApi => _useRealApi;
@@ -234,10 +242,9 @@ class PaypalService {
       final prefs = await SharedPreferences.getInstance();
       
       const defaultIsSandbox = bool.fromEnvironment('PAYPAL_IS_SANDBOX', defaultValue: true);
-      const defaultUseRealApi = bool.fromEnvironment('PAYPAL_USE_REAL_API', defaultValue: false);
       
       _isSandbox = prefs.getBool('paypal_is_sandbox') ?? defaultIsSandbox;
-      _useRealApi = prefs.getBool('paypal_use_real_api') ?? defaultUseRealApi;
+      _useRealApi = true; // Always force real API in production checkout flow
     } catch (e) {
       debugPrint('Error loading PayPal config: $e');
     }
@@ -250,10 +257,10 @@ class PaypalService {
   }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('paypal_is_sandbox', isSandbox);
-    await prefs.setBool('paypal_use_real_api', useRealApi);
+    await prefs.setBool('paypal_use_real_api', true);
 
     _isSandbox = isSandbox;
-    _useRealApi = useRealApi;
+    _useRealApi = true;
   }
 
   /// Inicia el flujo interactivo de PayPal
@@ -263,6 +270,7 @@ class PaypalService {
     required String serviceName,
     required String businessName,
     bool preferCard = false,
+    String? washgoOrderId,
   }) async {
     await init();
 
@@ -293,6 +301,7 @@ class PaypalService {
             initialIsSandbox: _isSandbox,
             initialUseRealApi: _useRealApi,
             preferCard: preferCard,
+            washgoOrderId: washgoOrderId,
           ),
         ),
       ),
@@ -307,6 +316,7 @@ class _PaypalCheckoutWidget extends StatefulWidget {
   final String serviceName;
   final String businessName;
   final bool preferCard;
+  final String? washgoOrderId;
 
   final bool initialIsSandbox;
   final bool initialUseRealApi;
@@ -318,6 +328,7 @@ class _PaypalCheckoutWidget extends StatefulWidget {
     required this.initialIsSandbox,
     required this.initialUseRealApi,
     this.preferCard = false,
+    this.washgoOrderId,
   });
 
   @override
@@ -326,24 +337,14 @@ class _PaypalCheckoutWidget extends StatefulWidget {
 
 class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
   // Steps: 
-  // 0: Main/Login (Simulator mode)
-  // 1: Review & Pay (Simulator mode)
-  // 2: Processing (Simulator / Real Loader)
+  // 2: Processing (Real Loader)
   // 3: Success Checkmark Screen
-  // 4: Configuration form (Simulator vs Real API Toggle)
   // 5: Real API approval tracking (Wait for user click to verify)
   // 6: Error Screen (CORS or HTTP failure)
-  int _currentStep = 0; 
+  int _currentStep = 2; 
 
-  // Settings inputs (no secrets, just modes)
   late bool _useRealApi;
   late bool _isSandbox;
-
-  // Simulator inputs
-  final _emailController = TextEditingController(text: 'sb-washgo-cliente@personal.example.com');
-  final _passwordController = TextEditingController(text: '12345678');
-  bool _rememberMe = true;
-  String? _validationError;
 
   // Real REST execution state
   String? _realOrderId;
@@ -360,22 +361,15 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
     _useRealApi = widget.initialUseRealApi;
     _isSandbox = widget.initialIsSandbox;
 
-    // If Real API is enabled, start in processing loader directly to avoid flicker
-    if (_useRealApi) {
-      _currentStep = 2; // Processing loader
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _startRealPaypalOrder();
-      });
-    } else {
-      _currentStep = 0; // Login simulator
-    }
+    _currentStep = 2; // Processing loader
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startRealPaypalOrder();
+    });
   }
 
   @override
   void dispose() {
     _statusTimer?.cancel();
-    _emailController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
@@ -410,6 +404,7 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
         serviceName: widget.serviceName,
         businessName: widget.businessName,
         preferCard: widget.preferCard,
+        washgoOrderId: widget.washgoOrderId,
       );
 
       _realOrderId = orderResult['orderId'];
@@ -467,6 +462,7 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
           _verifyAndCapturePayment();
         } else if (status == 'COMPLETED') {
           timer.cancel();
+          _updateWashgoOrderStatus();
           setState(() {
             _currentStep = 3; // Success screen!
           });
@@ -475,6 +471,21 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
         debugPrint('Error polling PayPal status: $e');
       }
     });
+  }
+
+  void _updateWashgoOrderStatus() {
+    final orderId = widget.washgoOrderId;
+    if (orderId != null && orderId.isNotEmpty) {
+      debugPrint('Updating Washgo Order $orderId status to EN_COLA after successful PayPal payment...');
+      FirebaseOrderRepository().updateOrderStatus(
+        orderId: orderId,
+        status: OrderStatus.EN_COLA,
+      ).then((_) {
+        debugPrint('Washgo Order $orderId status successfully updated to EN_COLA.');
+      }).catchError((err) {
+        debugPrint('Error updating Washgo Order $orderId status to EN_COLA: $err');
+      });
+    }
   }
 
   /// Verification & capture of the PayPal Order
@@ -523,6 +534,7 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
           _realPayerEmail = payer['email_address'];
         }
 
+        _updateWashgoOrderStatus();
         setState(() {
           _currentStep = 3; // Success step
         });
@@ -539,6 +551,7 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
         // If the order has already been captured, it is a success!
         if (errDetail.toLowerCase().contains('already captured') || 
             (errorCode != null && errorCode.toLowerCase().contains('already_captured'))) {
+          _updateWashgoOrderStatus();
           setState(() {
             _realTransactionId = 'PAYID-$_realOrderId';
             _currentStep = 3; // Success step
@@ -558,6 +571,7 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
     } catch (e) {
       final errorStr = e.toString().toLowerCase();
       if (errorStr.contains('already_captured') || errorStr.contains('already captured')) {
+        _updateWashgoOrderStatus();
         setState(() {
           _realTransactionId = 'PAYID-$_realOrderId';
           _currentStep = 3; // Success step
@@ -577,51 +591,6 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
 
       // Resume status polling on generic error
       _startStatusPolling();
-    }
-  }
-
-
-
-  // --- Simulator flow handlers ---
-  void _autofillSandbox() {
-    setState(() {
-      _emailController.text = 'sb-washgo-cliente@personal.example.com';
-      _passwordController.text = 'sandbox_pass_99';
-    });
-  }
-
-  void _handleLogin() {
-    if (_emailController.text.isEmpty || !_emailController.text.contains('@')) {
-      setState(() {
-        _validationError = 'Por favor, ingrese un correo de sandbox válido';
-      });
-      return;
-    }
-    if (_passwordController.text.isEmpty || _passwordController.text.length < 6) {
-      setState(() {
-        _validationError = 'La contraseña debe tener al menos 6 caracteres';
-      });
-      return;
-    }
-
-    setState(() {
-      _validationError = null;
-      _currentStep = 1; // Go to Review & Pay
-    });
-  }
-
-  Future<void> _handlePaymentSimulation() async {
-    setState(() {
-      _currentStep = 2; // Processing loader
-    });
-
-    await Future.delayed(const Duration(milliseconds: 1800));
-
-    if (mounted) {
-      setState(() {
-        _realTransactionId = 'PAYID-${const Uuid().v4().replaceAll('-', '').substring(0, 16).toUpperCase()}';
-        _currentStep = 3; // Success checkmark
-      });
     }
   }
 
@@ -672,32 +641,22 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
 
         // Environment Indicator Banner
         Container(
-          color: _useRealApi
-              ? (_isSandbox ? const Color(0xFFFFF9E6) : const Color(0xFFECFDF5))
-              : const Color(0xFFF1F5F9),
+          color: _isSandbox ? const Color(0xFFFFF9E6) : const Color(0xFFECFDF5),
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             children: [
               Icon(
-                _useRealApi 
-                    ? (_isSandbox ? Icons.science_outlined : Icons.verified_user_outlined)
-                    : Icons.developer_mode_outlined,
-                color: _useRealApi 
-                    ? (_isSandbox ? const Color(0xFFD97706) : const Color(0xFF059669))
-                    : const Color(0xFF64748B),
+                _isSandbox ? Icons.science_outlined : Icons.verified_user_outlined,
+                color: _isSandbox ? const Color(0xFFD97706) : const Color(0xFF059669),
                 size: 16,
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  _useRealApi 
-                      ? (_isSandbox ? 'Modo Real: PayPal Sandbox Activo' : 'Modo Real: Producción En Vivo')
-                      : 'Modo Simulación Integrada (Sin credenciales)',
+                  _isSandbox ? 'Modo Real: PayPal Sandbox Activo' : 'Modo Real: Producción En Vivo',
                   style: GoogleFonts.inter(
-                    color: _useRealApi 
-                        ? (_isSandbox ? const Color(0xFFB45309) : const Color(0xFF047857))
-                        : const Color(0xFF475569),
+                    color: _isSandbox ? const Color(0xFFB45309) : const Color(0xFF047857),
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -807,16 +766,10 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
 
   Widget _buildCurrentStepWidget() {
     switch (_currentStep) {
-      case 0:
-        return _buildLoginStep();
-      case 1:
-        return _buildReviewStep();
       case 2:
         return _buildProcessingStep();
       case 3:
         return _buildSuccessStep();
-      case 4:
-        return _buildConfigStep();
       case 5:
         return _buildRealVerifyStep();
       case 6:
@@ -824,500 +777,6 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
       default:
         return const SizedBox.shrink();
     }
-  }
-
-  Widget _buildConfigStep() {
-    final hasBackendKeys = const String.fromEnvironment('PAYPAL_CLIENT_ID').isNotEmpty;
-
-    return SingleChildScrollView(
-      key: const ValueKey('config_step'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.security_rounded, color: Color(0xFF0070BA), size: 24),
-              const SizedBox(width: 8),
-              Text(
-                'Configuración de PayPal',
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1E293B),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Por motivos de seguridad y preparación para producción, se ha eliminado el ingreso de Client Secret en el dispositivo móvil.',
-            style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF475569), height: 1.4),
-          ),
-          const SizedBox(height: 16),
-          
-          // Backend Keys Status Banner
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: hasBackendKeys ? const Color(0xFFECFDF5) : const Color(0xFFFFF7ED),
-              border: Border.all(
-                color: hasBackendKeys ? const Color(0xFFA7F3D0) : const Color(0xFFFED7AA),
-              ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  hasBackendKeys ? Icons.check_circle_rounded : Icons.info_outline_rounded,
-                  color: hasBackendKeys ? const Color(0xFF059669) : const Color(0xFFD97706),
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    hasBackendKeys
-                        ? 'Backend Configurado: Las claves de PayPal se detectaron en las variables de entorno.'
-                        : 'Simulación de Llaves: El backend utilizará credenciales seguras simuladas de prueba.',
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: hasBackendKeys ? const Color(0xFF065F46) : const Color(0xFF9A3412),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Use Real API Switch
-          SwitchListTile(
-            title: Text(
-              'Usar API Real de PayPal',
-              style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF334155)),
-            ),
-            subtitle: Text(
-              'Activa la integración real en lugar de la simulación local.',
-              style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B)),
-            ),
-            activeThumbColor: const Color(0xFF0070BA),
-            value: _useRealApi,
-            onChanged: (val) {
-              setState(() {
-                _useRealApi = val;
-              });
-            },
-          ),
-          const Divider(),
-
-          // Sandbox vs Live Switch (Only relevant if Real API is enabled)
-          Opacity(
-            opacity: _useRealApi ? 1.0 : 0.5,
-            child: SwitchListTile(
-              title: Text(
-                'Modo Sandbox (Pruebas)',
-                style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF334155)),
-              ),
-              subtitle: Text(
-                'Desactiva para procesar transacciones en entorno de producción real.',
-                style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B)),
-              ),
-              activeThumbColor: const Color(0xFF0070BA),
-              value: _isSandbox,
-              onChanged: _useRealApi
-                  ? (val) {
-                      setState(() {
-                        _isSandbox = val;
-                      });
-                    }
-                  : null,
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Actions
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    setState(() {
-                      _currentStep = 0; // Back to main simulator login
-                    });
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF475569),
-                    side: const BorderSide(color: Color(0xFFCBD5E1)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  ),
-                  child: const Text('Cancelar'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () async {
-                    await PaypalService().saveConfig(
-                      isSandbox: _isSandbox,
-                      useRealApi: _useRealApi,
-                    );
-                    setState(() {
-                      if (_useRealApi) {
-                        _currentStep = 2; // Real loader
-                        _startRealPaypalOrder();
-                      } else {
-                        _currentStep = 0; // Simulator
-                      }
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0070BA),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  ),
-                  child: const Text('Guardar'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // STEP 0: Login simulator screen
-  Widget _buildLoginStep() {
-    return Column(
-      key: const ValueKey('login_step'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Pagar con PayPal',
-          style: GoogleFonts.inter(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF1E293B),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Inicia sesión en tu cuenta de pruebas para completar tu compra.',
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            color: const Color(0xFF64748B),
-          ),
-        ),
-        const SizedBox(height: 20),
-
-        if (_validationError != null) ...[
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFEF2F2),
-              border: Border.all(color: const Color(0xFFFCA5A5)),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.error_outline_rounded, color: Color(0xFFDC2626), size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    _validationError!,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: const Color(0xFFB91C1C),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-
-        Text(
-          'Correo electrónico (Sandbox)',
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF475569),
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: _emailController,
-          keyboardType: TextInputType.emailAddress,
-          decoration: InputDecoration(
-            hintText: 'ejemplo@sandbox.com',
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        Text(
-          'Contraseña',
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF475569),
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: _passwordController,
-          obscureText: true,
-          decoration: InputDecoration(
-            hintText: '••••••••',
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: Checkbox(
-                    value: _rememberMe,
-                    onChanged: (val) {
-                      setState(() {
-                        _rememberMe = val ?? true;
-                      });
-                    },
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Recordar sesión',
-                  style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF475569)),
-                ),
-              ],
-            ),
-            TextButton(
-              onPressed: _autofillSandbox,
-              child: Text(
-                'Autocompletar Sandbox',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF0070BA),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-
-        SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: ElevatedButton(
-            onPressed: _handleLogin,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0070BA),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-            ),
-            child: Text(
-              'Iniciar Sesión',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Center(
-          child: OutlinedButton.icon(
-            icon: const Icon(Icons.settings_outlined, size: 16),
-            label: const Text('Configurar API Real / Sandbox'),
-            onPressed: () {
-              setState(() {
-                _currentStep = 4; // Open settings form
-                _validationError = null;
-              });
-            },
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF64748B),
-              side: const BorderSide(color: Color(0xFFCBD5E1)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            ),
-          ),
-        )
-      ],
-    );
-  }
-
-  // STEP 1: Review & Pay simulator screen
-  Widget _buildReviewStep() {
-    return Column(
-      key: const ValueKey('review_step'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Icon(Icons.account_circle_rounded, color: Color(0xFF003087), size: 36),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Hola, Cliente de Pruebas',
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF1E293B),
-                    ),
-                  ),
-                  Text(
-                    _emailController.text,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: const Color(0xFF64748B),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        Text(
-          'Selecciona tu método de pago',
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF475569),
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF0070BA), size: 24),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Saldo de PayPal',
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF1E293B),
-                          ),
-                        ),
-                        Text(
-                          'Disponible: \$1,245.50 USD',
-                          style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.radio_button_checked, color: Color(0xFF0070BA), size: 20),
-                ],
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12.0),
-                child: Divider(),
-              ),
-              Row(
-                children: [
-                  const Icon(Icons.credit_card_rounded, color: Color(0xFF64748B), size: 24),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Visa Débito (•••• 4321)',
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: const Color(0xFF64748B),
-                          ),
-                        ),
-                        Text(
-                          'Asociada a tu cuenta',
-                          style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF94A3B8)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.radio_button_off, color: Color(0xFFCBD5E1), size: 20),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: ElevatedButton(
-            onPressed: _handlePaymentSimulation,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFC439), 
-              foregroundColor: const Color(0xFF1E293B),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-            ),
-            child: Text(
-              'Pagar Ahora \$${widget.amount.toStringAsFixed(2)}',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Center(
-          child: Text(
-            'Serás redirigido de regreso a WashGo al finalizar.',
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              color: const Color(0xFF94A3B8),
-            ),
-          ),
-        ),
-      ],
-    );
   }
 
   // STEP 2: Processing spinner
@@ -1337,7 +796,7 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
         ),
         const SizedBox(height: 24),
         Text(
-          _useRealApi ? 'Iniciando Orden con PayPal...' : 'Procesando tu pago...',
+          'Iniciando Orden con PayPal...',
           style: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -1346,9 +805,7 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
         ),
         const SizedBox(height: 8),
         Text(
-          _useRealApi 
-              ? 'Conectando con la API REST oficial de PayPal. Espera un momento.'
-              : 'Estamos autorizando de forma segura la transacción con PayPal Sandbox.',
+          'Conectando con la API REST oficial de PayPal. Espera un momento.',
           textAlign: TextAlign.center,
           style: GoogleFonts.inter(
             fontSize: 12,
@@ -1439,7 +896,7 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
                     style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B)),
                   ),
                   Text(
-                    _realPayerEmail ?? _emailController.text,
+                    _realPayerEmail ?? 'usuario@paypal.com',
                     style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF334155)),
                   ),
                 ],
@@ -1458,7 +915,7 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
                 PaypalPaymentResult(
                   isSuccess: true,
                   transactionId: _realTransactionId,
-                  payerEmail: _realPayerEmail ?? _emailController.text,
+                  payerEmail: _realPayerEmail ?? 'usuario@paypal.com',
                 ),
               );
             },
@@ -1471,7 +928,7 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
               ),
             ),
             child: Text(
-              'Aceptar',
+              'Aceptar y Volver',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -1482,8 +939,6 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
       ],
     );
   }
-
-
 
   // STEP 5: Real API approval tracking (Wait for user click to verify or auto-detect)
   Widget _buildRealVerifyStep() {
@@ -1642,43 +1097,25 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
         ),
         const SizedBox(height: 24),
         
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () {
-                  setState(() {
-                    _currentStep = 4; // Settings form
-                    _validationError = null;
-                  });
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF475569),
-                  side: const BorderSide(color: Color(0xFFCBD5E1)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                ),
-                child: const Text('Volver a Configurar'),
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: ElevatedButton(
+            onPressed: _startRealPaypalOrder,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0070BA),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            ),
+            child: Text(
+              'Reintentar',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _useRealApi = false;
-                    _currentStep = 0; // Turn off real API, use simulator
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0070BA),
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                ),
-                child: const Text('Usar Simulador'),
-              ),
-            ),
-          ],
+          ),
         ),
       ],
     );

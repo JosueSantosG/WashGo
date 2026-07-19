@@ -155,8 +155,20 @@ class _ClientOnboardingPageState extends State<ClientOnboardingPage> {
     } catch (e) {
       debugPrint('Error guardando los datos: $e');
       if (mounted) {
+        final errorString = e.toString();
+        String friendlyMessage = 'Algo salió mal. Por favor, intenta de nuevo.';
+        if (errorString.contains('Network reconnected') || 
+            errorString.contains('cannot be safely retried') ||
+            errorString.contains('connection') ||
+            errorString.contains('SocketException') ||
+            errorString.contains('403')) {
+          friendlyMessage = 'Hubo un problema de conexión temporal. Por favor, presiona "Finalizar" de nuevo.';
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al guardar los datos')),
+          SnackBar(
+            content: Text(friendlyMessage),
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     } finally {

@@ -10,3 +10,10 @@ void openBrowserPopup(String url) {
     ]);
   } catch (_) {}
 }
+
+void closeBrowserWindow() {
+  try {
+    js.context.callMethod('close', []);
+  } catch (_) {}
+}
+

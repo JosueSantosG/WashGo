@@ -15,7 +15,6 @@ class AppRoutes {
   static const String employeeDashboard = '/employee-dashboard';
   static const String createLaundry = '/create-laundry';
   static const String mapPicker = '/map-picker';
-  static const String superAdminLogin = '/superadmin-login';
   static const String superAdminDashboard = '/superadmin-dashboard';
   static const String prepaidConsumption = '/prepaid-consumption';
   static const String terms = '/terms';
