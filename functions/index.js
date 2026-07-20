@@ -753,6 +753,82 @@ app.get("/payphone/transaction/:orderId", async (req, res) => {
   }
 });
 
+// 2be. PayPhone Webhook (Public — no auth required, called directly by PayPhone's servers)
+app.post("/payphone-webhook", async (req, res) => {
+  console.log("[PayPhone-Webhook] Received webhook payload:", JSON.stringify(req.body));
+  
+  // Extract transactionId and orderId (check multiple possible mappings to be highly resilient)
+  const transactionId = req.body.id || req.body.transactionId || req.body.transactionid || req.body.transaction_id;
+  const orderId = req.body.clientTransactionId || req.body.clientTxId || req.body.clientTransactionid || req.body.client_transaction_id;
+  const status = req.body.status || req.body.transactionStatus || req.body.transactionstatus || req.body.state;
+
+  if (!orderId || !transactionId) {
+    console.warn("[PayPhone-Webhook] Missing orderId or transactionId in payload");
+    return res.status(400).json({ error: "Missing orderId or transactionId" });
+  }
+
+  const orderIdStr = orderId.toString();
+  const transactionIdStr = transactionId.toString();
+
+  try {
+    // 1. Store transactionId in Firestore (so the frontend "Verificar" button will also find it)
+    await admin.firestore().collection("payphone_transactions").doc(orderIdStr).set({
+      transactionId: transactionIdStr,
+      storedAt: FieldValue.serverTimestamp(),
+      webhookPayload: req.body,
+    }, { merge: true });
+    console.log(`[PayPhone-Webhook] Stored transactionId ${transactionIdStr} for orderId ${orderIdStr}`);
+
+    // 2. Call Confirmation API to securely verify and confirm
+    const token = process.env.PAYPHONE_TOKEN;
+    const isMock = !token || token === "mock";
+    let approved = isMock;
+
+    if (!isMock) {
+      try {
+        const confirmResponse = await axios({
+          url: "https://pay.payphonetodoesposible.com/api/button/V2/Confirm",
+          method: "post",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          data: {
+            id: parseInt(transactionIdStr) || transactionIdStr,
+            clientTxId: orderIdStr,
+          },
+        });
+        approved = confirmResponse.data.transactionStatus === "Approved";
+        console.log(`[PayPhone-Webhook] PayPhone Confirmation Status for ${transactionIdStr}: ${confirmResponse.data.transactionStatus}`);
+      } catch (confirmError) {
+        console.error(`[PayPhone-Webhook] Confirmation API call failed: ${confirmError.response?.data ? JSON.stringify(confirmError.response.data) : confirmError.message}`);
+        // Fall back to status field from payload if the confirm endpoint returns an error (e.g. already confirmed)
+      }
+    }
+
+    // 3. Update order status to EN_COLA if approved
+    if (approved || status === "Approved" || status === "COMPLETED") {
+      const orderResult = await serverGetOrderById({ id: orderIdStr });
+      const order = orderResult.data.order;
+      if (order && order.status === "PENDIENTE_PAGO") {
+        await serverUpdateOrderStatus({ orderId: orderIdStr, status: "EN_COLA" });
+        console.log(`[PayPhone-Webhook] Order ${orderIdStr} updated to EN_COLA`);
+      } else if (order) {
+        console.log(`[PayPhone-Webhook] Order ${orderIdStr} already in status ${order.status}`);
+      } else {
+        console.warn(`[PayPhone-Webhook] Order ${orderIdStr} not found in database`);
+      }
+    } else {
+      console.warn(`[PayPhone-Webhook] Transaction status is not approved: ${status}`);
+    }
+
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error(`[PayPhone-Webhook] Error processing webhook: ${error.message}`);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 // 3. Complete Cash Payment (PDF generation disabled — digital invoice only)
 app.post("/orders/complete-cash-payment", authenticate, async (req, res) => {
   const { orderId } = req.body;
