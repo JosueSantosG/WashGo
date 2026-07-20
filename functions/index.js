@@ -1158,6 +1158,9 @@ app.post("/payments/upload-proof", authenticate, async (req, res) => {
     const fileName = `transfers/${orderId}.${ext}`;
     const file = bucket.file(fileName);
     const buffer = Buffer.from(imageBase64, "base64");
+    if (buffer.length > 5 * 1024 * 1024) {
+      return res.status(400).json({ error: "La imagen excede el límite de 5 MB." });
+    }
     await file.save(buffer, {
       metadata: { contentType: `image/${ext === "jpg" ? "jpeg" : ext}` },
     });

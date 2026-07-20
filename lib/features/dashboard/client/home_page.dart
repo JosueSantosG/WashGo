@@ -4,7 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:washgo/config/theme/app_colors.dart';
-import 'package:washgo/dataconnect-generated/example.dart';
+import 'package:washgo/dataconnect-generated/example.dart' hide PaymentProofStatus;
 import 'package:go_router/go_router.dart';
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
@@ -30,6 +30,7 @@ import 'package:washgo/features/orders/models/client_order.dart';
 import 'package:washgo/features/orders/widgets/reschedule_slots_sheet.dart';
 import 'package:washgo/core/utils/observations_parser.dart';
 import 'package:washgo/features/payments/repositories/bank_transfer_repository.dart';
+import 'package:washgo/features/payments/models/payment_proof_model.dart';
 
 class HomePage extends StatefulWidget {
   final int initialTab;
@@ -160,7 +161,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       );
       try {
         final proof = await BankTransferRepository().getProofStatus(order.id);
-        isPaid = proof != null;
+        isPaid = proof != null && proof.status == PaymentProofStatus.APPROVED;
       } catch (e) {
         isPaid = false;
       }

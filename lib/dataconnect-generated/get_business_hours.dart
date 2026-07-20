@@ -7,8 +7,8 @@ class GetBusinessHoursVariablesBuilder {
   GetBusinessHoursVariablesBuilder(this._dataConnect, {required  this.businessId,});
   Deserializer<GetBusinessHoursData> dataDeserializer = (dynamic json)  => GetBusinessHoursData.fromJson(jsonDecode(json));
   Serializer<GetBusinessHoursVariables> varsSerializer = (GetBusinessHoursVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetBusinessHoursData, GetBusinessHoursVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetBusinessHoursData, GetBusinessHoursVariables>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetBusinessHoursData, GetBusinessHoursVariables> ref() {

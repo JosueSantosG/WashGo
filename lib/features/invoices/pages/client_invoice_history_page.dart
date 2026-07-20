@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:washgo/config/theme/app_colors.dart';
 import 'package:washgo/features/invoices/models/invoice.dart';
 import 'package:washgo/features/invoices/repositories/invoice_repository.dart';
@@ -307,6 +308,8 @@ class _ClientInvoiceHistoryPageState extends State<ClientInvoiceHistoryPage> {
                   _buildDetailRow('Fecha de Emisión', _formatDate(currentInvoice.fechaEmision)),
                   _buildDetailRow('Método de Pago', currentInvoice.paymentMethod),
                   _buildDetailRow('Empleado Asignado', currentInvoice.employeeName ?? 'Sin asignar'),
+                  if (currentInvoice.proofImageUrl != null && currentInvoice.proofImageUrl!.isNotEmpty)
+                    _buildLinkDetailRow('Foto comprobante', 'Ver Foto', currentInvoice.proofImageUrl!),
                   
                   if (currentInvoice.clientName != null && currentInvoice.clientName!.trim().isNotEmpty) ...[
                     _buildDetailRow('Cliente', currentInvoice.clientName!),
@@ -459,6 +462,52 @@ class _ClientInvoiceHistoryPageState extends State<ClientInvoiceHistoryPage> {
                 fontWeight: FontWeight.w600,
               ),
               textAlign: TextAlign.right,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLinkDetailRow(String label, String linkText, String url) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 140,
+            child: Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: GestureDetector(
+                onTap: () async {
+                  final uri = Uri.parse(url);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  } else {
+                    debugPrint('Could not launch $url');
+                  }
+                },
+                child: Text(
+                  linkText,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
             ),
           ),
         ],

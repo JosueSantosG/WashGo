@@ -1196,18 +1196,9 @@ class ExampleConnector {
 
   ExampleConnector({required this.dataConnect});
   static ExampleConnector get instance {
-    
-    CacheSettings cacheSettings = CacheSettings(
-      maxAge: Duration(milliseconds:5000),
-      storage: CacheStorage.memory,
-    );
-    
     return ExampleConnector(
         dataConnect: FirebaseDataConnect.instanceFor(
             connectorConfig: connectorConfig,
-            
-            cacheSettings: cacheSettings,
-            
             sdkType: CallerSDKType.generated));
   }
 

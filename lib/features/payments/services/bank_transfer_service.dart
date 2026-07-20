@@ -22,12 +22,13 @@ class BankTransferService {
       return 'https://us-central1-$projectId.cloudfunctions.net';
     }
   }
+
   final http.Client _client;
   final FirebaseAuth _auth;
 
   BankTransferService({http.Client? client, FirebaseAuth? auth})
-      : _client = client ?? http.Client(),
-        _auth = auth ?? FirebaseAuth.instance;
+    : _client = client ?? http.Client(),
+      _auth = auth ?? FirebaseAuth.instance;
 
   Future<String?> get _authToken async => await _auth.currentUser?.getIdToken();
 
@@ -39,6 +40,9 @@ class BankTransferService {
     required double amount,
   }) async {
     final bytes = await imageFile.readAsBytes();
+    if (bytes.length > 5 * 1024 * 1024) {
+      throw Exception('La imagen del comprobante no puede superar los 5 MB.');
+    }
     final base64Image = base64Encode(bytes);
     final ext = imageFile.name.split('.').last;
 
@@ -64,7 +68,8 @@ class BankTransferService {
 
     if (response.statusCode != 200) {
       throw Exception(
-          'Error al subir comprobante: ${response.statusCode} - $body');
+        'Error al subir comprobante: ${response.statusCode} - $body',
+      );
     }
 
     // Since the backend returns { success: true, message: ... } instead of the full proof,
@@ -132,8 +137,7 @@ class BankTransferService {
     );
 
     if (response.statusCode != 200) {
-      throw Exception(
-          'Error al revisar comprobante: ${response.statusCode}');
+      throw Exception('Error al revisar comprobante: ${response.statusCode}');
     }
   }
 }

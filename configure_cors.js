@@ -8,7 +8,7 @@ const p = path.join(userProfile, '.config', 'configstore', 'firebase-tools.json'
 try {
   const data = JSON.parse(fs.readFileSync(p, 'utf8'));
   const accessToken = data.tokens.access_token;
-  const bucketName = 'washgo-app-8392.firebasestorage.app';
+  const bucketName = 'washgov1.firebasestorage.app';
   
   const corsConfig = {
     cors: [

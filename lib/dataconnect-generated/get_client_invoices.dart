@@ -42,8 +42,8 @@ class GetClientInvoicesVariablesBuilder {
   GetClientInvoicesVariablesBuilder(this._dataConnect, );
   Deserializer<GetClientInvoicesData> dataDeserializer = (dynamic json)  => GetClientInvoicesData.fromJson(jsonDecode(json));
   Serializer<GetClientInvoicesVariables> varsSerializer = (GetClientInvoicesVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetClientInvoicesData, GetClientInvoicesVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetClientInvoicesData, GetClientInvoicesVariables>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetClientInvoicesData, GetClientInvoicesVariables> ref() {
@@ -165,6 +165,7 @@ class GetClientInvoicesInvoicesOrder {
   final EnumValue<OrderStatus> status;
   final GetClientInvoicesInvoicesOrderBusiness business;
   final GetClientInvoicesInvoicesOrderEmployee? employee;
+  final GetClientInvoicesInvoicesOrderPaymentProofOnOrder? paymentProof_on_order;
   GetClientInvoicesInvoicesOrder.fromJson(dynamic json):
   
   id = nativeFromJson<String>(json['id']),
@@ -173,7 +174,8 @@ class GetClientInvoicesInvoicesOrder {
   paymentMethod = paymentMethodDeserializer(json['paymentMethod']),
   status = orderStatusDeserializer(json['status']),
   business = GetClientInvoicesInvoicesOrderBusiness.fromJson(json['business']),
-  employee = json['employee'] == null ? null : GetClientInvoicesInvoicesOrderEmployee.fromJson(json['employee']);
+  employee = json['employee'] == null ? null : GetClientInvoicesInvoicesOrderEmployee.fromJson(json['employee']),
+  paymentProof_on_order = json['paymentProof_on_order'] == null ? null : GetClientInvoicesInvoicesOrderPaymentProofOnOrder.fromJson(json['paymentProof_on_order']);
   @override
   bool operator ==(Object other) {
     if(identical(this, other)) {
@@ -190,11 +192,12 @@ class GetClientInvoicesInvoicesOrder {
     paymentMethod == otherTyped.paymentMethod && 
     status == otherTyped.status && 
     business == otherTyped.business && 
-    employee == otherTyped.employee;
+    employee == otherTyped.employee && 
+    paymentProof_on_order == otherTyped.paymentProof_on_order;
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, price.hashCode, serviceName.hashCode, paymentMethod.hashCode, status.hashCode, business.hashCode, employee.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, price.hashCode, serviceName.hashCode, paymentMethod.hashCode, status.hashCode, business.hashCode, employee.hashCode, paymentProof_on_order.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -214,6 +217,9 @@ class GetClientInvoicesInvoicesOrder {
     if (employee != null) {
       json['employee'] = employee!.toJson();
     }
+    if (paymentProof_on_order != null) {
+      json['paymentProof_on_order'] = paymentProof_on_order!.toJson();
+    }
     return json;
   }
 
@@ -225,6 +231,7 @@ class GetClientInvoicesInvoicesOrder {
     required this.status,
     required this.business,
     this.employee,
+    this.paymentProof_on_order,
   });
 }
 
@@ -300,6 +307,40 @@ class GetClientInvoicesInvoicesOrderEmployee {
   GetClientInvoicesInvoicesOrderEmployee({
     required this.nombreCompleto,
     this.telefono,
+  });
+}
+
+@immutable
+class GetClientInvoicesInvoicesOrderPaymentProofOnOrder {
+  final String imageUrl;
+  GetClientInvoicesInvoicesOrderPaymentProofOnOrder.fromJson(dynamic json):
+  
+  imageUrl = nativeFromJson<String>(json['imageUrl']);
+  @override
+  bool operator ==(Object other) {
+    if(identical(this, other)) {
+      return true;
+    }
+    if(other.runtimeType != runtimeType) {
+      return false;
+    }
+
+    final GetClientInvoicesInvoicesOrderPaymentProofOnOrder otherTyped = other as GetClientInvoicesInvoicesOrderPaymentProofOnOrder;
+    return imageUrl == otherTyped.imageUrl;
+    
+  }
+  @override
+  int get hashCode => imageUrl.hashCode;
+  
+
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> json = {};
+    json['imageUrl'] = nativeToJson<String>(imageUrl);
+    return json;
+  }
+
+  GetClientInvoicesInvoicesOrderPaymentProofOnOrder({
+    required this.imageUrl,
   });
 }
 

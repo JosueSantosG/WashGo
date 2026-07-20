@@ -7,8 +7,8 @@ class GetPendingEmployeeRequestsVariablesBuilder {
   GetPendingEmployeeRequestsVariablesBuilder(this._dataConnect, {required  this.businessId,});
   Deserializer<GetPendingEmployeeRequestsData> dataDeserializer = (dynamic json)  => GetPendingEmployeeRequestsData.fromJson(jsonDecode(json));
   Serializer<GetPendingEmployeeRequestsVariables> varsSerializer = (GetPendingEmployeeRequestsVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetPendingEmployeeRequestsData, GetPendingEmployeeRequestsVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetPendingEmployeeRequestsData, GetPendingEmployeeRequestsVariables>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetPendingEmployeeRequestsData, GetPendingEmployeeRequestsVariables> ref() {

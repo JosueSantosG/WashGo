@@ -7,8 +7,8 @@ class GetInvoiceByIdAdminVariablesBuilder {
   GetInvoiceByIdAdminVariablesBuilder(this._dataConnect, {required  this.id,});
   Deserializer<GetInvoiceByIdAdminData> dataDeserializer = (dynamic json)  => GetInvoiceByIdAdminData.fromJson(jsonDecode(json));
   Serializer<GetInvoiceByIdAdminVariables> varsSerializer = (GetInvoiceByIdAdminVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetInvoiceByIdAdminData, GetInvoiceByIdAdminVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetInvoiceByIdAdminData, GetInvoiceByIdAdminVariables>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetInvoiceByIdAdminData, GetInvoiceByIdAdminVariables> ref() {

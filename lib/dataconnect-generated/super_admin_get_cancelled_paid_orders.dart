@@ -8,8 +8,8 @@ class SuperAdminGetCancelledPaidOrdersVariablesBuilder {
   SuperAdminGetCancelledPaidOrdersVariablesBuilder(this._dataConnect, {required  this.startOfMonth,required  this.endOfMonth,});
   Deserializer<SuperAdminGetCancelledPaidOrdersData> dataDeserializer = (dynamic json)  => SuperAdminGetCancelledPaidOrdersData.fromJson(jsonDecode(json));
   Serializer<SuperAdminGetCancelledPaidOrdersVariables> varsSerializer = (SuperAdminGetCancelledPaidOrdersVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<SuperAdminGetCancelledPaidOrdersData, SuperAdminGetCancelledPaidOrdersVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<SuperAdminGetCancelledPaidOrdersData, SuperAdminGetCancelledPaidOrdersVariables>> execute() {
+    return ref().execute();
   }
 
   QueryRef<SuperAdminGetCancelledPaidOrdersData, SuperAdminGetCancelledPaidOrdersVariables> ref() {

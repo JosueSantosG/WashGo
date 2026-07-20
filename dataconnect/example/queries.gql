@@ -543,6 +543,9 @@ query GetClientInvoices(
         nombreCompleto
         telefono
       }
+      paymentProof_on_order {
+        imageUrl
+      }
     }
     invoiceItems_on_invoice {
       id

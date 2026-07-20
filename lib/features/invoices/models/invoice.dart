@@ -19,6 +19,7 @@ class InvoiceModel {
   final String? employeeName;
   final String? employeePhone;
   final String? observations;
+  final String? proofImageUrl;
 
   // Financial and metadata fields
   final double subtotal;
@@ -45,6 +46,7 @@ class InvoiceModel {
     this.employeeName,
     this.employeePhone,
     this.observations,
+    this.proofImageUrl,
     required this.subtotal,
     required this.discount,
     required this.tax,

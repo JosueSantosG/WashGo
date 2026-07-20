@@ -6,8 +6,8 @@ class GetGlobalAppRatingsVariablesBuilder {
   GetGlobalAppRatingsVariablesBuilder(this._dataConnect, );
   Deserializer<GetGlobalAppRatingsData> dataDeserializer = (dynamic json)  => GetGlobalAppRatingsData.fromJson(jsonDecode(json));
   
-  Future<QueryResult<GetGlobalAppRatingsData, void>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetGlobalAppRatingsData, void>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetGlobalAppRatingsData, void> ref() {

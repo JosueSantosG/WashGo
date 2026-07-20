@@ -99,6 +99,7 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
         businessName: inv.order.business.nombre,
         employeeName: inv.order.employee?.nombreCompleto,
         employeePhone: inv.order.employee?.telefono,
+        proofImageUrl: inv.order.paymentProof_on_order?.imageUrl,
         subtotal: inv.subtotal,
         discount: inv.discount,
         tax: inv.tax,
