@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -32,8 +33,8 @@ class PaymentSelectionPage extends StatefulWidget {
     required this.selectedCategory,
     required this.scheduleNow,
     this.scheduledDateTime,
-    required this.onPaymentCompleted,
     required this.serviceDuration,
+    required this.onPaymentCompleted,
   });
 
   @override
@@ -47,6 +48,47 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
   bool _payphoneWaiting = false;
   String? _payphoneOrderId;
   String? _payphonePaymentUrl;
+  Timer? _pollingTimer;
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startPayphonePolling(String orderId) {
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
+      if (!_payphoneWaiting || !mounted) {
+        timer.cancel();
+        return;
+      }
+      try {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          final idToken = await user.getIdToken(true);
+          if (idToken != null) {
+            final txId = await PayphoneService.getStoredTransaction(
+              orderId: orderId,
+              baseUrl: _getFunctionsBaseUrl(),
+              idToken: idToken,
+            );
+            if (txId != null && _payphoneWaiting && mounted) {
+              timer.cancel();
+              setState(() {
+                _payphoneWaiting = false;
+                _payphoneOrderId = null;
+                _payphonePaymentUrl = null;
+              });
+              context.push('/payphone-callback/success?id=$txId&clientTransactionId=$orderId');
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('[PayPhone Polling Error] $e');
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -769,13 +811,14 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                   throw Exception('No se pudo abrir el enlace de pago: $payWithCardUrl');
                                 }
 
-                                // 5. Transition to waiting state
-                                setState(() {
-                                  _payphoneWaiting = true;
-                                  _payphoneOrderId = orderId;
-                                  _payphonePaymentUrl = payWithCardUrl;
-                                  _isProcessing = false;
-                                });
+                                 // 5. Transition to waiting state & start auto-polling (every 3s)
+                                 setState(() {
+                                   _payphoneWaiting = true;
+                                   _payphoneOrderId = orderId;
+                                   _payphonePaymentUrl = payWithCardUrl;
+                                   _isProcessing = false;
+                                 });
+                                 _startPayphonePolling(orderId);
                               }
                             } else {
                               await widget.onPaymentCompleted(_selectedMethod);
