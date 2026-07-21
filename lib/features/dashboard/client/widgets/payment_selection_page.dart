@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:washgo/config/theme/app_colors.dart';
@@ -131,82 +132,52 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                   });
                                   try {
                                     final orderId = _payphoneOrderId!;
-                                    final connector = ExampleConnector.instance;
-
-                                    // 1. Initial check (passive)
-                                    var orderResult = await connector
-                                        .getOrderById(id: orderId)
-                                        .execute();
-                                    var order = orderResult.data.order;
-
-                                    if (order == null) {
-                                      throw Exception('No se encontró el pedido.');
-                                    }
-
-                                    var orderStatus = order.status.stringValue;
-
-                                    // 2. Active verification if status is still pending
-                                    if (orderStatus != 'EN_COLA' && orderStatus != 'COMPLETADO') {
-                                      final user = FirebaseAuth.instance.currentUser;
-                                      if (user != null) {
-                                        final idToken = await user.getIdToken(true);
-                                        if (idToken != null) {
-                                          final storedTxId = await PayphoneService.getStoredTransaction(
-                                            orderId: orderId,
-                                            baseUrl: _getFunctionsBaseUrl(),
-                                            idToken: idToken,
-                                          );
-                                          if (storedTxId != null) {
-                                            try {
-                                              await PayphoneService.completePayment(
-                                                orderId: orderId,
-                                                transactionId: storedTxId,
-                                                base64Pdf: "",
-                                                idToken: idToken,
-                                                baseUrl: _getFunctionsBaseUrl(),
-                                              );
-
-                                              // Fetch again to see if status updated
-                                              orderResult = await connector
-                                                  .getOrderById(id: orderId)
-                                                  .execute();
-                                              order = orderResult.data.order;
-                                              if (order != null) {
-                                                orderStatus = order.status.stringValue;
-                                              }
-                                            } catch (e) {
-                                              debugPrint('[PayPhone verification] Proactive complete payment failed: $e');
-                                            }
-                                          }
-                                        }
+                                    // 1. Fetch backend stored transaction first (queries Payphone Sale API, updates Firestore & order status to EN_COLA)
+                                    String? verifiedTxId;
+                                    final user = FirebaseAuth.instance.currentUser;
+                                    if (user != null) {
+                                      final idToken = await user.getIdToken(true);
+                                      if (idToken != null) {
+                                        verifiedTxId = await PayphoneService.getStoredTransaction(
+                                          orderId: orderId,
+                                          baseUrl: _getFunctionsBaseUrl(),
+                                          idToken: idToken,
+                                        );
                                       }
                                     }
 
-                                    // 3. Final status assessment
-                                    if (orderStatus == 'EN_COLA' || orderStatus == 'COMPLETADO') {
+                                    // 2. Check order status in DataConnect as a fallback safety check
+                                    bool isApproved = verifiedTxId != null;
+                                    if (!isApproved) {
+                                      try {
+                                        final connector = ExampleConnector.instance;
+                                        final orderResult = await connector.getOrderById(id: orderId).execute();
+                                        final order = orderResult.data.order;
+                                        if (order != null && (order.status.stringValue == 'EN_COLA' || order.status.stringValue == 'COMPLETADO')) {
+                                          isApproved = true;
+                                        }
+                                      } catch (e) {
+                                        debugPrint('[PayPhone Verification] order check fallback: $e');
+                                      }
+                                    }
+
+                                    // 3. Final status assessment & navigation
+                                    if (isApproved) {
                                       if (!mounted) return;
                                       setState(() {
                                         _payphoneWaiting = false;
                                         _payphoneOrderId = null;
                                         _payphonePaymentUrl = null;
                                       });
-                                      Navigator.pop(context);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            '¡Pago verificado y reserva confirmada!',
-                                            style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-                                          ),
-                                          backgroundColor: Colors.green.shade600,
-                                          duration: const Duration(seconds: 4),
-                                        ),
-                                      );
+                                      // Navigate directly to the PayphoneSuccessPage receipt screen!
+                                      final txParam = verifiedTxId ?? 'APPROVED';
+                                      context.push('/payphone-callback/success?id=$txParam&clientTransactionId=$orderId');
                                     } else {
                                       if (!context.mounted) return;
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
                                           content: Text(
-                                            'El pago aún no ha sido confirmado. Si ya pagaste en PayPhone, espera unos segundos e intenta de nuevo.',
+                                            'El pago aún no ha sido verificado. Si ya pagaste en PayPhone, espera unos segundos e intenta de nuevo.',
                                             style: GoogleFonts.inter(fontWeight: FontWeight.w600),
                                           ),
                                           backgroundColor: Colors.orange.shade800,
@@ -301,11 +272,34 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                                     if (user != null) {
                                       final idToken = await user.getIdToken(true);
                                       if (idToken != null) {
-                                        await PayphoneService.cancelPendingOrder(
+                                        final cancelRes = await PayphoneService.cancelPendingOrder(
                                           orderId: _payphoneOrderId!,
                                           idToken: idToken,
                                           baseUrl: _getFunctionsBaseUrl(),
                                         );
+
+                                        if (cancelRes['isAlreadyPaid'] == true) {
+                                          final txId = cancelRes['transactionId'] ?? 'APPROVED';
+                                          final orderId = _payphoneOrderId!;
+                                          setState(() {
+                                            _payphoneWaiting = false;
+                                            _payphoneOrderId = null;
+                                            _payphonePaymentUrl = null;
+                                          });
+                                          if (!context.mounted) return;
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                '¡Tu pago ya fue aprobado en Payphone! Tu reserva ha sido confirmada.',
+                                                style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                                              ),
+                                              backgroundColor: Colors.green.shade600,
+                                              duration: const Duration(seconds: 4),
+                                            ),
+                                          );
+                                          context.push('/payphone-callback/success?id=$txId&clientTransactionId=$orderId');
+                                          return;
+                                        }
                                       }
                                     }
                                     setState(() {

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class PayphoneService {
@@ -27,7 +28,7 @@ class PayphoneService {
     return data['payWithCardUrl'] as String;
   }
 
-  static Future<void> cancelPendingOrder({
+  static Future<Map<String, dynamic>> cancelPendingOrder({
     required String orderId,
     required String idToken,
     required String baseUrl,
@@ -38,11 +39,22 @@ class PayphoneService {
         'Authorization': 'Bearer $idToken',
       },
     );
-    if (response.statusCode != 200) {
+    if (response.statusCode == 200) {
+      return {'success': true};
+    } else {
       try {
         final errorData = jsonDecode(response.body);
+        if (errorData['isAlreadyPaid'] == true) {
+          return {
+            'success': false,
+            'isAlreadyPaid': true,
+            'transactionId': errorData['transactionId'] ?? 'APPROVED',
+            'message': errorData['message'] ?? 'Tu pago fue aprobado en Payphone.',
+          };
+        }
         throw Exception(errorData['error'] ?? 'Error al cancelar la orden.');
-      } catch (_) {
+      } catch (e) {
+        if (e is Exception && e.toString().contains('Exception:')) rethrow;
         throw Exception('Error del servidor al cancelar la orden: ${response.statusCode}');
       }
     }
@@ -56,6 +68,7 @@ class PayphoneService {
     required String idToken,
   }) async {
     try {
+      debugPrint('[PayphoneService] Fetching stored tx for orderId: $orderId from URL: $baseUrl/orders/$orderId/payphone-transaction');
       final response = await http.get(
         Uri.parse('$baseUrl/orders/$orderId/payphone-transaction'),
         headers: {
@@ -63,12 +76,15 @@ class PayphoneService {
           'Content-Type': 'application/json',
         },
       );
+      debugPrint('[PayphoneService] getStoredTransaction status: ${response.statusCode}, body: ${response.body}');
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['transactionId'] as String?;
+        final txId = data['transactionId'] as String?;
+        debugPrint('[PayphoneService] Parsed transactionId: "$txId"');
+        return txId;
       }
     } catch (e) {
-      // Silently fail — caller handles the null
+      debugPrint('[PayphoneService] Error fetching stored tx: $e');
     }
     return null;
   }

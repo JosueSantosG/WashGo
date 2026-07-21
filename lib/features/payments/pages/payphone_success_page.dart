@@ -377,7 +377,7 @@ class _PayphoneSuccessPageState extends State<PayphoneSuccessPage> {
           width: double.infinity,
           height: 48,
           child: ElevatedButton(
-            onPressed: () => context.go('/'),
+            onPressed: () => context.go('/reservas'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.success,
               foregroundColor: Colors.white,
@@ -387,7 +387,7 @@ class _PayphoneSuccessPageState extends State<PayphoneSuccessPage> {
               ),
             ),
             child: Text(
-              'Volver al Inicio',
+              'Ver mis Reservas',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
