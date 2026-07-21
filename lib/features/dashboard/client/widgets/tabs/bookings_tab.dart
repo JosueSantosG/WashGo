@@ -54,6 +54,7 @@ class BookingsTab extends StatefulWidget {
 
 class _BookingsTabState extends State<BookingsTab> {
   final Map<String, Future<QueuePosition>> _queueFutures = {};
+  final Map<String, Future<PaymentProofModel?>> _proofFutures = {};
 
   @override
   void initState() {
@@ -288,6 +289,7 @@ class _BookingsTabState extends State<BookingsTab> {
     }
     if (ordersChanged) {
       _queueFutures.clear();
+      _proofFutures.clear();
     }
   }
 
@@ -295,6 +297,13 @@ class _BookingsTabState extends State<BookingsTab> {
     return _queueFutures.putIfAbsent(
       orderId,
       () => widget.getQueuePosition!(businessId, orderId),
+    );
+  }
+
+  Future<PaymentProofModel?> _getProofFuture(String orderId) {
+    return _proofFutures.putIfAbsent(
+      orderId,
+      () => BankTransferRepository().getProofStatus(orderId),
     );
   }
 
@@ -352,6 +361,7 @@ class _BookingsTabState extends State<BookingsTab> {
         onRefresh: () async {
           setState(() {
             _queueFutures.clear();
+            _proofFutures.clear();
           });
           await widget.onRefresh();
         },
@@ -726,7 +736,7 @@ class _BookingsTabState extends State<BookingsTab> {
           if (order.paymentMethod == 'TRANSFERENCIA_BANCARIA' &&
               statusStr == 'PENDIENTE_PAGO') ...[
             FutureBuilder<PaymentProofModel?>(
-              future: BankTransferRepository().getProofStatus(order.id),
+              future: _getProofFuture(order.id),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Container(
@@ -785,6 +795,9 @@ class _BookingsTabState extends State<BookingsTab> {
                             );
                           }
                           if (context.mounted) {
+                            setState(() {
+                              _proofFutures.remove(order.id);
+                            });
                             widget.onRefresh();
                           }
                         },
@@ -1411,7 +1424,7 @@ class _BookingsTabState extends State<BookingsTab> {
           // Botón alternativo de pago en línea para transferencia bancaria (si no hay comprobante subido o fue rechazado)
           if (statusStr == 'PENDIENTE_PAGO' && order.paymentMethod == 'TRANSFERENCIA_BANCARIA') ...[
             FutureBuilder<PaymentProofModel?>(
-              future: BankTransferRepository().getProofStatus(order.id),
+              future: _getProofFuture(order.id),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const SizedBox.shrink();
@@ -1448,7 +1461,7 @@ class _BookingsTabState extends State<BookingsTab> {
               statusStr == 'PENDIENTE_PAGO') ...[
             const SizedBox(height: 12),
             FutureBuilder<PaymentProofModel?>(
-              future: BankTransferRepository().getProofStatus(order.id),
+              future: _getProofFuture(order.id),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const SizedBox(
@@ -1484,6 +1497,9 @@ class _BookingsTabState extends State<BookingsTab> {
                           );
                         }
                         if (context.mounted) {
+                          setState(() {
+                            _proofFutures.remove(order.id);
+                          });
                           widget.onRefresh();
                         }
                       },
@@ -1516,6 +1532,9 @@ class _BookingsTabState extends State<BookingsTab> {
                           },
                         );
                         if (context.mounted) {
+                          setState(() {
+                            _proofFutures.remove(order.id);
+                          });
                           widget.onRefresh();
                         }
                       },

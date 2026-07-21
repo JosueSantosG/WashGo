@@ -42,8 +42,8 @@ class GetClientInvoicesVariablesBuilder {
   GetClientInvoicesVariablesBuilder(this._dataConnect, );
   Deserializer<GetClientInvoicesData> dataDeserializer = (dynamic json)  => GetClientInvoicesData.fromJson(jsonDecode(json));
   Serializer<GetClientInvoicesVariables> varsSerializer = (GetClientInvoicesVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetClientInvoicesData, GetClientInvoicesVariables>> execute() {
-    return ref().execute();
+  Future<QueryResult<GetClientInvoicesData, GetClientInvoicesVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<GetClientInvoicesData, GetClientInvoicesVariables> ref() {

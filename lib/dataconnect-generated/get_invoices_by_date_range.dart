@@ -9,8 +9,8 @@ class GetInvoicesByDateRangeVariablesBuilder {
   GetInvoicesByDateRangeVariablesBuilder(this._dataConnect, {required  this.businessId,required  this.startDate,required  this.endDate,});
   Deserializer<GetInvoicesByDateRangeData> dataDeserializer = (dynamic json)  => GetInvoicesByDateRangeData.fromJson(jsonDecode(json));
   Serializer<GetInvoicesByDateRangeVariables> varsSerializer = (GetInvoicesByDateRangeVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetInvoicesByDateRangeData, GetInvoicesByDateRangeVariables>> execute() {
-    return ref().execute();
+  Future<QueryResult<GetInvoicesByDateRangeData, GetInvoicesByDateRangeVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<GetInvoicesByDateRangeData, GetInvoicesByDateRangeVariables> ref() {

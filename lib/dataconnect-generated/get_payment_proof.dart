@@ -7,8 +7,8 @@ class GetPaymentProofVariablesBuilder {
   GetPaymentProofVariablesBuilder(this._dataConnect, {required  this.orderId,});
   Deserializer<GetPaymentProofData> dataDeserializer = (dynamic json)  => GetPaymentProofData.fromJson(jsonDecode(json));
   Serializer<GetPaymentProofVariables> varsSerializer = (GetPaymentProofVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetPaymentProofData, GetPaymentProofVariables>> execute() {
-    return ref().execute();
+  Future<QueryResult<GetPaymentProofData, GetPaymentProofVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<GetPaymentProofData, GetPaymentProofVariables> ref() {

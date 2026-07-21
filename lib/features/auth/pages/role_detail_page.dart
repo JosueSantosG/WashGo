@@ -103,31 +103,6 @@ class _RoleDetailPageState extends State<RoleDetailPage> {
     }
   }
 
-  List<String> get _limitations {
-    switch (widget.role) {
-      case UserRole.CLIENTE:
-        return [
-          'No puedes gestionar personal o empleados de un local.',
-          'No puedes cambiar los precios de los servicios de autolavado.',
-          'No tienes acceso a los paneles financieros de los locales.',
-        ];
-      case UserRole.EMPLEADO:
-        return [
-          'No puedes editar la información del local o los servicios.',
-          'No puedes cambiar el precio de los lavados o configurar nuevos servicios.',
-          'No tienes acceso a los reportes generales de ganancias del negocio.',
-        ];
-      case UserRole.ADMINISTRADOR:
-        return [
-          'Este rol te otorga el control absoluto de tu negocio.',
-          'Es un rol administrativo y de gestión comercial.',
-        ];
-      case UserRole.SUPER_ADMIN:
-        return [
-          'Este es un rol global sin limitaciones específicas de negocio.',
-        ];
-    }
-  }
 
   String get _onboardingDescription {
     switch (widget.role) {
@@ -345,16 +320,6 @@ class _RoleDetailPageState extends State<RoleDetailPage> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Section: Limitaciones
-                        _SectionCard(
-                          title: 'Limitaciones del rol:',
-                          titleColor: const Color(0xFFC62828),
-                          backgroundColor: const Color(0xFFFFEBEE),
-                          items: _limitations,
-                          icon: Icons.remove_circle_outline_rounded,
-                          iconColor: const Color(0xFFEF5350),
-                        ),
-                        const SizedBox(height: 16),
 
                         // Info Card about Onboarding step
                         Container(

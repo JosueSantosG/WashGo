@@ -7,8 +7,8 @@ class GetOrderLogsVariablesBuilder {
   GetOrderLogsVariablesBuilder(this._dataConnect, {required  this.orderId,});
   Deserializer<GetOrderLogsData> dataDeserializer = (dynamic json)  => GetOrderLogsData.fromJson(jsonDecode(json));
   Serializer<GetOrderLogsVariables> varsSerializer = (GetOrderLogsVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetOrderLogsData, GetOrderLogsVariables>> execute() {
-    return ref().execute();
+  Future<QueryResult<GetOrderLogsData, GetOrderLogsVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<GetOrderLogsData, GetOrderLogsVariables> ref() {

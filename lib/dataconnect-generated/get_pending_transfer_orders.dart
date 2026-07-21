@@ -7,8 +7,8 @@ class GetPendingTransferOrdersVariablesBuilder {
   GetPendingTransferOrdersVariablesBuilder(this._dataConnect, {required  this.businessId,});
   Deserializer<GetPendingTransferOrdersData> dataDeserializer = (dynamic json)  => GetPendingTransferOrdersData.fromJson(jsonDecode(json));
   Serializer<GetPendingTransferOrdersVariables> varsSerializer = (GetPendingTransferOrdersVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetPendingTransferOrdersData, GetPendingTransferOrdersVariables>> execute() {
-    return ref().execute();
+  Future<QueryResult<GetPendingTransferOrdersData, GetPendingTransferOrdersVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<GetPendingTransferOrdersData, GetPendingTransferOrdersVariables> ref() {

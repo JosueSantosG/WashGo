@@ -10,8 +10,8 @@ class GetEmployeeHistoryOrdersPagedVariablesBuilder {
   GetEmployeeHistoryOrdersPagedVariablesBuilder(this._dataConnect, {required  this.businessId,required  this.employeeId,required  this.limit,required  this.offset,});
   Deserializer<GetEmployeeHistoryOrdersPagedData> dataDeserializer = (dynamic json)  => GetEmployeeHistoryOrdersPagedData.fromJson(jsonDecode(json));
   Serializer<GetEmployeeHistoryOrdersPagedVariables> varsSerializer = (GetEmployeeHistoryOrdersPagedVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetEmployeeHistoryOrdersPagedData, GetEmployeeHistoryOrdersPagedVariables>> execute() {
-    return ref().execute();
+  Future<QueryResult<GetEmployeeHistoryOrdersPagedData, GetEmployeeHistoryOrdersPagedVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<GetEmployeeHistoryOrdersPagedData, GetEmployeeHistoryOrdersPagedVariables> ref() {

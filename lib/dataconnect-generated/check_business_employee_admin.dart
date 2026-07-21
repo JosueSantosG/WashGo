@@ -8,8 +8,8 @@ class CheckBusinessEmployeeAdminVariablesBuilder {
   CheckBusinessEmployeeAdminVariablesBuilder(this._dataConnect, {required  this.businessId,required  this.employeeId,});
   Deserializer<CheckBusinessEmployeeAdminData> dataDeserializer = (dynamic json)  => CheckBusinessEmployeeAdminData.fromJson(jsonDecode(json));
   Serializer<CheckBusinessEmployeeAdminVariables> varsSerializer = (CheckBusinessEmployeeAdminVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<CheckBusinessEmployeeAdminData, CheckBusinessEmployeeAdminVariables>> execute() {
-    return ref().execute();
+  Future<QueryResult<CheckBusinessEmployeeAdminData, CheckBusinessEmployeeAdminVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
+    return ref().execute(fetchPolicy: fetchPolicy);
   }
 
   QueryRef<CheckBusinessEmployeeAdminData, CheckBusinessEmployeeAdminVariables> ref() {
