@@ -150,12 +150,13 @@ class _BookingsTabState extends State<BookingsTab> {
             if (paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA) {
               if (context.mounted) {
                 context.pushNamed(
-                  AppRoutes.proofUpload,
+                  AppRoutes.bankTransferInstructions,
                   extra: {
                     'orderId': order.id,
-                    'amount': order.price,
+                    'amount': order.price.toDouble(),
                     'serviceName': order.serviceName ?? 'Servicio',
                     'businessName': order.businessName,
+                    'businessId': order.businessId,
                   },
                 );
               }
@@ -774,12 +775,13 @@ class _BookingsTabState extends State<BookingsTab> {
                       child: InkWell(
                         onTap: () async {
                           final result = await context.pushNamed(
-                            AppRoutes.proofUpload,
+                            AppRoutes.bankTransferInstructions,
                             extra: {
                               'orderId': order.id,
                               'amount': order.price.toDouble(),
                               'serviceName': order.serviceName ?? "Lavado Completo",
                               'businessName': order.businessName,
+                              'businessId': order.businessId,
                             },
                           );
                           if (result != null && context.mounted) {
@@ -881,12 +883,13 @@ class _BookingsTabState extends State<BookingsTab> {
                       onTap: () async {
                         if (isRejected) {
                           final result = await context.pushNamed(
-                            AppRoutes.proofUpload,
+                            AppRoutes.bankTransferInstructions,
                             extra: {
                               'orderId': order.id,
                               'amount': order.price.toDouble(),
                               'serviceName': order.serviceName ?? "Lavado Completo",
                               'businessName': order.businessName,
+                              'businessId': order.businessId,
                             },
                           );
                           if (result != null && context.mounted) {
@@ -1476,12 +1479,13 @@ class _BookingsTabState extends State<BookingsTab> {
                     child: ElevatedButton.icon(
                       onPressed: () async {
                         final result = await context.pushNamed(
-                          AppRoutes.proofUpload,
+                          AppRoutes.bankTransferInstructions,
                           extra: {
                             'orderId': order.id,
                             'amount': order.price.toDouble(),
                             'serviceName': order.serviceName ?? 'Servicio',
                             'businessName': order.businessName,
+                            'businessId': order.businessId,
                           },
                         );
                         if (result != null && context.mounted) {
