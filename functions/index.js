@@ -323,7 +323,7 @@ const handlePayphoneCallback = async (req, res) => {
     }
   }
 
-  if (shortTxId && transactionId) {
+  if (shortTxId) {
     if (!fullOrderId) {
       try {
         const txDoc = await admin.firestore().collection("payphone_transactions").doc(shortTxId).get();
@@ -338,31 +338,66 @@ const handlePayphoneCallback = async (req, res) => {
       }
     }
 
-    try {
-      await admin.firestore().collection("payphone_transactions").doc(shortTxId).set({
-        transactionId,
-        fullOrderId,
-        confirmedAt: FieldValue.serverTimestamp(),
-        callbackDetails: params,
-      }, { merge: true });
-      console.log(`[PayPhone-callback] SUCCESSFULLY STORED transactionId=${transactionId} for fullOrderId=${fullOrderId} (shortTxId=${shortTxId})`);
-    } catch (err) {
-      console.error(`[PayPhone-callback] Error storing transactionId: ${err.message}`);
+    // Strict Payphone API Approval Check
+    const token = process.env.PAYPHONE_TOKEN;
+    let isApproved = false;
+    let verifiedTxId = transactionId;
+    let saleDetails = null;
+
+    if (token) {
+      try {
+        const saleRes = await axios({
+          url: `https://pay.payphonetodoesposible.com/api/Sale/Client/${shortTxId}`,
+          method: "get",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const foundData = Array.isArray(saleRes.data) && saleRes.data.length > 0
+          ? saleRes.data[0]
+          : saleRes.data;
+
+        if (foundData && (foundData.transactionStatus === "Approved" || foundData.statusCode === 3)) {
+          isApproved = true;
+          verifiedTxId = String(foundData.transactionId || foundData.id || transactionId);
+          saleDetails = foundData;
+        } else {
+          console.warn(`[PayPhone-callback] Transaction ${shortTxId} was NOT approved: status=${foundData?.transactionStatus}, code=${foundData?.statusCode}`);
+        }
+      } catch (checkErr) {
+        console.error(`[PayPhone-callback] Error verifying sale with Payphone: ${checkErr.message}`);
+      }
     }
 
-    try {
-      const orderResult = await serverGetOrderById({ id: fullOrderId });
-      const order = orderResult?.data?.order;
-      if (order && order.status === "PENDIENTE_PAGO") {
-        await serverUpdateOrderStatus({ orderId: fullOrderId, status: "EN_COLA" });
-        console.log(`[PayPhone-callback] Order ${fullOrderId} successfully updated to EN_COLA`);
+    if (isApproved) {
+      try {
+        await admin.firestore().collection("payphone_transactions").doc(shortTxId).set({
+          transactionId: verifiedTxId,
+          fullOrderId,
+          confirmedAt: FieldValue.serverTimestamp(),
+          payphoneDetails: saleDetails || params,
+        }, { merge: true });
+        console.log(`[PayPhone-callback] SUCCESSFULLY STORED transactionId=${verifiedTxId} for fullOrderId=${fullOrderId} (shortTxId=${shortTxId})`);
+      } catch (err) {
+        console.error(`[PayPhone-callback] Error storing transactionId: ${err.message}`);
       }
-    } catch (completionErr) {
-      console.error(`[PayPhone-callback] Error updating order ${fullOrderId}: ${completionErr.message}`);
+
+      try {
+        const orderResult = await serverGetOrderById({ id: fullOrderId });
+        const order = orderResult?.data?.order;
+        if (order && order.status === "PENDIENTE_PAGO") {
+          await serverUpdateOrderStatus({ orderId: fullOrderId, status: "EN_COLA" });
+          console.log(`[PayPhone-callback] Order ${fullOrderId} successfully updated to EN_COLA`);
+        }
+      } catch (completionErr) {
+        console.error(`[PayPhone-callback] Error updating order ${fullOrderId}: ${completionErr.message}`);
+      }
     }
   }
 
-  // If HTTP request accepts HTML or is browser GET, redirect to Web App success page
+  // If HTTP request accepts HTML or is browser GET, redirect to Web App success page if approved, or cancel page if rejected
   if (req.method === "GET" || (req.headers.accept && req.headers.accept.includes("text/html"))) {
     const redirectUrl = `https://washgov1.web.app/#/payphone-callback/success?id=${transactionId}&clientTransactionId=${shortTxId}`;
     return res.redirect(redirectUrl);
@@ -534,7 +569,9 @@ app.get("/orders/:orderId/payphone-transaction", authenticate, async (req, res) 
 
         console.log(`[PayPhone-lookup] Payphone API response for ${shortTxId}:`, JSON.stringify(foundData));
 
-        if (foundData && (foundData.transactionStatus === "Approved" || foundData.statusCode === 3 || foundData.transactionId)) {
+        const isApproved = foundData && (foundData.transactionStatus === "Approved" || foundData.statusCode === 3);
+
+        if (isApproved) {
           const foundTxId = String(foundData.transactionId || foundData.id || shortTxId);
 
           await admin.firestore().collection("payphone_transactions").doc(shortTxId).set({
@@ -552,6 +589,8 @@ app.get("/orders/:orderId/payphone-transaction", authenticate, async (req, res) 
           }
 
           return res.json({ transactionId: foundTxId, recovered: true });
+        } else {
+          console.warn(`[PayPhone-lookup] Transaction ${shortTxId} was rejected or canceled: status=${foundData?.transactionStatus}, code=${foundData?.statusCode}`);
         }
       } catch (payphoneApiErr) {
         const errMsg = payphoneApiErr.response?.data?.message || payphoneApiErr.message;
@@ -637,7 +676,9 @@ app.delete("/orders/:orderId/cancel-pending", authenticate, async (req, res) => 
           ? saleRes.data[0]
           : saleRes.data;
 
-        if (foundData && (foundData.transactionStatus === "Approved" || foundData.statusCode === 3 || foundData.transactionId)) {
+        const isApproved = foundData && (foundData.transactionStatus === "Approved" || foundData.statusCode === 3);
+
+        if (isApproved) {
           const foundTxId = String(foundData.transactionId || foundData.id || shortTxId);
 
           // Payment WAS ALREADY approved! Recover order to EN_COLA and save transactionId in Firestore
