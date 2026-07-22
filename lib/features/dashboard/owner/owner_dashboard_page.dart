@@ -8,7 +8,6 @@ import 'package:washgo/dataconnect-generated/example.dart';
 import 'package:washgo/config/theme/app_colors.dart';
 import 'package:washgo/config/routes/app_routes.dart';
 import 'package:washgo/core/session/session_manager.dart';
-import 'package:washgo/features/dashboard/owner/widgets/services_tab.dart';
 import 'package:washgo/features/dashboard/owner/widgets/employees_tab.dart';
 import 'package:washgo/features/dashboard/owner/widgets/owner_billing_tab.dart';
 import 'package:washgo/features/dashboard/owner/widgets/reviews_tab.dart';
@@ -26,6 +25,7 @@ import 'package:washgo/features/orders/repositories/order_repository.dart';
 import 'package:washgo/features/orders/repositories/firebase_order_repository.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:washgo/features/invoices/repositories/invoice_repository.dart';
+import 'package:washgo/features/invoices/models/invoice.dart';
 import 'package:washgo/features/orders/models/washgo_order.dart';
 import 'package:washgo/core/utils/observations_parser.dart';
 import 'package:washgo/features/laundries/repositories/reservation_config_repository.dart';
@@ -120,7 +120,7 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
 
   List<EmployeeRequest> _requests = [];
   List<ActiveEmployee> _activeEmployees = [];
-  List<WashGoService> _services = [];
+  final ValueNotifier<List<WashGoService>> _servicesNotifier = ValueNotifier([]);
   List<GetUserNotificationsNotifications> _notifications = [];
   late AnimationController _animationController;
 
@@ -290,37 +290,47 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
       _businessPhone = business.telefono;
       _telefonoController.text = _businessPhone ?? '';
 
-      List<EmployeeRequest> requests = [];
-      try {
-        requests = await _businessRepository.getPendingEmployeeRequests(
-          _businessId!,
-        );
-      } catch (e) {
-        debugPrint('Error fetching pending employee requests: $e');
-      }
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final mondayOffset = now.weekday - 1;
+      final startOfWeek = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).subtract(Duration(days: mondayOffset));
+      final startOfMonth = DateTime(now.year, now.month, 1);
+      final queryStartDate = startOfWeek.isBefore(startOfMonth)
+          ? startOfWeek
+          : startOfMonth;
 
-      List<ActiveEmployee> employees = [];
-      try {
-        employees = await _businessRepository.getActiveEmployees(_businessId!);
-      } catch (e) {
-        debugPrint('Error fetching active employees: $e');
-      }
+      final results = await Future.wait([
+        _businessRepository.getPendingEmployeeRequests(_businessId!).catchError((e) {
+          debugPrint('Error fetching pending employee requests: $e');
+          return <EmployeeRequest>[];
+        }),
+        _businessRepository.getActiveEmployees(_businessId!).catchError((e) {
+          debugPrint('Error fetching active employees: $e');
+          return <ActiveEmployee>[];
+        }),
+        _businessRepository.getBusinessServices(_businessId!).catchError((e) {
+          debugPrint('Error fetching business services: $e');
+          return <WashGoService>[];
+        }),
+        _businessRepository.getBusinessHours(_businessId!).catchError((e) {
+          debugPrint('Error fetching business hours: $e');
+          return <Map<String, dynamic>>[];
+        }),
+        _invoiceRepository.getBusinessInvoices(_businessId!, startDate: queryStartDate).catchError((e) {
+          debugPrint('Error fetching business invoices: $e');
+          return <InvoiceModel>[];
+        }),
+      ]);
 
-      List<WashGoService> services = [];
-      try {
-        services = await _businessRepository.getBusinessServices(_businessId!);
-      } catch (e) {
-        debugPrint('Error fetching business services: $e');
-      }
-
-      List<Map<String, dynamic>> businessHours = [];
-      try {
-        businessHours = await _businessRepository.getBusinessHours(
-          _businessId!,
-        );
-      } catch (e) {
-        debugPrint('Error fetching business hours: $e');
-      }
+      final requests = results[0] as List<EmployeeRequest>;
+      final employees = results[1] as List<ActiveEmployee>;
+      final services = results[2] as List<WashGoService>;
+      final businessHours = results[3] as List<Map<String, dynamic>>;
+      final invoices = results[4] as List<dynamic>;
 
       if (businessHours.isNotEmpty) {
         try {
@@ -357,32 +367,8 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
       setState(() {
         _requests = requests;
         _activeEmployees = employees;
-        _services = services;
+        _servicesNotifier.value = services;
       });
-
-      // Fetch invoices for billing stats (today's completed orders + weekly earnings)
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final mondayOffset = now.weekday - 1;
-      final startOfWeek = DateTime(
-        now.year,
-        now.month,
-        now.day,
-      ).subtract(Duration(days: mondayOffset));
-      final startOfMonth = DateTime(now.year, now.month, 1);
-      final queryStartDate = startOfWeek.isBefore(startOfMonth)
-          ? startOfWeek
-          : startOfMonth;
-
-      List<dynamic> invoices = [];
-      try {
-        invoices = await _invoiceRepository.getBusinessInvoices(
-          _businessId!,
-          startDate: queryStartDate,
-        );
-      } catch (e) {
-        debugPrint('Error fetching business invoices: $e');
-      }
 
       double weeklyEarnings = 0.0;
       double cashEarnings = 0.0;
@@ -995,18 +981,15 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                   context.go('/owner-dashboard');
                   break;
                 case 1:
-                  context.go('/owner-dashboard/services');
-                  break;
-                case 2:
                   context.go('/owner-dashboard/employees');
                   break;
-                case 3:
+                case 2:
                   context.go('/owner-dashboard/billing');
                   break;
-                case 4:
+                case 3:
                   context.go('/owner-dashboard/reviews');
                   break;
-                case 5:
+                case 4:
                   context.go('/owner-dashboard/config');
                   break;
               }
@@ -1033,14 +1016,6 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                   color: AppColors.primary,
                 ),
                 label: 'Dashboard',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.local_laundry_service_rounded),
-                activeIcon: Icon(
-                  Icons.local_laundry_service_rounded,
-                  color: AppColors.primary,
-                ),
-                label: 'Servicios',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.people_alt_rounded),
@@ -1084,21 +1059,17 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
         'Resumen de operaciones hoy y monitor de lavado en tiempo real.';
 
     if (_selectedIndex == 1) {
-      title = 'Servicios';
-      subtitle =
-          'Configura el catálogo de servicios de lavado, precios y duraciones.';
-    } else if (_selectedIndex == 2) {
       title = 'Empleados';
       subtitle =
           'Administra el personal, aprueba solicitudes y comparte el código de acceso.';
-    } else if (_selectedIndex == 3) {
+    } else if (_selectedIndex == 2) {
       title = 'Facturación';
       subtitle = 'Consulta y administra las facturas de tu negocio.';
-    } else if (_selectedIndex == 4) {
+    } else if (_selectedIndex == 3) {
       title = 'Reseñas';
       subtitle =
           'Consulta la reputación del local y las opiniones de los clientes.';
-    } else if (_selectedIndex == 5) {
+    } else if (_selectedIndex == 4) {
       title = 'Configuración';
       subtitle =
           'Edita la información de tu negocio, coordenadas GPS y cuenta de usuario.';
@@ -2720,20 +2691,18 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
       case 0:
         return _buildInicioTab();
       case 1:
-        return _buildServiciosTab();
-      case 2:
         return _buildEmpleadosTab();
-      case 3:
+      case 2:
         return OwnerBillingTab(
           businessId: _businessId ?? '',
           activeEmployees: _activeEmployees,
         );
-      case 4:
+      case 3:
         return ReviewsTab(
           businessId: _businessId ?? '',
           animationController: _animationController,
         );
-      case 5:
+      case 4:
         return _buildConfiguracionTab();
       default:
         return _buildInicioTab();
@@ -2813,6 +2782,19 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
         anticipacionController: _anticipacionController,
         isSaving: _isSaving,
         saveLocalDetails: _saveLocalDetails,
+        authRepository: _authRepository,
+        activeOrdersCount: _activeOrders.length,
+        businessId: _businessId,
+        businessRepository: _businessRepository,
+        businessStatus: _business?.status,
+        onBusinessStatusChanged: () {
+          _loadDashboardData();
+        },
+        servicesNotifier: _servicesNotifier,
+        onToggleServiceActive: _toggleServiceActive,
+        onEditService: (service) => _showServiceDialog(service: service),
+        onDeleteService: _deleteService,
+        onAddService: () => _showServiceDialog(),
       ),
     );
   }
@@ -3346,18 +3328,100 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
     );
   }
 
-  Widget _buildServiciosTab() {
-    return ServicesTab(
-      services: _services,
-      animationController: _animationController,
-      onToggleActive: _toggleServiceActive,
-      onEditService: (service) => _showServiceDialog(service: service),
-      onDeleteService: _deleteService,
-      onAddService: () => _showServiceDialog(),
+  // ================= TAB 2: EMPLEADOS =================
+  void _showEmployeeActionSheet(ActiveEmployee rel) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final isDisabled = rel.isDisabledByOwner;
+        return Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                rel.employee.nombreCompleto,
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.onSurface,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                rel.employee.email,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppColors.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: Icon(
+                  isDisabled ? Icons.check_circle_outline_rounded : Icons.block_rounded,
+                  color: isDisabled ? Colors.green : Colors.red,
+                ),
+                title: Text(
+                  isDisabled ? 'Habilitar acceso en mi local' : 'Deshabilitar empleado de mi local',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    color: isDisabled ? Colors.green.shade700 : Colors.red.shade700,
+                  ),
+                ),
+                subtitle: Text(
+                  isDisabled
+                      ? 'Permite que el empleado vuelva a activar su turno y atender pedidos.'
+                      : 'El empleado no podrá activar turno ni aceptar reservas en este local.',
+                  style: GoogleFonts.inter(fontSize: 12),
+                ),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  try {
+                    await _businessRepository.toggleEmployeeDisabledByOwner(
+                      businessId: _businessId!,
+                      employeeId: rel.employee.id,
+                      isDisabled: !isDisabled,
+                    );
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            !isDisabled
+                                ? 'Empleado deshabilitado para este local.'
+                                : 'Empleado habilitado nuevamente.',
+                          ),
+                          backgroundColor: !isDisabled ? Colors.orange.shade800 : Colors.green.shade600,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                      _loadDashboardData();
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error al actualizar empleado: $e'),
+                          backgroundColor: AppColors.error,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  // ================= TAB 2: EMPLEADOS =================
   Widget _buildEmpleadosTab() {
     return EmployeesTab(
       businessCode: _businessCode,
@@ -3366,11 +3430,7 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
       animationController: _animationController,
       onRejectRequest: _handleReject,
       onApproveRequest: _handleApprove,
-      onEmployeeAction: (rel) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gestión de empleado en desarrollo.')),
-        );
-      },
+      onEmployeeAction: _showEmployeeActionSheet,
     );
   }
 }

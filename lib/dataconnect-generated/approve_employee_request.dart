@@ -125,11 +125,13 @@ class ApproveEmployeeRequestBusinessEmployeeInsert {
 class ApproveEmployeeRequestData {
   final ApproveEmployeeRequestEmployeeRequestUpdate? employeeRequest_update;
   final ApproveEmployeeRequestUserUpdate? user_update;
+  final int businessEmployee_updateMany;
   final ApproveEmployeeRequestBusinessEmployeeInsert businessEmployee_insert;
   ApproveEmployeeRequestData.fromJson(dynamic json):
   
   employeeRequest_update = json['employeeRequest_update'] == null ? null : ApproveEmployeeRequestEmployeeRequestUpdate.fromJson(json['employeeRequest_update']),
   user_update = json['user_update'] == null ? null : ApproveEmployeeRequestUserUpdate.fromJson(json['user_update']),
+  businessEmployee_updateMany = nativeFromJson<int>(json['businessEmployee_updateMany']),
   businessEmployee_insert = ApproveEmployeeRequestBusinessEmployeeInsert.fromJson(json['businessEmployee_insert']);
   @override
   bool operator ==(Object other) {
@@ -143,11 +145,12 @@ class ApproveEmployeeRequestData {
     final ApproveEmployeeRequestData otherTyped = other as ApproveEmployeeRequestData;
     return employeeRequest_update == otherTyped.employeeRequest_update && 
     user_update == otherTyped.user_update && 
+    businessEmployee_updateMany == otherTyped.businessEmployee_updateMany && 
     businessEmployee_insert == otherTyped.businessEmployee_insert;
     
   }
   @override
-  int get hashCode => Object.hashAll([employeeRequest_update.hashCode, user_update.hashCode, businessEmployee_insert.hashCode]);
+  int get hashCode => Object.hashAll([employeeRequest_update.hashCode, user_update.hashCode, businessEmployee_updateMany.hashCode, businessEmployee_insert.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -158,6 +161,7 @@ class ApproveEmployeeRequestData {
     if (user_update != null) {
       json['user_update'] = user_update!.toJson();
     }
+    json['businessEmployee_updateMany'] = nativeToJson<int>(businessEmployee_updateMany);
     json['businessEmployee_insert'] = businessEmployee_insert.toJson();
     return json;
   }
@@ -165,6 +169,7 @@ class ApproveEmployeeRequestData {
   ApproveEmployeeRequestData({
     this.employeeRequest_update,
     this.user_update,
+    required this.businessEmployee_updateMany,
     required this.businessEmployee_insert,
   });
 }

@@ -22,12 +22,14 @@ class GetActiveEmployeesBusinessEmployees {
   final String id;
   final GetActiveEmployeesBusinessEmployeesEmployee employee;
   final bool estadoDisponibilidad;
+  final bool isDisabledByOwner;
   final Timestamp joinedAt;
   GetActiveEmployeesBusinessEmployees.fromJson(dynamic json):
   
   id = nativeFromJson<String>(json['id']),
   employee = GetActiveEmployeesBusinessEmployeesEmployee.fromJson(json['employee']),
   estadoDisponibilidad = nativeFromJson<bool>(json['estadoDisponibilidad']),
+  isDisabledByOwner = nativeFromJson<bool>(json['isDisabledByOwner']),
   joinedAt = Timestamp.fromJson(json['joinedAt']);
   @override
   bool operator ==(Object other) {
@@ -42,11 +44,12 @@ class GetActiveEmployeesBusinessEmployees {
     return id == otherTyped.id && 
     employee == otherTyped.employee && 
     estadoDisponibilidad == otherTyped.estadoDisponibilidad && 
+    isDisabledByOwner == otherTyped.isDisabledByOwner && 
     joinedAt == otherTyped.joinedAt;
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, employee.hashCode, estadoDisponibilidad.hashCode, joinedAt.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, employee.hashCode, estadoDisponibilidad.hashCode, isDisabledByOwner.hashCode, joinedAt.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -54,6 +57,7 @@ class GetActiveEmployeesBusinessEmployees {
     json['id'] = nativeToJson<String>(id);
     json['employee'] = employee.toJson();
     json['estadoDisponibilidad'] = nativeToJson<bool>(estadoDisponibilidad);
+    json['isDisabledByOwner'] = nativeToJson<bool>(isDisabledByOwner);
     json['joinedAt'] = joinedAt.toJson();
     return json;
   }
@@ -62,6 +66,7 @@ class GetActiveEmployeesBusinessEmployees {
     required this.id,
     required this.employee,
     required this.estadoDisponibilidad,
+    required this.isDisabledByOwner,
     required this.joinedAt,
   });
 }
@@ -73,13 +78,15 @@ class GetActiveEmployeesBusinessEmployeesEmployee {
   final String email;
   final String? telefono;
   final String? fotoPerfil;
+  final GetActiveEmployeesBusinessEmployeesEmployeeCurrentBusiness? currentBusiness;
   GetActiveEmployeesBusinessEmployeesEmployee.fromJson(dynamic json):
   
   id = nativeFromJson<String>(json['id']),
   nombreCompleto = nativeFromJson<String>(json['nombreCompleto']),
   email = nativeFromJson<String>(json['email']),
   telefono = json['telefono'] == null ? null : nativeFromJson<String>(json['telefono']),
-  fotoPerfil = json['fotoPerfil'] == null ? null : nativeFromJson<String>(json['fotoPerfil']);
+  fotoPerfil = json['fotoPerfil'] == null ? null : nativeFromJson<String>(json['fotoPerfil']),
+  currentBusiness = json['currentBusiness'] == null ? null : GetActiveEmployeesBusinessEmployeesEmployeeCurrentBusiness.fromJson(json['currentBusiness']);
   @override
   bool operator ==(Object other) {
     if(identical(this, other)) {
@@ -94,11 +101,12 @@ class GetActiveEmployeesBusinessEmployeesEmployee {
     nombreCompleto == otherTyped.nombreCompleto && 
     email == otherTyped.email && 
     telefono == otherTyped.telefono && 
-    fotoPerfil == otherTyped.fotoPerfil;
+    fotoPerfil == otherTyped.fotoPerfil && 
+    currentBusiness == otherTyped.currentBusiness;
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, nombreCompleto.hashCode, email.hashCode, telefono.hashCode, fotoPerfil.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, nombreCompleto.hashCode, email.hashCode, telefono.hashCode, fotoPerfil.hashCode, currentBusiness.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -112,6 +120,9 @@ class GetActiveEmployeesBusinessEmployeesEmployee {
     if (fotoPerfil != null) {
       json['fotoPerfil'] = nativeToJson<String?>(fotoPerfil);
     }
+    if (currentBusiness != null) {
+      json['currentBusiness'] = currentBusiness!.toJson();
+    }
     return json;
   }
 
@@ -121,6 +132,46 @@ class GetActiveEmployeesBusinessEmployeesEmployee {
     required this.email,
     this.telefono,
     this.fotoPerfil,
+    this.currentBusiness,
+  });
+}
+
+@immutable
+class GetActiveEmployeesBusinessEmployeesEmployeeCurrentBusiness {
+  final String id;
+  final String nombre;
+  GetActiveEmployeesBusinessEmployeesEmployeeCurrentBusiness.fromJson(dynamic json):
+  
+  id = nativeFromJson<String>(json['id']),
+  nombre = nativeFromJson<String>(json['nombre']);
+  @override
+  bool operator ==(Object other) {
+    if(identical(this, other)) {
+      return true;
+    }
+    if(other.runtimeType != runtimeType) {
+      return false;
+    }
+
+    final GetActiveEmployeesBusinessEmployeesEmployeeCurrentBusiness otherTyped = other as GetActiveEmployeesBusinessEmployeesEmployeeCurrentBusiness;
+    return id == otherTyped.id && 
+    nombre == otherTyped.nombre;
+    
+  }
+  @override
+  int get hashCode => Object.hashAll([id.hashCode, nombre.hashCode]);
+  
+
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> json = {};
+    json['id'] = nativeToJson<String>(id);
+    json['nombre'] = nativeToJson<String>(nombre);
+    return json;
+  }
+
+  GetActiveEmployeesBusinessEmployeesEmployeeCurrentBusiness({
+    required this.id,
+    required this.nombre,
   });
 }
 

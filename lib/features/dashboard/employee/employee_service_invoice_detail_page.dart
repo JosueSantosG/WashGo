@@ -307,9 +307,13 @@ class EmployeeServiceInvoiceDetailPage extends StatelessWidget {
             _buildDetailCard([
               _buildDetailRow(
                 'Método de Pago',
-                invoice.paymentMethod.toUpperCase() == 'PAYPAL'
-                    ? 'PayPal 💳'
-                    : 'Efectivo 💵',
+                () {
+                  final String paymentMethod = invoice.paymentMethod.toUpperCase();
+                  if (paymentMethod == 'PAYPAL') return 'PayPal 💳';
+                  if (paymentMethod == 'PAYPHONE') return 'PayPhone 📱';
+                  if (paymentMethod.contains('TRANSFERENCIA')) return 'Transferencia 🏦';
+                  return 'Efectivo 💵';
+                }(),
               ),
               _buildDetailRow(
                 'Estado de Factura',
@@ -513,16 +517,20 @@ class EmployeeServiceInvoiceDetailPage extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Text(
-                  value,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                Expanded(
+                  child: Text(
+                    value,
+                    textAlign: TextAlign.right,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.onSurface,
+                    ),
                   ),
-                  textAlign: TextAlign.end,
                 ),
-                ?trailing,
+                if (trailing != null) trailing,
               ],
             ),
           ),

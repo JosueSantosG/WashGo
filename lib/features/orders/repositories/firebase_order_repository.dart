@@ -1,4 +1,3 @@
-// ignore_for_file: avoid_print
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_data_connect/firebase_data_connect.dart';
@@ -538,7 +537,7 @@ class FirebaseOrderRepository implements OrderRepository {
         final metadataRepo = FirebaseReservationMetadataRepository();
         await metadataRepo.deleteReservation(orderId);
       } catch (e) {
-        print('Error deleting reservation: $e');
+        debugPrint('Error deleting reservation: $e');
       }
     }
 
@@ -573,7 +572,7 @@ class FirebaseOrderRepository implements OrderRepository {
         final metadataRepo = FirebaseReservationMetadataRepository();
         await metadataRepo.deleteReservation(orderId);
       } catch (e) {
-        print('Error deleting reservation: $e');
+        debugPrint('Error deleting reservation: $e');
       }
     }
 
@@ -759,7 +758,7 @@ class FirebaseOrderRepository implements OrderRepository {
         );
       }).toList();
     } catch (e) {
-      print('Error en getEmployeeHistoryOrdersPaged: $e');
+      debugPrint('Error en getEmployeeHistoryOrdersPaged: $e');
       return [];
     }
   }
@@ -811,7 +810,7 @@ class FirebaseOrderRepository implements OrderRepository {
         );
       }).toList();
     } catch (e) {
-      print('Error en getClientHistoryOrdersPaged: $e');
+      debugPrint('Error en getClientHistoryOrdersPaged: $e');
       return [];
     }
   }
@@ -834,7 +833,7 @@ class FirebaseOrderRepository implements OrderRepository {
       }
       return null;
     } catch (e) {
-      print('Error en findUserByPhone: $e');
+      debugPrint('Error en findUserByPhone: $e');
       return null;
     }
   }
@@ -939,9 +938,13 @@ class FirebaseOrderRepository implements OrderRepository {
 
       if (isTerminal) continue;
 
-      final String status = order is ClientOrder ? order.status.toUpperCase() : order.status.name.toUpperCase();
+      final String status = order is ClientOrder
+          ? order.status.toUpperCase()
+          : (order.status != null ? order.status.toString().split('.').last.toUpperCase() : '');
       if (status == 'PENDIENTE_PAGO') {
-        final paymentMethod = order is ClientOrder ? order.paymentMethod.toUpperCase() : order.paymentMethod.name.toUpperCase();
+        final paymentMethod = order is ClientOrder
+            ? order.paymentMethod.toUpperCase()
+            : (order.paymentMethod != null ? order.paymentMethod.toString().split('.').last.toUpperCase() : '');
         if (paymentMethod == 'PAYPHONE' || paymentMethod == 'PAYPAL' || paymentMethod == 'TRANSFERENCIA_BANCARIA') {
           final bool hasProof = order is ClientOrder
               ? order.hasPaymentProof
@@ -963,9 +966,9 @@ class FirebaseOrderRepository implements OrderRepository {
                 );
                 final metadataRepo = FirebaseReservationMetadataRepository();
                 await metadataRepo.deleteReservation(orderId);
-                print('Lazy expired order $orderId due to stale payment (created at $orderCreatedAt)');
+                debugPrint('Lazy expired order $orderId due to stale payment (created at $orderCreatedAt)');
               } catch (e) {
-                print('Error expiring order $orderId: $e');
+                debugPrint('Error expiring order $orderId: $e');
               }
               continue;
             }
@@ -986,9 +989,9 @@ class FirebaseOrderRepository implements OrderRepository {
               );
               final metadataRepo = FirebaseReservationMetadataRepository();
               await metadataRepo.deleteReservation(orderId);
-              print('Lazy expired order $orderId due to no-show (scheduled at $schedTime)');
+              debugPrint('Lazy expired order $orderId due to no-show (scheduled at $schedTime)');
             } catch (e) {
-              print('Error expiring order $orderId: $e');
+              debugPrint('Error expiring order $orderId: $e');
             }
           }
         }

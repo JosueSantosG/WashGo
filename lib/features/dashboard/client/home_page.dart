@@ -609,9 +609,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       setState(() {
         _selectedIndex = widget.initialTab;
       });
-      if (_selectedIndex == 1) {
-        _fetchClientOrders();
-      }
     }
   }
 

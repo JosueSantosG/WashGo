@@ -168,6 +168,54 @@ app.post("/paypal/create-order", authenticate, async (req, res) => {
   }
 });
 
+// 1a-1. Get PayPal Order Status
+app.get("/paypal/order-status/:paypalOrderId", authenticate, async (req, res) => {
+  const { paypalOrderId } = req.params;
+  if (!paypalOrderId) {
+    return res.status(400).json({ error: "Missing paypalOrderId" });
+  }
+  try {
+    const accessToken = await getPaypalAccessToken();
+    const baseUrl = getPaypalBaseUrl();
+    const response = await axios({
+      url: `${baseUrl}/v2/checkout/orders/${paypalOrderId}`,
+      method: "get",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return res.json({ status: response.data.status });
+  } catch (error) {
+    console.error("Get PayPal Order Status Error:", error.response?.data || error.message);
+    return res.status(500).json({ error: error.response?.data || error.message });
+  }
+});
+
+// 1a-2. Capture PayPal Order
+app.post("/paypal/capture-order", authenticate, async (req, res) => {
+  const { paypalOrderId } = req.body;
+  if (!paypalOrderId) {
+    return res.status(400).json({ error: "Missing paypalOrderId" });
+  }
+  try {
+    const accessToken = await getPaypalAccessToken();
+    const baseUrl = getPaypalBaseUrl();
+    const response = await axios({
+      url: `${baseUrl}/v2/checkout/orders/${paypalOrderId}/capture`,
+      method: "post",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return res.json(response.data);
+  } catch (error) {
+    console.error("Capture PayPal Order Error:", error.response?.data || error.message);
+    return res.status(500).json(error.response?.data || { error: error.message });
+  }
+});
+
 // 1b. Prepare PayPhone Payment
 app.post("/payphone/prepare", authenticate, async (req, res) => {
   const { orderId } = req.body;

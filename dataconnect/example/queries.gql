@@ -197,8 +197,16 @@ query GetBusinessOrders($businessId: UUID!) @auth(level: USER) {
   }
 }
 
-query GetActiveEmployees($businessId: UUID!) @auth(level: USER, insecureReason: "Obtener empleados activos") {
-  businessEmployees(where: {businessId: {eq: $businessId}, status: {eq: ACTIVE}}) {
+query GetActiveEmployees($businessId: UUID!) @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) @redact {
+    roles
+  }
+  business(key: { id: $businessId }) @redact {
+    owner {
+      id
+    }
+  }
+  businessEmployees(where: {businessId: {eq: $businessId}, status: {eq: ACTIVE}}) @check(expr: "'SUPER_ADMIN' in response.user.roles || (response.business != null && response.business.owner != null && response.business.owner.id == auth.uid) || this.exists(e, e.employeeId == auth.uid)", message: "No tienes permiso para ver los empleados de este negocio") {
     id
     employee {
       id
@@ -206,9 +214,29 @@ query GetActiveEmployees($businessId: UUID!) @auth(level: USER, insecureReason: 
       email
       telefono
       fotoPerfil
+      currentBusiness {
+        id
+        nombre
+      }
     }
     estadoDisponibilidad
+    isDisabledByOwner
     joinedAt
+  }
+}
+
+query GetEmployeeBranches @auth(level: USER) {
+  businessEmployees(where: { employeeId: { eq_expr: "auth.uid" }, status: { eq: ACTIVE } }) {
+    id
+    business {
+      id
+      nombre
+      businessCode
+      descripcion
+    }
+    status
+    isDisabledByOwner
+    estadoDisponibilidad
   }
 }
 
@@ -692,6 +720,9 @@ query GetBusinessInvoices(
       employee {
         nombreCompleto
         telefono
+      }
+      business {
+        nombre
       }
     }
     invoiceItems_on_invoice {

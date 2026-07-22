@@ -5,8 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:uuid/uuid.dart';
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:washgo/config/env/environment.dart';
 import 'package:washgo/core/utils/web_helper.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
 import 'package:washgo/features/orders/repositories/firebase_order_repository.dart';
@@ -25,62 +26,23 @@ class PaypalPaymentResult {
   });
 }
 
-/// Clase que simula el servidor/backend seguro (ej. Firebase Cloud Functions).
-/// Aquí se realiza toda la lógica con el Client Secret de PayPal de forma segura,
-/// sin exponer credenciales al dispositivo móvil.
+/// Servicio backend para PayPal delegando la autenticación y operaciones sensibles a Firebase Cloud Functions.
+/// Las credenciales de PayPal residen únicamente en el servidor y NUNCA se exponen al cliente.
 class PaypalBackendService {
-  // Credenciales privadas simuladas a nivel de servidor (cargadas de variables de entorno del backend)
-  // En producción, estas claves residen únicamente en el entorno del servidor y nunca se exponen al cliente.
-  static const String _clientId = String.fromEnvironment(
-    'PAYPAL_CLIENT_ID',
-    defaultValue: '',
-  );
-
-  static const String _clientSecret = String.fromEnvironment(
-    'PAYPAL_CLIENT_SECRET',
-    defaultValue: '',
-  );
-
   final bool isSandbox;
 
   PaypalBackendService({required this.isSandbox});
 
-  String get _baseUrl => isSandbox
-      ? 'https://api-m.sandbox.paypal.com'
-      : 'https://api-m.paypal.com';
-
-  /// Obtiene un token de acceso OAuth2 utilizando las credenciales seguras del servidor
-  Future<String> _getAccessToken() async {
-    final id = _clientId.isNotEmpty ? _clientId : 'ASb-washgo-client-id-simulated-xyz123';
-    final secret = _clientSecret.isNotEmpty ? _clientSecret : 'EEl-washgo-client-secret-simulated-abc987';
-    
-    final basicAuth = 'Basic ${base64Encode(utf8.encode('$id:$secret'))}';
-    
-    try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/v1/oauth2/token'),
-        headers: {
-          'Authorization': basicAuth,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: 'grant_type=client_credentials',
-      ).timeout(const Duration(seconds: 15));
-
-      if (response.statusCode == 200) {
-        final json = jsonDecode(response.body);
-        return json['access_token'] as String;
-      } else {
-        throw Exception('PayPal OAuth2 Error: ${response.statusCode} - ${response.body}');
-      }
-    } catch (e) {
-      if (e.toString().contains('XMLHttpRequest') || e.toString().contains('CORS')) {
-        throw Exception('CORS_ERROR');
-      }
-      rethrow;
+  String get _backendBaseUrl {
+    if (Environment.useEmulators) {
+      final host = Environment.emulatorHost;
+      return 'http://$host:5001/washgov1/us-central1/api';
     }
+    const projectId = 'washgov1';
+    return 'https://us-central1-$projectId.cloudfunctions.net/api';
   }
 
-  /// Crea una orden de pago en PayPal en representación del cliente
+  /// Crea una orden de pago en PayPal a través de Firebase Cloud Functions
   Future<Map<String, String>> createOrder({
     required double amount,
     required String serviceName,
@@ -88,79 +50,36 @@ class PaypalBackendService {
     bool preferCard = false,
     String? washgoOrderId,
   }) async {
-    final token = await _getAccessToken();
-    
-    String returnUrl = 'https://example.com/paypal-callback/success';
-    String cancelUrl = 'https://example.com/paypal-callback/cancel';
-    if (kIsWeb) {
-      try {
-        final origin = Uri.base.origin;
-        if (origin.startsWith('http')) {
-          returnUrl = '$origin/paypal-callback/success';
-          cancelUrl = '$origin/paypal-callback/cancel';
-        }
-      } catch (_) {}
+    if (washgoOrderId == null || washgoOrderId.isEmpty) {
+      throw Exception('Se requiere un ID de orden de WashGo para procesar el pago.');
     }
-    
-    if (washgoOrderId != null) {
-      returnUrl = '$returnUrl?washgoOrderId=$washgoOrderId';
-      cancelUrl = '$cancelUrl?washgoOrderId=$washgoOrderId';
-    }
-    
+
     try {
+      final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
       final response = await http.post(
-        Uri.parse('$_baseUrl/v2/checkout/orders'),
+        Uri.parse('$_backendBaseUrl/paypal/create-order'),
         headers: {
-          'Authorization': 'Bearer $token',
+          'Authorization': 'Bearer $idToken',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({
-          'intent': 'CAPTURE',
-          'purchase_units': [
-            {
-              'amount': {
-                'currency_code': 'USD',
-                'value': amount.toStringAsFixed(2),
-              },
-              'description': 'Servicio: $serviceName - $businessName',
-            }
-          ],
-          'payment_source': {
-            'paypal': {
-              'experience_context': {
-                'brand_name': 'WashGo',
-                'landing_page': preferCard ? 'BILLING' : 'LOGIN',
-                'user_action': 'PAY_NOW',
-                'return_url': returnUrl,
-                'cancel_url': cancelUrl,
-              }
-            }
-          }
-        }),
+        body: jsonEncode({'orderId': washgoOrderId}),
       ).timeout(const Duration(seconds: 15));
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
-        final orderId = json['id'] as String;
-        final links = json['links'] as List;
-        
-        final approveLinkMap = links.firstWhere(
-          (link) => link['rel'] == 'payer-action' || link['rel'] == 'approve',
-          orElse: () => null,
-        );
-        
-        if (approveLinkMap == null) {
-          throw Exception('No se encontró el link de aprobación (approve o payer-action) en la respuesta de PayPal.');
+        final paypalOrderId = json['paypalOrderId'] as String;
+        final approveUrl = json['approveUrl'] as String?;
+
+        if (approveUrl == null || approveUrl.isEmpty) {
+          throw Exception('No se encontró el link de aprobación en la respuesta de PayPal.');
         }
-        
-        final approveLink = approveLinkMap['href'] as String;
-        
+
         return {
-          'orderId': orderId,
-          'approveUrl': approveLink,
+          'orderId': paypalOrderId,
+          'approveUrl': approveUrl,
         };
       } else {
-        throw Exception('PayPal Order Creation Error: ${response.statusCode} - ${response.body}');
+        throw Exception('Error al crear orden en PayPal: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
       if (e.toString().contains('XMLHttpRequest') || e.toString().contains('CORS')) {
@@ -170,15 +89,14 @@ class PaypalBackendService {
     }
   }
 
-  /// Obtiene el estado actual de la orden (APPROVED, COMPLETED, etc.)
+  /// Obtiene el estado actual de la orden (APPROVED, COMPLETED, etc.) vía Cloud Functions
   Future<String> getOrderStatus(String orderId) async {
-    final token = await _getAccessToken();
-    
     try {
+      final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
       final response = await http.get(
-        Uri.parse('$_baseUrl/v2/checkout/orders/$orderId'),
+        Uri.parse('$_backendBaseUrl/paypal/order-status/$orderId'),
         headers: {
-          'Authorization': 'Bearer $token',
+          'Authorization': 'Bearer $idToken',
           'Content-Type': 'application/json',
         },
       ).timeout(const Duration(seconds: 10));
@@ -197,17 +115,17 @@ class PaypalBackendService {
     }
   }
 
-  /// Captura un pago aprobado por el usuario
+  /// Captura un pago aprobado por el usuario vía Cloud Functions
   Future<Map<String, dynamic>?> captureOrder(String orderId) async {
-    final token = await _getAccessToken();
-    
     try {
+      final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
       final response = await http.post(
-        Uri.parse('$_baseUrl/v2/checkout/orders/$orderId/capture'),
+        Uri.parse('$_backendBaseUrl/paypal/capture-order'),
         headers: {
-          'Authorization': 'Bearer $token',
+          'Authorization': 'Bearer $idToken',
           'Content-Type': 'application/json',
         },
+        body: jsonEncode({'paypalOrderId': orderId}),
       ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -456,7 +374,9 @@ class _PaypalCheckoutWidgetState extends State<_PaypalCheckoutWidget> {
 
       try {
         final status = await backendService.getOrderStatus(_realOrderId!);
-        debugPrint('Polling PayPal Order $_realOrderId status: $status');
+        if (kDebugMode) {
+          debugPrint('Polling PayPal Order status: $status');
+        }
         if (status == 'APPROVED') {
           timer.cancel();
           _verifyAndCapturePayment();

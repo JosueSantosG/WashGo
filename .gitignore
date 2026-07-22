@@ -74,3 +74,10 @@ scratch_screen.html
 # Agent & Knowledge Graph directories
 brain/
 graphify-out/
+
+# Temporary scratch & debug logs
+temp_logs*
+functions/scratch_*
+functions/gcp_*.json
+functions/test_*.js
+functions/get_prod_doc.js

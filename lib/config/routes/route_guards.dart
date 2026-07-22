@@ -15,7 +15,7 @@ String? authRedirect(BuildContext context, GoRouterState state) {
 
   final bool isSuperAdminRoute = state.matchedLocation.startsWith('/superadmin') || state.matchedLocation == AppRoutes.adminPaymentReview;
   if (isSuperAdminRoute) {
-    final isSuperAdminAuthenticated = SuperAdminSession.isLoggedIn ||
+    final isSuperAdminAuthenticated = FirebaseAuth.instance.currentUser != null &&
         SessionManager.activeRole == UserRole.SUPER_ADMIN;
     if ((state.matchedLocation == AppRoutes.superAdminDashboard || state.matchedLocation == AppRoutes.adminPaymentReview) && !isSuperAdminAuthenticated) {
       return AppRoutes.login;

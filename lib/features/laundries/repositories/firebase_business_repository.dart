@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_data_connect/firebase_data_connect.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
 import 'package:washgo/features/laundries/models/washgo_business.dart';
@@ -78,6 +79,9 @@ class FirebaseBusinessRepository implements BusinessRepository {
           fotoPerfil: be.employee.fotoPerfil,
         ),
         estadoDisponibilidad: be.estadoDisponibilidad,
+        isDisabledByOwner: be.isDisabledByOwner,
+        currentBusinessId: be.employee.currentBusiness?.id,
+        currentBusinessName: be.employee.currentBusiness?.nombre,
       );
     }).toList();
   }
@@ -279,7 +283,7 @@ class FirebaseBusinessRepository implements BusinessRepository {
   }) async {
     final response = await _connector
         .getEmployeeAvailability(businessId: businessId, employeeId: employeeId)
-        .execute();
+        .execute(fetchPolicy: QueryFetchPolicy.serverOnly);
     final list = response.data.businessEmployees;
     if (list.isEmpty) return null;
     final record = list.first;
@@ -399,5 +403,57 @@ class FirebaseBusinessRepository implements BusinessRepository {
         fecha: h.fecha.toDateTime(),
       );
     }).toList();
+  }
+
+  @override
+  Future<List<EmployeeBranchStatus>> getEmployeeBranches() async {
+    final response = await _connector.getEmployeeBranches().execute(fetchPolicy: QueryFetchPolicy.serverOnly);
+    return response.data.businessEmployees.map((be) {
+      return EmployeeBranchStatus(
+        recordId: be.id,
+        businessId: be.business.id,
+        businessName: be.business.nombre,
+        businessCode: be.business.businessCode,
+        description: be.business.descripcion,
+        isDisabledByOwner: be.isDisabledByOwner,
+        estadoDisponibilidad: be.estadoDisponibilidad,
+      );
+    }).toList();
+  }
+
+  @override
+  Future<void> activateEmployeeShift(String businessId) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    // Desactivar todos los turnos activos previos para evitar doble consulta de actualización en Data Connect
+    await _connector.deactivateAllEmployeeShifts(employeeId: uid).execute();
+    await _connector.activateEmployeeShift(businessId: businessId, employeeId: uid).execute();
+  }
+
+  @override
+  Future<void> deactivateEmployeeShift(String businessId) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    await _connector.deactivateEmployeeShift(businessId: businessId, employeeId: uid).execute();
+  }
+
+  @override
+  Future<void> toggleEmployeeDisabledByOwner({
+    required String businessId,
+    required String employeeId,
+    required bool isDisabled,
+  }) async {
+    await _connector
+        .toggleEmployeeDisabledByOwner(
+          businessId: businessId,
+          employeeId: employeeId,
+          isDisabled: isDisabled,
+        )
+        .execute();
+  }
+
+  @override
+  Future<void> updateBusinessStatus(String businessId, BusinessStatus status) async {
+    await _connector
+        .ownerUpdateBusinessStatus(id: businessId, status: status)
+        .execute();
   }
 }

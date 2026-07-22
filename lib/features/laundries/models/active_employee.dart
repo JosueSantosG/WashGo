@@ -18,11 +18,17 @@ class ActiveEmployee {
   final String id;
   final ActiveEmployeeUser employee;
   final bool estadoDisponibilidad;
+  final bool isDisabledByOwner;
+  final String? currentBusinessId;
+  final String? currentBusinessName;
 
   const ActiveEmployee({
     required this.id,
     required this.employee,
     required this.estadoDisponibilidad,
+    this.isDisabledByOwner = false,
+    this.currentBusinessId,
+    this.currentBusinessName,
   });
 }
 
@@ -32,6 +38,26 @@ class EmployeeAvailability {
 
   const EmployeeAvailability({
     required this.id,
+    required this.estadoDisponibilidad,
+  });
+}
+
+class EmployeeBranchStatus {
+  final String recordId;
+  final String businessId;
+  final String businessName;
+  final String businessCode;
+  final String? description;
+  final bool isDisabledByOwner;
+  final bool estadoDisponibilidad;
+
+  const EmployeeBranchStatus({
+    required this.recordId,
+    required this.businessId,
+    required this.businessName,
+    required this.businessCode,
+    this.description,
+    required this.isDisabledByOwner,
     required this.estadoDisponibilidad,
   });
 }

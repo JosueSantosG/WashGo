@@ -4,13 +4,13 @@
 ExampleConnector.instance.UpsertUser(upsertUserVariables).execute();
 ExampleConnector.instance.RequestEmployeeAccess(requestEmployeeAccessVariables).execute();
 ExampleConnector.instance.ApproveEmployeeRequest(approveEmployeeRequestVariables).execute();
+ExampleConnector.instance.DeactivateAllEmployeeShifts(deactivateAllEmployeeShiftsVariables).execute();
+ExampleConnector.instance.ActivateEmployeeShift(activateEmployeeShiftVariables).execute();
+ExampleConnector.instance.DeactivateEmployeeShift(deactivateEmployeeShiftVariables).execute();
+ExampleConnector.instance.ToggleEmployeeDisabledByOwner(toggleEmployeeDisabledByOwnerVariables).execute();
 ExampleConnector.instance.RejectEmployeeRequest(rejectEmployeeRequestVariables).execute();
 ExampleConnector.instance.CreateBusiness(createBusinessVariables).execute();
 ExampleConnector.instance.UpdateBusiness(updateBusinessVariables).execute();
-ExampleConnector.instance.CreateOrder(createOrderVariables).execute();
-ExampleConnector.instance.AcceptOrder(acceptOrderVariables).execute();
-ExampleConnector.instance.UpdateOrderStatus(updateOrderStatusVariables).execute();
-ExampleConnector.instance.UpdateOrderPaymentMethodAndStatus(updateOrderPaymentMethodAndStatusVariables).execute();
 
 ```
 

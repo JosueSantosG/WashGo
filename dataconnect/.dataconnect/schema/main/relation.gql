@@ -614,6 +614,15 @@ extend type BusinessEmployee {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "BusinessEmployee.id", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `BusinessEmployee` table where the `isDisabledByOwner` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  isDisabledByOwner_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "BusinessEmployee.isDisabledByOwner", purpose: QUERY_COUNT)
+  """
   ✨ Count the number of rows in the `BusinessEmployee` table where the `joinedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
   joinedAt_count(

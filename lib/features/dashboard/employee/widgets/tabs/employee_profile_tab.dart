@@ -7,6 +7,9 @@ import 'package:washgo/core/session/session_manager.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
 import 'package:washgo/features/auth/repositories/auth_repository.dart';
 
+import 'package:washgo/features/auth/models/business_summary.dart';
+import 'package:washgo/features/laundries/models/active_employee.dart';
+
 class EmployeeProfileTab extends StatefulWidget {
   final EmployeeStatus? employeeStatus;
   final bool isAvailable;
@@ -16,7 +19,10 @@ class EmployeeProfileTab extends StatefulWidget {
   final String? employeeEmail;
   final List<UserRole> userRoles;
   final AuthRepository authRepository;
+  final List<EmployeeBranchStatus> employeeBranches;
   final Future<void> Function(bool) onToggleAvailability;
+  final Future<void> Function(String businessId) onActivateShift;
+  final Future<void> Function(String businessId)? onDeactivateShift;
   final Future<void> Function() onRefreshDashboard;
   final void Function(String name, String phone) onProfileUpdated;
 
@@ -30,7 +36,10 @@ class EmployeeProfileTab extends StatefulWidget {
     required this.employeeEmail,
     required this.userRoles,
     required this.authRepository,
+    required this.employeeBranches,
     required this.onToggleAvailability,
+    required this.onActivateShift,
+    this.onDeactivateShift,
     required this.onRefreshDashboard,
     required this.onProfileUpdated,
   });
@@ -740,100 +749,364 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
     );
   }
 
-  Widget _buildAvailabilityToggleCard() {
-    final isPending = widget.employeeStatus == EmployeeStatus.PENDING;
-    final statusColor = isPending
-        ? Colors.grey
-        : (widget.isAvailable ? Colors.green : Colors.orange);
-    final statusText = isPending
-        ? 'Esperando Aprobación'
-        : (widget.isAvailable ? 'Disponible' : 'En Receso / Almuerzo');
-    final statusDesc = isPending
-        ? 'Tu cuenta debe ser aceptada por el dueño para poder activarte.'
-        : (widget.isAvailable
-            ? 'Activo para recibir y aceptar pedidos en cola.'
-            : 'En descanso. Puedes ver pedidos en cola pero no aceptarlos.');
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: statusColor.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+
+  void _showJoinNewBranchModal(BuildContext context) {
+    final codeController = TextEditingController();
+    bool isSearching = false;
+    bool isSubmitting = false;
+    String? errorMessage;
+    BusinessSummary? businessFound;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 24.0,
+                right: 24.0,
+                top: 24.0,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24.0,
               ),
-              child: Icon(
-                isPending
-                    ? Icons.hourglass_empty_rounded
-                    : (widget.isAvailable ? Icons.check_circle_rounded : Icons.lunch_dining_rounded),
-                color: statusColor,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    statusText,
-                    style: GoogleFonts.outfit(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.onSurface,
-                    ),
+                  Row(
+                    children: [
+                      const Icon(Icons.storefront_rounded, color: AppColors.primary, size: 28),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Vincular Nueva Sucursal',
+                        style: GoogleFonts.outfit(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.onSurface,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 8),
                   Text(
-                    statusDesc,
-                    style: GoogleFonts.outfit(
-                      fontSize: 12,
+                    'Ingresa el código del negocio al que deseas unirte (ej: WGX91K).',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
                       color: AppColors.onSurfaceVariant,
                     ),
                   ),
+                  const SizedBox(height: 20),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: codeController,
+                          textCapitalization: TextCapitalization.characters,
+                          decoration: InputDecoration(
+                            labelText: 'Código de Negocio',
+                            hintText: 'Ej. WGX91K',
+                            errorText: errorMessage,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      SizedBox(
+                        width: 100,
+                        height: 54,
+                        child: ElevatedButton(
+                          onPressed: isSearching
+                              ? null
+                              : () async {
+                                  final code = codeController.text.trim();
+                                  if (code.isEmpty) return;
+                                  setSheetState(() {
+                                    isSearching = true;
+                                    errorMessage = null;
+                                    businessFound = null;
+                                  });
+                                  try {
+                                    final business = await widget.authRepository.getBusinessByCode(code);
+                                    setSheetState(() {
+                                      isSearching = false;
+                                      if (business != null) {
+                                        businessFound = business;
+                                      } else {
+                                        errorMessage = 'No se encontró lavandería con ese código.';
+                                      }
+                                    });
+                                  } catch (e) {
+                                    setSheetState(() {
+                                      isSearching = false;
+                                      errorMessage = 'Error al buscar el código.';
+                                    });
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: isSearching
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                )
+                              : const Text('Buscar', style: TextStyle(color: Colors.white)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (businessFound != null) ...[
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.check_circle_rounded, color: Colors.green, size: 32),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  businessFound!.nombre,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.onSurface,
+                                  ),
+                                ),
+                                if (businessFound!.descripcion != null &&
+                                    businessFound!.descripcion!.isNotEmpty)
+                                  Text(
+                                    businessFound!.descripcion!,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      color: AppColors.onSurfaceVariant,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: isSubmitting
+                            ? null
+                            : () async {
+                                setSheetState(() {
+                                  isSubmitting = true;
+                                });
+                                try {
+                                  await widget.authRepository.requestEmployeeAccess(businessFound!.id);
+                                  if (ctx.mounted) {
+                                    Navigator.pop(ctx);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Solicitud enviada a "${businessFound!.nombre}". Espera a que el dueño la apruebe.',
+                                        ),
+                                        backgroundColor: Colors.green.shade600,
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                    widget.onRefreshDashboard();
+                                  }
+                                } catch (e) {
+                                  setSheetState(() {
+                                    isSubmitting = false;
+                                    errorMessage = 'Error al enviar solicitud: $e';
+                                  });
+                                }
+                              },
+                        icon: const Icon(Icons.send_rounded, color: Colors.white),
+                        label: isSubmitting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              )
+                            : const Text('Enviar Solicitud al Dueño', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
-            ),
-            if (widget.isLoadingAvailability)
-              const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.primary,
-                ),
-              )
-            else
-              Switch.adaptive(
-                value: isPending ? false : widget.isAvailable,
-                activeThumbColor: Colors.green,
-                activeTrackColor: Colors.green.withValues(alpha: 0.3),
-                inactiveThumbColor: Colors.orange,
-                inactiveTrackColor: Colors.orange.withValues(alpha: 0.3),
-                onChanged: isPending ? null : widget.onToggleAvailability,
-              ),
-          ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildBranchesCard() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Disponibilidad por Sucursal',
+          style: GoogleFonts.outfit(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.onBackground,
+          ),
         ),
-      ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
+          ),
+          child: Column(
+            children: [
+              ...widget.employeeBranches.map((branch) {
+                final isAvailable = branch.estadoDisponibilidad;
+                final isDisabled = branch.isDisabledByOwner;
+
+                String statusSubtitle;
+                Color statusColor;
+                IconData statusIcon;
+
+                if (isDisabled) {
+                  statusSubtitle = 'Deshabilitado por el dueño';
+                  statusColor = Colors.red;
+                  statusIcon = Icons.block_rounded;
+                } else if (isAvailable) {
+                  statusSubtitle = 'Disponible (Atendiendo aquí)';
+                  statusColor = Colors.green;
+                  statusIcon = Icons.check_circle_rounded;
+                } else {
+                  statusSubtitle = 'En Receso / Inactivo';
+                  statusColor = Colors.orange;
+                  statusIcon = Icons.pause_circle_outline_rounded;
+                }
+
+                return Column(
+                  children: [
+                    ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          statusIcon,
+                          color: statusColor,
+                          size: 20,
+                        ),
+                      ),
+                      title: Text(
+                        branch.businessName,
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: AppColors.onSurface,
+                        ),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Código: ${branch.businessCode}',
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                          ),
+                          Text(
+                            statusSubtitle,
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: statusColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      trailing: isDisabled
+                          ? const Icon(Icons.lock_rounded, color: Colors.red)
+                          : Switch.adaptive(
+                              value: isAvailable,
+                              activeColor: Colors.green,
+                              onChanged: (val) {
+                                if (val) {
+                                  widget.onActivateShift(branch.businessId);
+                                } else {
+                                  widget.onDeactivateShift?.call(branch.businessId);
+                                }
+                              },
+                            ),
+                    ),
+                    const Divider(height: 1, indent: 56),
+                  ],
+                );
+              }),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.add_business_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                ),
+                title: Text(
+                  'Unirme a otra sucursal',
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: AppColors.primary,
+                  ),
+                ),
+                subtitle: Text(
+                  'Ingresar código de lavandería para vincularte',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.primary),
+                onTap: () => _showJoinNewBranchModal(context),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
     );
   }
 
@@ -879,24 +1152,12 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
             ),
           ),
 
-          // Availability Card (Disponibilidad)
-          Text(
-            'Disponibilidad',
-            style: GoogleFonts.outfit(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.onBackground,
-            ),
-          ),
-          const SizedBox(height: 8),
-          _buildAvailabilityToggleCard(),
-          const SizedBox(height: 24),
+          // Sucursales / Turno
+          _buildBranchesCard(),
 
           // Información Personal
           _buildPersonalInfoCard(),
           const SizedBox(height: 24),
-
-
 
           // Legal y Cumplimiento
           _buildLegalCard(),

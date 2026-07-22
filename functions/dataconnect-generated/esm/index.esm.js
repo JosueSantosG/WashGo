@@ -88,6 +88,30 @@ export function approveEmployeeRequest(dcOrVarsOrOptions, varsOrOptions, options
   return dcInstance.executeMutation('ApproveEmployeeRequest', inputVars, inputOpts);
 }
 
+export function deactivateAllEmployeeShifts(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeMutation('DeactivateAllEmployeeShifts', inputVars, inputOpts);
+}
+
+export function activateEmployeeShift(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeMutation('ActivateEmployeeShift', inputVars, inputOpts);
+}
+
+export function deactivateEmployeeShift(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeMutation('DeactivateEmployeeShift', inputVars, inputOpts);
+}
+
+export function toggleEmployeeDisabledByOwner(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeMutation('ToggleEmployeeDisabledByOwner', inputVars, inputOpts);
+}
+
 export function rejectEmployeeRequest(dcOrVarsOrOptions, varsOrOptions, options) {
   const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
   dcInstance.useGen(true);
@@ -104,6 +128,12 @@ export function updateBusiness(dcOrVarsOrOptions, varsOrOptions, options) {
   const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
   dcInstance.useGen(true);
   return dcInstance.executeMutation('UpdateBusiness', inputVars, inputOpts);
+}
+
+export function ownerUpdateBusinessStatus(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
+  dcInstance.useGen(true);
+  return dcInstance.executeMutation('OwnerUpdateBusinessStatus', inputVars, inputOpts);
 }
 
 export function createOrder(dcOrVarsOrOptions, varsOrOptions, options) {
@@ -346,10 +376,10 @@ export function updateUserPhone(dcOrVarsOrOptions, varsOrOptions, options) {
   return dcInstance.executeMutation('UpdateUserPhone', inputVars, inputOpts);
 }
 
-export function deleteCurrentUser(dcOrOptions, options) {
-  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
+export function deleteCurrentUser(dcOrVarsOrOptions, varsOrOptions, options) {
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
   dcInstance.useGen(true);
-  return dcInstance.executeMutation('DeleteCurrentUser', undefined, inputOpts);
+  return dcInstance.executeMutation('DeleteCurrentUser', inputVars, inputOpts);
 }
 
 export function completeOrderWithInvoiceOnly(dcOrVarsOrOptions, varsOrOptions, options) {
@@ -476,6 +506,12 @@ export function getActiveEmployees(dcOrVarsOrOptions, varsOrOptions, options) {
   const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
   dcInstance.useGen(true);
   return dcInstance.executeQuery('GetActiveEmployees', inputVars, inputOpts);
+}
+
+export function getEmployeeBranches(dcOrOptions, options) {
+  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetEmployeeBranches', undefined, inputOpts);
 }
 
 export function getBusinessServices(dcOrVarsOrOptions, varsOrOptions, options) {

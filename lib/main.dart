@@ -11,12 +11,35 @@ import 'package:washgo/config/env/firebase_options.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
 import 'package:washgo/core/session/booking_intent_manager.dart';
 
+import 'package:firebase_app_check/firebase_app_check.dart';
+
 export 'package:washgo/app/app.dart' show WashGoApp;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await BookingIntentManager.instance.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Activate Firebase App Check (disabled in local emulator mode)
+  if (!Environment.useEmulators) {
+    try {
+      const recaptchaSiteKey = String.fromEnvironment(
+        'RECAPTCHA_SITE_KEY',
+        defaultValue: '6Leabcdefghijklmnopqrstuvwxyz_PLACEHOLDER',
+      );
+      await FirebaseAppCheck.instance.activate(
+        webProvider: ReCaptchaV3Provider(recaptchaSiteKey),
+        androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+        appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.deviceCheck,
+      );
+      debugPrint('Firebase App Check activated.');
+    } catch (e) {
+      debugPrint('Error activating App Check: $e');
+    }
+  } else {
+    debugPrint('Firebase App Check skipped in emulator mode.');
+  }
+
   debugPrint('--- APP CONFIGURATION INFO ---');
   debugPrint('Active Environment current: ${Environment.current}');
   debugPrint('DefaultFirebaseOptions Project ID: ${DefaultFirebaseOptions.currentPlatform.projectId}');

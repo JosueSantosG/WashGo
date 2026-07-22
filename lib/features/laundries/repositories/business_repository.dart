@@ -24,6 +24,8 @@ abstract class BusinessRepository {
     double? longitud,
   });
   
+  Future<void> updateBusinessStatus(String businessId, BusinessStatus status);
+  
   Future<void> approveEmployeeRequest({
     required String requestId,
     required String employeeId,
@@ -103,5 +105,14 @@ abstract class BusinessRepository {
 
   Future<List<PrepaidServiceMetricModel>> getPrepaidServiceMetrics(String businessId);
   Future<List<PrepaidHistoryEntryModel>> getPrepaidHistory(String businessId);
+
+  Future<List<EmployeeBranchStatus>> getEmployeeBranches();
+  Future<void> activateEmployeeShift(String businessId);
+  Future<void> deactivateEmployeeShift(String businessId);
+  Future<void> toggleEmployeeDisabledByOwner({
+    required String businessId,
+    required String employeeId,
+    required bool isDisabled,
+  });
 }
 

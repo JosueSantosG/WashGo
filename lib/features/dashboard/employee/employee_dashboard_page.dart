@@ -15,6 +15,7 @@ import 'package:washgo/features/orders/models/order_audit_log.dart';
 import 'package:washgo/features/laundries/repositories/business_repository.dart';
 import 'package:washgo/features/laundries/repositories/firebase_business_repository.dart';
 import 'package:washgo/features/laundries/models/washgo_service.dart';
+import 'package:washgo/features/laundries/models/active_employee.dart';
 import 'package:washgo/features/invoices/repositories/invoice_repository.dart';
 import 'package:washgo/features/invoices/models/invoice.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -42,6 +43,8 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
   bool _isAvailable = true;
   String? _businessEmployeeRecordId;
   bool _isLoadingAvailability = false;
+  List<EmployeeBranchStatus> _employeeBranches = [];
+  bool _isDisabledByOwner = false;
 
   String? _employeeId;
   String? _employeeName;
@@ -1150,14 +1153,29 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
         businessId: _businessId!,
         employeeId: _employeeId!,
       );
-      if (availability != null) {
-        setState(() {
+      final branches = await _businessRepository.getEmployeeBranches();
+
+      setState(() {
+        if (availability != null) {
           _isAvailable = availability.estadoDisponibilidad;
           _businessEmployeeRecordId = availability.id;
-        });
-      }
+        }
+        _employeeBranches = branches;
+        if (branches.isNotEmpty) {
+          final branch = branches.firstWhere(
+            (b) => b.businessId == _businessId,
+            orElse: () => branches.first,
+          );
+          _isDisabledByOwner = branch.isDisabledByOwner;
+          _isAvailable = branch.estadoDisponibilidad;
+        } else {
+          // Para usuarios empleados preexistentes sin registros en la tabla pivote
+          _isDisabledByOwner = false;
+          _isAvailable = true;
+        }
+      });
     } catch (e) {
-      debugPrint('Error fetching employee availability: $e');
+      debugPrint('Error fetching employee availability/branches: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -1192,6 +1210,7 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
         );
       }
     } catch (e) {
+      debugPrint('Error al cambiar disponibilidad: $e');
       if (mounted) {
         setState(() {
           _isAvailable = !value; // Revert on error
@@ -1214,6 +1233,72 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
 
   Future<void> _acceptOrder(WashGoOrder order) async {
     if (_employeeId == null) return;
+
+    if (_isDisabledByOwner) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              const Icon(Icons.block_rounded, color: Colors.red, size: 28),
+              const SizedBox(width: 8),
+              Text(
+                'Acceso Deshabilitado',
+                style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ],
+          ),
+          content: Text(
+            'No puedes aceptar reservas de este local porque estás deshabilitado por el dueño.',
+            style: GoogleFonts.inter(fontSize: 14, height: 1.5),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Entendido',
+                style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppColors.primary),
+              ),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    if (!_isAvailable) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              const Icon(Icons.pause_circle_outline_rounded, color: Colors.orange, size: 28),
+              const SizedBox(width: 8),
+              Text(
+                'En Receso / Descanso',
+                style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ],
+          ),
+          content: Text(
+            'Te encuentras en receso. Activa tu disponibilidad a "Disponible" desde tu Perfil para poder aceptar reservas.',
+            style: GoogleFonts.inter(fontSize: 14, height: 1.5),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Entendido',
+                style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppColors.primary),
+              ),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
 
     if (order.status == OrderStatus.PENDIENTE_PAGO) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1873,7 +1958,83 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
       );
     }
 
+    if (_isDisabledByOwner) {
+      return Column(
+        children: [
+          _buildDisabledWarningBanner(),
+          Expanded(child: content),
+        ],
+      );
+    }
+
+    if (!_isAvailable) {
+      return Column(
+        children: [
+          _buildInactiveShiftWarningBanner(),
+          Expanded(child: content),
+        ],
+      );
+    }
+
     return content;
+  }
+
+  Widget _buildDisabledWarningBanner() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.red.shade300, width: 1.5),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.block_rounded, color: Colors.red.shade700, size: 24),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              'Estás deshabilitado por el dueño de este local. No puedes aceptar ni gestionar reservas aquí.',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Colors.red.shade900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInactiveShiftWarningBanner() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.amber.shade300, width: 1.5),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.pause_circle_outline_rounded, color: Colors.amber.shade800, size: 24),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              'Te encuentras en receso o inactivo en esta sucursal. Activa tu disponibilidad desde tu Perfil para poder aceptar reservas.',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Colors.amber.shade900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildPendingWarningBanner() {
@@ -2104,7 +2265,58 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
       employeeEmail: _employeeEmail,
       userRoles: _userRoles,
       authRepository: _authRepository,
+      employeeBranches: _employeeBranches,
       onToggleAvailability: _toggleAvailability,
+      onActivateShift: (businessId) async {
+        try {
+          await _businessRepository.activateEmployeeShift(businessId);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Disponibilidad activada en esta sucursal.'),
+                backgroundColor: Colors.green.shade600,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            _initializeDashboard(silent: true);
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error al activar disponibilidad: $e'),
+                backgroundColor: AppColors.error,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        }
+      },
+      onDeactivateShift: (businessId) async {
+        try {
+          await _businessRepository.deactivateEmployeeShift(businessId);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Cambiado a En Receso / Inactivo.'),
+                backgroundColor: Colors.orange.shade800,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            _initializeDashboard(silent: true);
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error al cambiar disponibilidad: $e'),
+                backgroundColor: AppColors.error,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        }
+      },
       onRefreshDashboard: () => _initializeDashboard(silent: true),
       onProfileUpdated: (name, phone) {
         setState(() {

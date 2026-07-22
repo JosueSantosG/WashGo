@@ -10,6 +10,7 @@ import 'package:washgo/core/session/session_manager.dart';
 
 import 'package:washgo/config/routes/app_routes.dart';
 import 'package:washgo/config/routes/route_guards.dart';
+import 'package:washgo/shared/widgets/deferred_loader.dart';
 import 'package:washgo/features/auth/pages/active_role_selection_page.dart';
 import 'package:washgo/features/auth/pages/auth_gate_page.dart';
 import 'package:washgo/features/auth/pages/client_onboarding_page.dart';
@@ -20,14 +21,14 @@ import 'package:washgo/features/auth/pages/register_page.dart';
 import 'package:washgo/features/auth/pages/role_selection_page.dart';
 import 'package:washgo/features/auth/pages/role_detail_page.dart';
 import 'package:washgo/features/dashboard/client/home_page.dart';
-import 'package:washgo/features/dashboard/owner/owner_dashboard_page.dart';
+import 'package:washgo/features/dashboard/owner/owner_dashboard_page.dart' deferred as owner_dashboard;
 import 'package:washgo/features/dashboard/owner/owner_invoice_detail_page.dart';
 import 'package:washgo/features/invoices/models/invoice.dart';
-import 'package:washgo/features/dashboard/employee/employee_dashboard_page.dart';
+import 'package:washgo/features/dashboard/employee/employee_dashboard_page.dart' deferred as employee_dashboard;
 import 'package:washgo/features/laundries/pages/create_laundry_page.dart';
-import 'package:washgo/features/maps/pages/map_picker_page.dart';
-import 'package:washgo/features/dashboard/admin/super_admin_dashboard_page.dart';
-import 'package:washgo/features/laundries/pages/prepaid_consumption_page.dart';
+import 'package:washgo/features/maps/pages/map_picker_page.dart' deferred as map_picker;
+import 'package:washgo/features/dashboard/admin/super_admin_dashboard_page.dart' deferred as super_admin_dashboard;
+import 'package:washgo/features/laundries/pages/prepaid_consumption_page.dart' deferred as prepaid_consumption;
 import 'package:latlong2/latlong.dart';
 import 'package:washgo/features/splash/pages/splash_page.dart';
 import 'package:washgo/features/auth/pages/policy_viewer_page.dart';
@@ -38,7 +39,7 @@ import 'package:washgo/features/payments/pages/payphone_cancel_page.dart';
 import 'package:washgo/features/payments/pages/bank_transfer_instructions_page.dart';
 import 'package:washgo/features/payments/pages/proof_upload_page.dart';
 import 'package:washgo/features/payments/pages/proof_status_page.dart';
-import 'package:washgo/features/payments/pages/admin_payment_review_page.dart';
+import 'package:washgo/features/payments/pages/admin_payment_review_page.dart' deferred as admin_payment_review;
 
 // Converts FirebaseAuth state and real-time database user profile updates into a Listenable.
 class AppRouterRefreshNotifier extends ChangeNotifier {
@@ -162,27 +163,42 @@ GoRouter _createAppRouter() {
     ),
     GoRoute(
       path: AppRoutes.ownerDashboard,
-      builder: (context, state) => const OwnerDashboardPage(initialTab: 0),
+      builder: (context, state) => DeferredLoader(
+        loader: owner_dashboard.loadLibrary,
+        builder: () => owner_dashboard.OwnerDashboardPage(initialTab: 0),
+      ),
     ),
     GoRoute(
       path: AppRoutes.employeeDashboard,
-      builder: (context, state) => const EmployeeDashboardPage(),
+      builder: (context, state) => DeferredLoader(
+        loader: employee_dashboard.loadLibrary,
+        builder: () => employee_dashboard.EmployeeDashboardPage(),
+      ),
     ),
     GoRoute(
       path: '/owner-dashboard/services',
-      builder: (context, state) => const OwnerDashboardPage(initialTab: 1),
+      redirect: (context, state) => '/owner-dashboard/config',
     ),
     GoRoute(
       path: '/owner-dashboard/employees',
-      builder: (context, state) => const OwnerDashboardPage(initialTab: 2),
+      builder: (context, state) => DeferredLoader(
+        loader: owner_dashboard.loadLibrary,
+        builder: () => owner_dashboard.OwnerDashboardPage(initialTab: 1),
+      ),
     ),
     GoRoute(
       path: '/owner-dashboard/billing',
-      builder: (context, state) => const OwnerDashboardPage(initialTab: 3),
+      builder: (context, state) => DeferredLoader(
+        loader: owner_dashboard.loadLibrary,
+        builder: () => owner_dashboard.OwnerDashboardPage(initialTab: 2),
+      ),
     ),
     GoRoute(
       path: '/owner-dashboard/reviews',
-      builder: (context, state) => const OwnerDashboardPage(initialTab: 4),
+      builder: (context, state) => DeferredLoader(
+        loader: owner_dashboard.loadLibrary,
+        builder: () => owner_dashboard.OwnerDashboardPage(initialTab: 3),
+      ),
     ),
     GoRoute(
       path: AppRoutes.ownerBillingDetail,
@@ -193,7 +209,10 @@ GoRouter _createAppRouter() {
     ),
     GoRoute(
       path: '/owner-dashboard/config',
-      builder: (context, state) => const OwnerDashboardPage(initialTab: 5),
+      builder: (context, state) => DeferredLoader(
+        loader: owner_dashboard.loadLibrary,
+        builder: () => owner_dashboard.OwnerDashboardPage(initialTab: 4),
+      ),
     ),
     GoRoute(
       path: AppRoutes.createLaundry,
@@ -208,18 +227,24 @@ GoRouter _createAppRouter() {
     ),
     GoRoute(
       path: AppRoutes.superAdminDashboard,
-      builder: (context, state) => const SuperAdminDashboardPage(),
+      builder: (context, state) => DeferredLoader(
+        loader: super_admin_dashboard.loadLibrary,
+        builder: () => super_admin_dashboard.SuperAdminDashboardPage(),
+      ),
     ),
     GoRoute(
       path: AppRoutes.prepaidConsumption,
       builder: (context, state) {
         final Map<String, dynamic> extras = (state.extra as Map?)?.cast<String, dynamic>() ?? {};
-        return PrepaidConsumptionPage(
-          businessId: (extras['businessId'] ?? '') as String,
-          businessName: (extras['businessName'] ?? '') as String,
-          saldoInicial: (extras['saldoInicial'] as num?)?.toDouble() ?? 0.0,
-          saldoConsumido: (extras['saldoConsumido'] as num?)?.toDouble() ?? 0.0,
-          saldoDisponible: (extras['saldoDisponible'] as num?)?.toDouble() ?? 0.0,
+        return DeferredLoader(
+          loader: prepaid_consumption.loadLibrary,
+          builder: () => prepaid_consumption.PrepaidConsumptionPage(
+            businessId: (extras['businessId'] ?? '') as String,
+            businessName: (extras['businessName'] ?? '') as String,
+            saldoInicial: (extras['saldoInicial'] as num?)?.toDouble() ?? 0.0,
+            saldoConsumido: (extras['saldoConsumido'] as num?)?.toDouble() ?? 0.0,
+            saldoDisponible: (extras['saldoDisponible'] as num?)?.toDouble() ?? 0.0,
+          ),
         );
       },
     ),
@@ -227,7 +252,10 @@ GoRouter _createAppRouter() {
       path: AppRoutes.mapPicker,
       builder: (context, state) {
         final initialLocation = state.extra as LatLng?;
-        return MapPickerPage(initialLocation: initialLocation);
+        return DeferredLoader(
+          loader: map_picker.loadLibrary,
+          builder: () => map_picker.MapPickerPage(initialLocation: initialLocation),
+        );
       },
     ),
     GoRoute(
@@ -336,7 +364,10 @@ GoRouter _createAppRouter() {
       name: AppRoutes.adminPaymentReview,
       path: AppRoutes.adminPaymentReview,
       builder: (context, state) {
-        return const AdminPaymentReviewPage();
+        return DeferredLoader(
+          loader: admin_payment_review.loadLibrary,
+          builder: () => admin_payment_review.AdminPaymentReviewPage(),
+        );
       },
     ),
   ];

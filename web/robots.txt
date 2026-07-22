@@ -1,0 +1,12 @@
+User-agent: *
+Disallow: /superadmin
+Disallow: /admin
+Disallow: /owner-dashboard
+Disallow: /employee-dashboard
+Disallow: /select-active-role
+Disallow: /onboarding-cliente
+Disallow: /onboarding-employee
+Disallow: /employee-code
+Allow: /
+
+Sitemap: https://washgov1.web.app/sitemap.xml

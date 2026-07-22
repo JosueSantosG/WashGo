@@ -170,6 +170,7 @@ class GetBusinessInvoicesInvoicesOrder {
   final EnumValue<OrderStatus> status;
   final GetBusinessInvoicesInvoicesOrderClient client;
   final GetBusinessInvoicesInvoicesOrderEmployee? employee;
+  final GetBusinessInvoicesInvoicesOrderBusiness business;
   GetBusinessInvoicesInvoicesOrder.fromJson(dynamic json):
   
   id = nativeFromJson<String>(json['id']),
@@ -178,7 +179,8 @@ class GetBusinessInvoicesInvoicesOrder {
   paymentMethod = paymentMethodDeserializer(json['paymentMethod']),
   status = orderStatusDeserializer(json['status']),
   client = GetBusinessInvoicesInvoicesOrderClient.fromJson(json['client']),
-  employee = json['employee'] == null ? null : GetBusinessInvoicesInvoicesOrderEmployee.fromJson(json['employee']);
+  employee = json['employee'] == null ? null : GetBusinessInvoicesInvoicesOrderEmployee.fromJson(json['employee']),
+  business = GetBusinessInvoicesInvoicesOrderBusiness.fromJson(json['business']);
   @override
   bool operator ==(Object other) {
     if(identical(this, other)) {
@@ -195,11 +197,12 @@ class GetBusinessInvoicesInvoicesOrder {
     paymentMethod == otherTyped.paymentMethod && 
     status == otherTyped.status && 
     client == otherTyped.client && 
-    employee == otherTyped.employee;
+    employee == otherTyped.employee && 
+    business == otherTyped.business;
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, price.hashCode, serviceName.hashCode, paymentMethod.hashCode, status.hashCode, client.hashCode, employee.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, price.hashCode, serviceName.hashCode, paymentMethod.hashCode, status.hashCode, client.hashCode, employee.hashCode, business.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -219,6 +222,7 @@ class GetBusinessInvoicesInvoicesOrder {
     if (employee != null) {
       json['employee'] = employee!.toJson();
     }
+    json['business'] = business.toJson();
     return json;
   }
 
@@ -230,6 +234,7 @@ class GetBusinessInvoicesInvoicesOrder {
     required this.status,
     required this.client,
     this.employee,
+    required this.business,
   });
 }
 
@@ -317,6 +322,40 @@ class GetBusinessInvoicesInvoicesOrderEmployee {
   GetBusinessInvoicesInvoicesOrderEmployee({
     required this.nombreCompleto,
     this.telefono,
+  });
+}
+
+@immutable
+class GetBusinessInvoicesInvoicesOrderBusiness {
+  final String nombre;
+  GetBusinessInvoicesInvoicesOrderBusiness.fromJson(dynamic json):
+  
+  nombre = nativeFromJson<String>(json['nombre']);
+  @override
+  bool operator ==(Object other) {
+    if(identical(this, other)) {
+      return true;
+    }
+    if(other.runtimeType != runtimeType) {
+      return false;
+    }
+
+    final GetBusinessInvoicesInvoicesOrderBusiness otherTyped = other as GetBusinessInvoicesInvoicesOrderBusiness;
+    return nombre == otherTyped.nombre;
+    
+  }
+  @override
+  int get hashCode => nombre.hashCode;
+  
+
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> json = {};
+    json['nombre'] = nativeToJson<String>(nombre);
+    return json;
+  }
+
+  GetBusinessInvoicesInvoicesOrderBusiness({
+    required this.nombre,
   });
 }
 

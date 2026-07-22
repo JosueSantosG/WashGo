@@ -98,7 +98,6 @@ class _AuthGatePageState extends State<AuthGatePage> {
         } else if (activeRole == UserRole.ADMINISTRADOR) {
           context.go('/owner-dashboard');
         } else if (activeRole == UserRole.SUPER_ADMIN) {
-          SuperAdminSession.isLoggedIn = true;
           context.go(AppRoutes.superAdminDashboard);
         } else {
           _checkPendingBookingIntentOrGoHome();

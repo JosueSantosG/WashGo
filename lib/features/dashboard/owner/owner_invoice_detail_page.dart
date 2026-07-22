@@ -420,7 +420,28 @@ class _OwnerInvoiceDetailPageState extends State<OwnerInvoiceDetailPage> {
 
   Widget _buildServiceDetailsCard() {
     final hasObservations = _currentInvoice.observations != null && _currentInvoice.observations!.trim().isNotEmpty;
-    final isPaypal = _currentInvoice.paymentMethod.toUpperCase() == 'PAYPAL';
+    final String paymentMethod = _currentInvoice.paymentMethod.toUpperCase();
+    final String paymentLabel;
+    final IconData paymentIcon;
+    final Color paymentColor;
+
+    if (paymentMethod == 'PAYPAL') {
+      paymentLabel = 'PayPal';
+      paymentIcon = Icons.credit_card_rounded;
+      paymentColor = Colors.blue[700]!;
+    } else if (paymentMethod == 'PAYPHONE') {
+      paymentLabel = 'PayPhone';
+      paymentIcon = Icons.mobile_friendly_rounded;
+      paymentColor = Colors.orange[700]!;
+    } else if (paymentMethod.contains('TRANSFERENCIA')) {
+      paymentLabel = 'Transferencia';
+      paymentIcon = Icons.account_balance_rounded;
+      paymentColor = Colors.teal[700]!;
+    } else {
+      paymentLabel = 'Efectivo';
+      paymentIcon = Icons.money_rounded;
+      paymentColor = Colors.green[700]!;
+    }
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -490,24 +511,24 @@ class _OwnerInvoiceDetailPageState extends State<OwnerInvoiceDetailPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isPaypal ? Colors.blue.withValues(alpha: 0.1) : Colors.green.withValues(alpha: 0.1),
+                  color: paymentColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      isPaypal ? Icons.payment_rounded : Icons.money_rounded,
+                      paymentIcon,
                       size: 14,
-                      color: isPaypal ? Colors.blue[700] : Colors.green[700],
+                      color: paymentColor,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      isPaypal ? 'PayPal' : 'Efectivo',
+                      paymentLabel,
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: isPaypal ? Colors.blue[700] : Colors.green[700],
+                        color: paymentColor,
                       ),
                     ),
                   ],

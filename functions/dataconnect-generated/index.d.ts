@@ -71,6 +71,16 @@ export interface AcceptOrderVariables {
   employeeId: string;
 }
 
+export interface ActivateEmployeeShiftData {
+  businessEmployee_updateMany: number;
+  user_update?: User_Key | null;
+}
+
+export interface ActivateEmployeeShiftVariables {
+  businessId: UUIDString;
+  employeeId: string;
+}
+
 export interface AddVehicleData {
   vehicle_insert: Vehicle_Key;
 }
@@ -84,6 +94,7 @@ export interface AddVehicleVariables {
 export interface ApproveEmployeeRequestData {
   employeeRequest_update?: EmployeeRequest_Key | null;
   user_update?: User_Key | null;
+  businessEmployee_updateMany: number;
   businessEmployee_insert: BusinessEmployee_Key;
 }
 
@@ -489,6 +500,23 @@ export interface CreateWalkInUserVariables {
   email: string;
 }
 
+export interface DeactivateAllEmployeeShiftsData {
+  businessEmployee_updateMany: number;
+}
+
+export interface DeactivateAllEmployeeShiftsVariables {
+  employeeId: string;
+}
+
+export interface DeactivateEmployeeShiftData {
+  businessEmployee_updateMany: number;
+}
+
+export interface DeactivateEmployeeShiftVariables {
+  businessId: UUIDString;
+  employeeId: string;
+}
+
 export interface DeleteBusinessHoursData {
   businessHour_deleteMany: number;
 }
@@ -498,7 +526,12 @@ export interface DeleteBusinessHoursVariables {
 }
 
 export interface DeleteCurrentUserData {
-  user_delete?: User_Key | null;
+  user_update?: User_Key | null;
+}
+
+export interface DeleteCurrentUserVariables {
+  email: string;
+  nombreCompleto: string;
 }
 
 export interface DeleteOrderReservationData {
@@ -581,8 +614,13 @@ export interface GetActiveEmployeesData {
       email: string;
       telefono?: string | null;
       fotoPerfil?: string | null;
+      currentBusiness?: {
+        id: UUIDString;
+        nombre: string;
+      } & Business_Key;
     } & User_Key;
     estadoDisponibilidad: boolean;
+    isDisabledByOwner: boolean;
     joinedAt: TimestampString;
   } & BusinessEmployee_Key)[];
 }
@@ -708,6 +746,9 @@ export interface GetBusinessInvoicesData {
       employee?: {
         nombreCompleto: string;
         telefono?: string | null;
+      };
+      business: {
+        nombre: string;
       };
     } & Order_Key;
     invoiceItems_on_invoice: ({
@@ -996,6 +1037,21 @@ export interface GetEmployeeAvailabilityData {
 export interface GetEmployeeAvailabilityVariables {
   businessId: UUIDString;
   employeeId: string;
+}
+
+export interface GetEmployeeBranchesData {
+  businessEmployees: ({
+    id: UUIDString;
+    business: {
+      id: UUIDString;
+      nombre: string;
+      businessCode: string;
+      descripcion?: string | null;
+    } & Business_Key;
+    status: EmployeeStatus;
+    isDisabledByOwner: boolean;
+    estadoDisponibilidad: boolean;
+  } & BusinessEmployee_Key)[];
 }
 
 export interface GetEmployeeHistoryOrdersPagedData {
@@ -1717,6 +1773,15 @@ export interface Order_Key {
   __typename?: 'Order_Key';
 }
 
+export interface OwnerUpdateBusinessStatusData {
+  business_update?: Business_Key | null;
+}
+
+export interface OwnerUpdateBusinessStatusVariables {
+  id: UUIDString;
+  status: BusinessStatus;
+}
+
 export interface PaymentProof_Key {
   id: UUIDString;
   __typename?: 'PaymentProof_Key';
@@ -1979,6 +2044,16 @@ export interface SwitchCurrentBusinessVariables {
   businessId: UUIDString;
 }
 
+export interface ToggleEmployeeDisabledByOwnerData {
+  businessEmployee_updateMany: number;
+}
+
+export interface ToggleEmployeeDisabledByOwnerVariables {
+  businessId: UUIDString;
+  employeeId: string;
+  isDisabled: boolean;
+}
+
 export interface ToggleServiceActiveData {
   service_update?: Service_Key | null;
 }
@@ -2198,6 +2273,26 @@ export function approveEmployeeRequest(dc: DataConnect, vars: ApproveEmployeeReq
 /** Generated Node Admin SDK operation action function for the 'ApproveEmployeeRequest' Mutation. Allow users to pass in custom DataConnect instances. */
 export function approveEmployeeRequest(vars: ApproveEmployeeRequestVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<ApproveEmployeeRequestData>>;
 
+/** Generated Node Admin SDK operation action function for the 'DeactivateAllEmployeeShifts' Mutation. Allow users to execute without passing in DataConnect. */
+export function deactivateAllEmployeeShifts(dc: DataConnect, vars: DeactivateAllEmployeeShiftsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<DeactivateAllEmployeeShiftsData>>;
+/** Generated Node Admin SDK operation action function for the 'DeactivateAllEmployeeShifts' Mutation. Allow users to pass in custom DataConnect instances. */
+export function deactivateAllEmployeeShifts(vars: DeactivateAllEmployeeShiftsVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<DeactivateAllEmployeeShiftsData>>;
+
+/** Generated Node Admin SDK operation action function for the 'ActivateEmployeeShift' Mutation. Allow users to execute without passing in DataConnect. */
+export function activateEmployeeShift(dc: DataConnect, vars: ActivateEmployeeShiftVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<ActivateEmployeeShiftData>>;
+/** Generated Node Admin SDK operation action function for the 'ActivateEmployeeShift' Mutation. Allow users to pass in custom DataConnect instances. */
+export function activateEmployeeShift(vars: ActivateEmployeeShiftVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<ActivateEmployeeShiftData>>;
+
+/** Generated Node Admin SDK operation action function for the 'DeactivateEmployeeShift' Mutation. Allow users to execute without passing in DataConnect. */
+export function deactivateEmployeeShift(dc: DataConnect, vars: DeactivateEmployeeShiftVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<DeactivateEmployeeShiftData>>;
+/** Generated Node Admin SDK operation action function for the 'DeactivateEmployeeShift' Mutation. Allow users to pass in custom DataConnect instances. */
+export function deactivateEmployeeShift(vars: DeactivateEmployeeShiftVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<DeactivateEmployeeShiftData>>;
+
+/** Generated Node Admin SDK operation action function for the 'ToggleEmployeeDisabledByOwner' Mutation. Allow users to execute without passing in DataConnect. */
+export function toggleEmployeeDisabledByOwner(dc: DataConnect, vars: ToggleEmployeeDisabledByOwnerVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<ToggleEmployeeDisabledByOwnerData>>;
+/** Generated Node Admin SDK operation action function for the 'ToggleEmployeeDisabledByOwner' Mutation. Allow users to pass in custom DataConnect instances. */
+export function toggleEmployeeDisabledByOwner(vars: ToggleEmployeeDisabledByOwnerVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<ToggleEmployeeDisabledByOwnerData>>;
+
 /** Generated Node Admin SDK operation action function for the 'RejectEmployeeRequest' Mutation. Allow users to execute without passing in DataConnect. */
 export function rejectEmployeeRequest(dc: DataConnect, vars: RejectEmployeeRequestVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<RejectEmployeeRequestData>>;
 /** Generated Node Admin SDK operation action function for the 'RejectEmployeeRequest' Mutation. Allow users to pass in custom DataConnect instances. */
@@ -2212,6 +2307,11 @@ export function createBusiness(vars: CreateBusinessVariables, options?: Operatio
 export function updateBusiness(dc: DataConnect, vars: UpdateBusinessVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<UpdateBusinessData>>;
 /** Generated Node Admin SDK operation action function for the 'UpdateBusiness' Mutation. Allow users to pass in custom DataConnect instances. */
 export function updateBusiness(vars: UpdateBusinessVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<UpdateBusinessData>>;
+
+/** Generated Node Admin SDK operation action function for the 'OwnerUpdateBusinessStatus' Mutation. Allow users to execute without passing in DataConnect. */
+export function ownerUpdateBusinessStatus(dc: DataConnect, vars: OwnerUpdateBusinessStatusVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<OwnerUpdateBusinessStatusData>>;
+/** Generated Node Admin SDK operation action function for the 'OwnerUpdateBusinessStatus' Mutation. Allow users to pass in custom DataConnect instances. */
+export function ownerUpdateBusinessStatus(vars: OwnerUpdateBusinessStatusVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<OwnerUpdateBusinessStatusData>>;
 
 /** Generated Node Admin SDK operation action function for the 'CreateOrder' Mutation. Allow users to execute without passing in DataConnect. */
 export function createOrder(dc: DataConnect, vars: CreateOrderVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<CreateOrderData>>;
@@ -2414,9 +2514,9 @@ export function updateUserPhone(dc: DataConnect, vars: UpdateUserPhoneVariables,
 export function updateUserPhone(vars: UpdateUserPhoneVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<UpdateUserPhoneData>>;
 
 /** Generated Node Admin SDK operation action function for the 'DeleteCurrentUser' Mutation. Allow users to execute without passing in DataConnect. */
-export function deleteCurrentUser(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<DeleteCurrentUserData>>;
+export function deleteCurrentUser(dc: DataConnect, vars: DeleteCurrentUserVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<DeleteCurrentUserData>>;
 /** Generated Node Admin SDK operation action function for the 'DeleteCurrentUser' Mutation. Allow users to pass in custom DataConnect instances. */
-export function deleteCurrentUser(options?: OperationOptions): Promise<ExecuteOperationResponse<DeleteCurrentUserData>>;
+export function deleteCurrentUser(vars: DeleteCurrentUserVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<DeleteCurrentUserData>>;
 
 /** Generated Node Admin SDK operation action function for the 'CompleteOrderWithInvoiceOnly' Mutation. Allow users to execute without passing in DataConnect. */
 export function completeOrderWithInvoiceOnly(dc: DataConnect, vars: CompleteOrderWithInvoiceOnlyVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<CompleteOrderWithInvoiceOnlyData>>;
@@ -2522,6 +2622,11 @@ export function getBusinessOrders(vars: GetBusinessOrdersVariables, options?: Op
 export function getActiveEmployees(dc: DataConnect, vars: GetActiveEmployeesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetActiveEmployeesData>>;
 /** Generated Node Admin SDK operation action function for the 'GetActiveEmployees' Query. Allow users to pass in custom DataConnect instances. */
 export function getActiveEmployees(vars: GetActiveEmployeesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetActiveEmployeesData>>;
+
+/** Generated Node Admin SDK operation action function for the 'GetEmployeeBranches' Query. Allow users to execute without passing in DataConnect. */
+export function getEmployeeBranches(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<GetEmployeeBranchesData>>;
+/** Generated Node Admin SDK operation action function for the 'GetEmployeeBranches' Query. Allow users to pass in custom DataConnect instances. */
+export function getEmployeeBranches(options?: OperationOptions): Promise<ExecuteOperationResponse<GetEmployeeBranchesData>>;
 
 /** Generated Node Admin SDK operation action function for the 'GetBusinessServices' Query. Allow users to execute without passing in DataConnect. */
 export function getBusinessServices(dc: DataConnect, vars: GetBusinessServicesVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<GetBusinessServicesData>>;

@@ -10,11 +10,21 @@ part 'request_employee_access.dart';
 
 part 'approve_employee_request.dart';
 
+part 'deactivate_all_employee_shifts.dart';
+
+part 'activate_employee_shift.dart';
+
+part 'deactivate_employee_shift.dart';
+
+part 'toggle_employee_disabled_by_owner.dart';
+
 part 'reject_employee_request.dart';
 
 part 'create_business.dart';
 
 part 'update_business.dart';
+
+part 'owner_update_business_status.dart';
 
 part 'create_order.dart';
 
@@ -139,6 +149,8 @@ part 'get_client_orders.dart';
 part 'get_business_orders.dart';
 
 part 'get_active_employees.dart';
+
+part 'get_employee_branches.dart';
 
 part 'get_business_services.dart';
 
@@ -633,6 +645,26 @@ class ExampleConnector {
   }
   
   
+  DeactivateAllEmployeeShiftsVariablesBuilder deactivateAllEmployeeShifts ({required String employeeId, }) {
+    return DeactivateAllEmployeeShiftsVariablesBuilder(dataConnect, employeeId: employeeId,);
+  }
+  
+  
+  ActivateEmployeeShiftVariablesBuilder activateEmployeeShift ({required String businessId, required String employeeId, }) {
+    return ActivateEmployeeShiftVariablesBuilder(dataConnect, businessId: businessId,employeeId: employeeId,);
+  }
+  
+  
+  DeactivateEmployeeShiftVariablesBuilder deactivateEmployeeShift ({required String businessId, required String employeeId, }) {
+    return DeactivateEmployeeShiftVariablesBuilder(dataConnect, businessId: businessId,employeeId: employeeId,);
+  }
+  
+  
+  ToggleEmployeeDisabledByOwnerVariablesBuilder toggleEmployeeDisabledByOwner ({required String businessId, required String employeeId, required bool isDisabled, }) {
+    return ToggleEmployeeDisabledByOwnerVariablesBuilder(dataConnect, businessId: businessId,employeeId: employeeId,isDisabled: isDisabled,);
+  }
+  
+  
   RejectEmployeeRequestVariablesBuilder rejectEmployeeRequest ({required String requestId, required String employeeId, }) {
     return RejectEmployeeRequestVariablesBuilder(dataConnect, requestId: requestId,employeeId: employeeId,);
   }
@@ -645,6 +677,11 @@ class ExampleConnector {
   
   UpdateBusinessVariablesBuilder updateBusiness ({required String id, required String nombre, required String ruc, }) {
     return UpdateBusinessVariablesBuilder(dataConnect, id: id,nombre: nombre,ruc: ruc,);
+  }
+  
+  
+  OwnerUpdateBusinessStatusVariablesBuilder ownerUpdateBusinessStatus ({required String id, required BusinessStatus status, }) {
+    return OwnerUpdateBusinessStatusVariablesBuilder(dataConnect, id: id,status: status,);
   }
   
   
@@ -848,8 +885,8 @@ class ExampleConnector {
   }
   
   
-  DeleteCurrentUserVariablesBuilder deleteCurrentUser () {
-    return DeleteCurrentUserVariablesBuilder(dataConnect, );
+  DeleteCurrentUserVariablesBuilder deleteCurrentUser ({required String email, required String nombreCompleto, }) {
+    return DeleteCurrentUserVariablesBuilder(dataConnect, email: email,nombreCompleto: nombreCompleto,);
   }
   
   
@@ -955,6 +992,11 @@ class ExampleConnector {
   
   GetActiveEmployeesVariablesBuilder getActiveEmployees ({required String businessId, }) {
     return GetActiveEmployeesVariablesBuilder(dataConnect, businessId: businessId,);
+  }
+  
+  
+  GetEmployeeBranchesVariablesBuilder getEmployeeBranches () {
+    return GetEmployeeBranchesVariablesBuilder(dataConnect, );
   }
   
   

@@ -30,39 +30,9 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
   List<InvoiceModel> _filteredInvoices = [];
 
 
-  // Precomputed Billing Metrics to avoid recalculating in build()
-  double _totalBilled = 0.0;
-  int _completedCount = 0;
-  double _cashTotal = 0.0;
-  double _paypalTotal = 0.0;
-  double _bankTransferTotal = 0.0;
-  double _averageTicket = 0.0;
   List<_EmployeeStat> _sortedStats = [];
 
   void _updateMetrics() {
-    double totalBilled = 0.0;
-    int completedCount = 0;
-    double cashTotal = 0.0;
-    double paypalTotal = 0.0;
-    double bankTransferTotal = 0.0;
-
-    for (final inv in _filteredInvoices) {
-      totalBilled += inv.total;
-      if (inv.invoiceStatus == InvoiceStatus.GENERATED) {
-        completedCount++;
-      }
-      final paymentUpper = inv.paymentMethod.toUpperCase();
-      if (paymentUpper == 'CASH' || paymentUpper == 'EFECTIVO') {
-        cashTotal += inv.total;
-      } else if (paymentUpper == 'PAYPAL') {
-        paypalTotal += inv.total;
-      } else if (paymentUpper.contains('TRANSFERENCIA')) {
-        bankTransferTotal += inv.total;
-      }
-    }
-
-    double averageTicket = _filteredInvoices.isNotEmpty ? totalBilled / _filteredInvoices.length : 0.0;
-
     final Map<String, _EmployeeStat> empStats = {};
     for (final inv in _filteredInvoices) {
       final empName = inv.employeeName ?? 'Sin asignar';
@@ -76,12 +46,6 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
     final sortedStats = empStats.values.toList()
       ..sort((a, b) => b.totalBilled.compareTo(a.totalBilled));
 
-    _totalBilled = totalBilled;
-    _completedCount = completedCount;
-    _cashTotal = cashTotal;
-    _paypalTotal = paypalTotal;
-    _bankTransferTotal = bankTransferTotal;
-    _averageTicket = averageTicket;
     _sortedStats = sortedStats;
   }
 
@@ -180,6 +144,8 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
           paymentMethod = PaymentMethod.CASH;
         } else if (_selectedPaymentMethod == 'Transferencia') {
           paymentMethod = PaymentMethod.TRANSFERENCIA_BANCARIA;
+        } else if (_selectedPaymentMethod == 'PayPhone') {
+          paymentMethod = PaymentMethod.PAYPHONE;
         } else {
           paymentMethod = PaymentMethod.PAYPAL;
         }
@@ -198,7 +164,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
       }
 
       // 5. Query Search
-      final searchQuery = _searchQuery.trim().isNotEmpty ? _searchQuery.trim() : null;
+      final searchQuery = _searchQuery.trim().length >= 3 ? _searchQuery.trim() : null;
 
       final invoices = await _invoiceRepository.getBusinessInvoices(
         widget.businessId,
@@ -344,6 +310,8 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
           paymentMethod = PaymentMethod.CASH;
         } else if (_selectedPaymentMethod == 'Transferencia') {
           paymentMethod = PaymentMethod.TRANSFERENCIA_BANCARIA;
+        } else if (_selectedPaymentMethod == 'PayPhone') {
+          paymentMethod = PaymentMethod.PAYPHONE;
         } else {
           paymentMethod = PaymentMethod.PAYPAL;
         }
@@ -360,7 +328,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
         }
       }
 
-      final searchQuery = _searchQuery.trim().isNotEmpty ? _searchQuery.trim() : null;
+      final searchQuery = _searchQuery.trim().length >= 3 ? _searchQuery.trim() : null;
 
       final allMatchingInvoices = await _invoiceRepository.getBusinessInvoices(
         widget.businessId,
@@ -464,18 +432,6 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
               ],
               const SizedBox(height: 24),
 
-              // Metrics Grid Section
-              _buildMetricsGrid(
-                totalBilled: _totalBilled,
-                invoiceCount: _filteredInvoices.length,
-                completedCount: _completedCount,
-                averageTicket: _averageTicket,
-                cashTotal: _cashTotal,
-                paypalTotal: _paypalTotal,
-                bankTransferTotal: _bankTransferTotal,
-              ),
-              const SizedBox(height: 28),
-
               // Employee Stats / Leaderboard
               if (_sortedStats.isNotEmpty) ...[
                 _buildEmployeeLeaderboard(_sortedStats),
@@ -545,12 +501,19 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
               child: TextField(
                 controller: _searchController,
                 onChanged: (val) {
+                  final prevQuery = _searchQuery;
                   setState(() {
                     _searchQuery = val;
                   });
                   if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
                   _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-                    _applyFilters();
+                    final prevTrimmed = prevQuery.trim();
+                    final currentTrimmed = val.trim();
+                    if (currentTrimmed.isEmpty || 
+                        currentTrimmed.length >= 3 || 
+                        (prevTrimmed.length >= 3 && currentTrimmed.length < 3)) {
+                      _applyFilters();
+                    }
                   });
                 },
                 decoration: InputDecoration(
@@ -702,6 +665,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
                       ),
                       const SizedBox(height: 6),
                       DropdownButtonFormField<String>(
+                        isExpanded: true,
                         initialValue: _selectedDateFilter,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -752,6 +716,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
                       ),
                       const SizedBox(height: 6),
                       DropdownButtonFormField<String>(
+                        isExpanded: true,
                         initialValue: _selectedEmployeeName,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -800,33 +765,32 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
               ),
             ),
             const SizedBox(height: 8),
-            Row(
-              children: ['Todos', 'Efectivo', 'PayPal', 'Transferencia'].map((method) {
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: ['Todos', 'Efectivo', 'PayPal', 'PayPhone', 'Transferencia'].map((method) {
                 final isSelected = _selectedPaymentMethod == method;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: ChoiceChip(
-                    label: Text(method),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() {
-                          _selectedPaymentMethod = method;
-                        });
-                        _applyFilters();
-                      }
-                    },
-                    selectedColor: AppColors.primary,
-                    backgroundColor: Colors.grey[100],
-                    labelStyle: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? Colors.white : AppColors.textPrimary,
-                    ),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    side: BorderSide.none,
-                    showCheckmark: false,
+                return ChoiceChip(
+                  label: Text(method),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() {
+                        _selectedPaymentMethod = method;
+                      });
+                      _applyFilters();
+                    }
+                  },
+                  selectedColor: AppColors.primary,
+                  backgroundColor: Colors.grey[100],
+                  labelStyle: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected ? Colors.white : AppColors.textPrimary,
                   ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  side: BorderSide.none,
+                  showCheckmark: false,
                 );
               }).toList(),
             ),
@@ -842,33 +806,32 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
               ),
             ),
             const SizedBox(height: 8),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: ['Todos', 'Emitida', 'Pendiente', 'Fallo de PDF'].map((status) {
                 final isSelected = _selectedStatus == status;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: ChoiceChip(
-                    label: Text(status),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() {
-                          _selectedStatus = status;
-                        });
-                        _applyFilters();
-                      }
-                    },
-                    selectedColor: AppColors.primary,
-                    backgroundColor: Colors.grey[100],
-                    labelStyle: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? Colors.white : AppColors.textPrimary,
-                    ),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    side: BorderSide.none,
-                    showCheckmark: false,
+                return ChoiceChip(
+                  label: Text(status),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() {
+                        _selectedStatus = status;
+                      });
+                      _applyFilters();
+                    }
+                  },
+                  selectedColor: AppColors.primary,
+                  backgroundColor: Colors.grey[100],
+                  labelStyle: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected ? Colors.white : AppColors.textPrimary,
                   ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  side: BorderSide.none,
+                  showCheckmark: false,
                 );
               }).toList(),
             ),
@@ -878,189 +841,7 @@ class _OwnerBillingTabState extends State<OwnerBillingTab> {
     );
   }
 
-  Widget _buildMetricsGrid({
-    required double totalBilled,
-    required int invoiceCount,
-    required int completedCount,
-    required double averageTicket,
-    required double cashTotal,
-    required double paypalTotal,
-    required double bankTransferTotal,
-  }) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final double width = constraints.maxWidth;
-        int crossAxisCount = 2;
-        double childAspectRatio = 1.4;
 
-        if (width >= 1000) {
-          crossAxisCount = 4;
-          childAspectRatio = 1.8;
-        } else if (width >= 720) {
-          crossAxisCount = 4;
-          childAspectRatio = 1.3;
-        } else {
-          crossAxisCount = 2;
-          childAspectRatio = 1.4;
-        }
-
-        return GridView.count(
-          crossAxisCount: crossAxisCount,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          childAspectRatio: childAspectRatio,
-          children: [
-            _buildMetricCard(
-              title: 'Total Facturado',
-              value: '\$${totalBilled.toStringAsFixed(2)}',
-              icon: Icons.monetization_on_rounded,
-              gradient: const LinearGradient(
-                colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              textColor: Colors.white,
-            ),
-            _buildMetricCard(
-              title: 'Ticket Promedio',
-              value: '\$${averageTicket.toStringAsFixed(2)}',
-              icon: Icons.analytics_rounded,
-              gradient: const LinearGradient(
-                colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              textColor: Colors.white,
-            ),
-            _buildMetricCard(
-              title: 'Facturas Emitidas',
-              value: '$invoiceCount',
-              subtitle: '$completedCount completadas',
-              icon: Icons.receipt_long_rounded,
-              gradient: const LinearGradient(
-                colors: [Color(0xFF10B981), Color(0xFF059669)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              textColor: Colors.white,
-            ),
-            _buildMetricCard(
-              title: 'Métodos de Pago',
-              value: 'Efe: \$${cashTotal.toStringAsFixed(0)}',
-              subtitle: 'PP: \$${paypalTotal.toStringAsFixed(0)} • Transf: \$${bankTransferTotal.toStringAsFixed(0)}',
-              icon: Icons.account_balance_wallet_rounded,
-              gradient: const LinearGradient(
-                colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              textColor: Colors.white,
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildMetricCard({
-    required String title,
-    required String value,
-    String? subtitle,
-    required IconData icon,
-    required Gradient gradient,
-    required Color textColor,
-    VoidCallback? onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: gradient,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          children: [
-            // Background soft circular design
-            Positioned(
-              right: -20,
-              bottom: -20,
-              child: Icon(
-                icon,
-                size: 100,
-                color: Colors.white.withValues(alpha: 0.12),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: textColor.withValues(alpha: 0.8),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(icon, color: textColor.withValues(alpha: 0.9), size: 20),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        value,
-                        style: GoogleFonts.inter(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: textColor,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (subtitle != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          subtitle,
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: textColor.withValues(alpha: 0.8),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildEmployeeLeaderboard(List<_EmployeeStat> stats) {
     return Card(

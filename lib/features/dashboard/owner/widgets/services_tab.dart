@@ -6,48 +6,52 @@ import 'package:washgo/features/laundries/models/washgo_service.dart';
 
 class ServicesTab extends StatelessWidget {
   final List<WashGoService> services;
-  final AnimationController animationController;
+  final Animation<double>? animationController;
   final void Function(String id, bool active, String nombre) onToggleActive;
   final void Function(WashGoService service) onEditService;
   final void Function(String id, String nombre) onDeleteService;
   final VoidCallback onAddService;
+  final bool showHeader;
 
   const ServicesTab({
     super.key,
     required this.services,
-    required this.animationController,
+    this.animationController,
     required this.onToggleActive,
     required this.onEditService,
     required this.onDeleteService,
     required this.onAddService,
+    this.showHeader = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
-      opacity: animationController,
+      opacity: animationController ?? kAlwaysCompleteAnimation,
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Gestión de Servicios',
-              style: GoogleFonts.inter(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.onSurface,
+            if (showHeader) ...[
+              Text(
+                'Gestión de Servicios',
+                style: GoogleFonts.inter(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.onSurface,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Configura y organiza tu catálogo de limpieza.',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                color: Colors.grey.shade600,
+              const SizedBox(height: 4),
+              Text(
+                'Configura y organiza tu catálogo de limpieza.',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: Colors.grey.shade600,
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
+            ],
             if (services.isEmpty)
               Container(
                 width: double.infinity,

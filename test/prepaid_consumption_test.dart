@@ -28,6 +28,8 @@ class FakeBusinessRepository implements BusinessRepository {
   @override
   Future<WashGoBusiness?> getBusiness(String businessId) => throw UnimplementedError();
   @override
+  Future<void> updateBusinessStatus(String businessId, BusinessStatus status) => throw UnimplementedError();
+  @override
   Future<List<EmployeeRequest>> getPendingEmployeeRequests(String businessId) => throw UnimplementedError();
   @override
   Future<List<ActiveEmployee>> getActiveEmployees(String businessId) => throw UnimplementedError();
@@ -91,6 +93,14 @@ class FakeBusinessRepository implements BusinessRepository {
   Future<void> switchCurrentBusiness(String businessId) => throw UnimplementedError();
   @override
   Future<void> updateBusinessPrepaidBalance({required String id, required double saldoPrepagoInicial, required double saldoPrepagoConsumido}) => throw UnimplementedError();
+  @override
+  Future<List<EmployeeBranchStatus>> getEmployeeBranches() async => [];
+  @override
+  Future<void> activateEmployeeShift(String businessId) async {}
+  @override
+  Future<void> deactivateEmployeeShift(String businessId) async {}
+  @override
+  Future<void> toggleEmployeeDisabledByOwner({required String businessId, required String employeeId, required bool isDisabled}) async {}
 }
 
 void main() {

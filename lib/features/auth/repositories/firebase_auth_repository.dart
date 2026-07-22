@@ -101,8 +101,14 @@ class FirebaseAuthRepository implements AuthRepository {
   Future<void> deleteAccount() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
+      final uid = currentUser.uid;
       try {
-        await _connector.deleteCurrentUser().execute();
+        await _connector
+            .deleteCurrentUser(
+              email: 'deleted-$uid@washgo.app',
+              nombreCompleto: 'Usuario Eliminado',
+            )
+            .execute();
       } catch (e) {
         // Log the error but proceed with Firebase Auth deletion to guarantee account termination
         debugPrint('Error deleting user record from Data Connect: $e');

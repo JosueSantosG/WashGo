@@ -108,6 +108,7 @@ type BusinessEmployee @table {
   business: Business!
   employee: User!
   estadoDisponibilidad: Boolean! @default(value: true)
+  isDisabledByOwner: Boolean! @default(value: false)
   joinedAt: Timestamp! @default(expr: "request.time")
   status: EmployeeStatus! @default(value: ACTIVE)
 }

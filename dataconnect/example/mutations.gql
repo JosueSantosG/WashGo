@@ -39,12 +39,71 @@ mutation ApproveEmployeeRequest($requestId: UUID!, $employeeId: String!, $busine
   # 2. Update the user
   user_update(key: { id: $employeeId }, data: { employeeStatus: ACTIVE, currentBusinessId: $businessId })
   
-  # 3. Create the business employee relationship
+  # 3. Deactivate all existing shifts for this employee
+  businessEmployee_updateMany(
+    where: { employeeId: { eq: $employeeId } },
+    data: { estadoDisponibilidad: false }
+  )
+
+  # 4. Create the new business employee relationship
   businessEmployee_insert(data: {
     businessId: $businessId,
     employeeId: $employeeId,
     status: ACTIVE
   })
+}
+
+mutation DeactivateAllEmployeeShifts($employeeId: String!) @auth(level: USER) @transaction {
+  query @redact {
+    user(key: { id_expr: "auth.uid" }) @check(
+      expr: "auth.uid == vars.employeeId || 'SUPER_ADMIN' in this.roles",
+      message: "Solo el propio empleado o un administrador puede desactivar los turnos"
+    ) {
+      roles
+    }
+  }
+  businessEmployee_updateMany(
+    where: { employeeId: { eq: $employeeId } },
+    data: { estadoDisponibilidad: false }
+  )
+}
+
+mutation ActivateEmployeeShift($businessId: UUID!, $employeeId: String!) @auth(level: USER) @transaction {
+  query @redact {
+    business(key: { id: $businessId }) {
+      owner {
+        id
+      }
+    }
+    user(key: { id_expr: "auth.uid" }) @check(
+      expr: "auth.uid == vars.employeeId || 'SUPER_ADMIN' in this.roles || (response.query.business != null && response.query.business.owner != null && response.query.business.owner.id == auth.uid)",
+      message: "No tienes permiso para activar el turno de este empleado"
+    ) {
+      roles
+    }
+  }
+  businessEmployee_updateMany(
+    where: { employeeId: { eq: $employeeId }, businessId: { eq: $businessId }, isDisabledByOwner: { eq: false } },
+    data: { estadoDisponibilidad: true }
+  )
+  user_update(
+    key: { id: $employeeId },
+    data: { currentBusinessId: $businessId }
+  )
+}
+
+mutation DeactivateEmployeeShift($businessId: UUID!, $employeeId: String!) @auth(level: USER) {
+  businessEmployee_updateMany(
+    where: { employeeId: { eq: $employeeId }, businessId: { eq: $businessId } },
+    data: { estadoDisponibilidad: false }
+  )
+}
+
+mutation ToggleEmployeeDisabledByOwner($businessId: UUID!, $employeeId: String!, $isDisabled: Boolean!) @auth(level: USER) {
+  businessEmployee_updateMany(
+    where: { businessId: { eq: $businessId }, employeeId: { eq: $employeeId } },
+    data: { isDisabledByOwner: $isDisabled, estadoDisponibilidad: false }
+  )
 }
 
 mutation RejectEmployeeRequest($requestId: UUID!, $employeeId: String!) @auth(level: USER) @transaction {
@@ -114,6 +173,17 @@ mutation UpdateBusiness(
     latitud: $latitud,
     longitud: $longitud
   })
+}
+
+mutation OwnerUpdateBusinessStatus($id: UUID!, $status: BusinessStatus!) @auth(level: USER) {
+  query @redact {
+    business(key: { id: $id }) {
+      owner {
+        id @check(expr: "this == auth.uid", message: "No eres el dueño de este negocio")
+      }
+    }
+  }
+  business_update(key: { id: $id }, data: { status: $status })
 }
 
 mutation CreateOrder(
@@ -923,8 +993,17 @@ mutation UpdateUserPhone($telefono: String!) @auth(level: USER) {
   user_update(key: { id_expr: "auth.uid" }, data: { telefono: $telefono })
 }
 
-mutation DeleteCurrentUser @auth(level: USER) {
-  user_delete(key: { id_expr: "auth.uid" })
+mutation DeleteCurrentUser($email: String!, $nombreCompleto: String!) @auth(level: USER) {
+  user_update(
+    key: { id_expr: "auth.uid" },
+    data: {
+      nombreCompleto: $nombreCompleto,
+      email: $email,
+      telefono: null,
+      fotoPerfil: null,
+      employeeStatus: UNASSIGNED
+    }
+  )
 }
 
 
