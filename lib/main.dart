@@ -25,7 +25,7 @@ void main() async {
     try {
       const recaptchaSiteKey = String.fromEnvironment(
         'RECAPTCHA_SITE_KEY',
-        defaultValue: '6Leabcdefghijklmnopqrstuvwxyz_PLACEHOLDER',
+        defaultValue: '6LcGfGMtAAAAAOa0ZY0RVRA_pHk9xJXx7CAwGmGG',
       );
       await FirebaseAppCheck.instance.activate(
         webProvider: ReCaptchaV3Provider(recaptchaSiteKey),

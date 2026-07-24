@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:latlong2/latlong.dart' as latlong;
@@ -51,13 +52,15 @@ class _MapPickerPageState extends State<MapPickerPage> {
       }
       if (permission == LocationPermission.deniedForever) return;
 
-      // Attempt to immediately load last known position (if supported)
-      try {
-        final lastKnown = await Geolocator.getLastKnownPosition();
-        if (lastKnown != null) {
-          _moveToPosition(latlong.LatLng(lastKnown.latitude, lastKnown.longitude));
-        }
-      } catch (_) {}
+      // Attempt to immediately load last known position (if supported and not web)
+      if (!kIsWeb) {
+        try {
+          final lastKnown = await Geolocator.getLastKnownPosition();
+          if (lastKnown != null) {
+            _moveToPosition(latlong.LatLng(lastKnown.latitude, lastKnown.longitude));
+          }
+        } catch (_) {}
+      }
 
       // Get current fresh position
       final position = await Geolocator.getCurrentPosition(

@@ -1,4 +1,5 @@
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
@@ -817,25 +818,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
 
       // Attempt to immediately load last known position to make it instant (isolated try-catch as it's unsupported on web)
-      try {
-        final lastKnown = await Geolocator.getLastKnownPosition();
-        if (lastKnown != null &&
-            HomePage.cachedUserLocation == null &&
-            mounted) {
-          setState(() {
-            _userLocation = LatLng(lastKnown.latitude, lastKnown.longitude);
-            HomePage.cachedUserLocation = _userLocation;
-          });
-          if (_isFirstLocationLock) {
-            _isFirstLocationLock = false;
-            HomePage.hasLockedInitialLocation = true;
-            _animatedMapMove(_userLocation, 15.0);
+      if (!kIsWeb) {
+        try {
+          final lastKnown = await Geolocator.getLastKnownPosition();
+          if (lastKnown != null &&
+              HomePage.cachedUserLocation == null &&
+              mounted) {
+            setState(() {
+              _userLocation = LatLng(lastKnown.latitude, lastKnown.longitude);
+              HomePage.cachedUserLocation = _userLocation;
+            });
+            if (_isFirstLocationLock) {
+              _isFirstLocationLock = false;
+              HomePage.hasLockedInitialLocation = true;
+              _animatedMapMove(_userLocation, 15.0);
+            }
           }
+        } catch (e) {
+          debugPrint(
+            'getLastKnownPosition is not supported or failed on this platform: $e',
+          );
         }
-      } catch (e) {
-        debugPrint(
-          'getLastKnownPosition is not supported or failed on this platform: $e',
-        );
       }
 
       // Always fetch businesses immediately with available/cached location
