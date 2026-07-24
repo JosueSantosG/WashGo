@@ -593,7 +593,7 @@ export function getClientInvoices(dcOrVarsOrOptions, varsOrOptions, options) {
 }
 
 export function getEmployeeInvoices(dcOrVarsOrOptions, varsOrOptions, options) {
-  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, false);
+  const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
   dcInstance.useGen(true);
   return dcInstance.executeQuery('GetEmployeeInvoices', inputVars, inputOpts);
 }
@@ -788,5 +788,11 @@ export function getPendingElectronicOrders(dcOrOptions, options) {
   const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
   dcInstance.useGen(true);
   return dcInstance.executeQuery('GetPendingElectronicOrders', undefined, inputOpts);
+}
+
+export function getMyEmployeeRequests(dcOrOptions, options) {
+  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('GetMyEmployeeRequests', undefined, inputOpts);
 }
 

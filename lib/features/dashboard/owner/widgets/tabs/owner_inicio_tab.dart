@@ -165,6 +165,9 @@ class OwnerInicioTab extends StatelessWidget {
   final double cashEarnings;
   final double electronicEarnings;
   final OwnerDashboardStats dashboardStats;
+  final List<WashGoBusiness> myBusinesses;
+  final Map<String, double> monthlyRevenueByBranch;
+  final void Function(String)? onSwitchBusiness;
 
   const OwnerInicioTab({
     super.key,
@@ -178,6 +181,9 @@ class OwnerInicioTab extends StatelessWidget {
     required this.cashEarnings,
     required this.electronicEarnings,
     required this.dashboardStats,
+    this.myBusinesses = const [],
+    this.monthlyRevenueByBranch = const {},
+    this.onSwitchBusiness,
   });
 
 
@@ -294,6 +300,7 @@ class OwnerInicioTab extends StatelessWidget {
             width: isWide ? (constraints.maxWidth - 16) / 2 : double.infinity,
           ),
           _buildIncomeBreakdownCard(
+            context: context,
             cashIncome: cashEarnings,
             electronicIncome: electronicEarnings,
             serviciosRealizados: serviciosRealizados,
@@ -461,6 +468,7 @@ class OwnerInicioTab extends StatelessWidget {
   }
 
   Widget _buildIncomeBreakdownCard({
+    required BuildContext context,
     required double cashIncome,
     required double electronicIncome,
     required int serviciosRealizados,
@@ -603,8 +611,185 @@ class OwnerInicioTab extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          const Divider(height: 1),
+          const SizedBox(height: 8),
+          InkWell(
+            onTap: () => _showBranchRevenueModal(context),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.storefront_rounded,
+                    size: 16,
+                    color: AppColors.primary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Ver ingresos por local',
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
+                    color: AppColors.primary,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  void _showBranchRevenueModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.analytics_rounded,
+                    color: AppColors.primary,
+                    size: 28,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Ingresos por Local',
+                    style: GoogleFonts.outfit(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Total recaudado acumulado en el mes actual.',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppColors.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (myBusinesses.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Text('No tienes locales registrados.'),
+                )
+              else
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(ctx).size.height * 0.45,
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: myBusinesses.length,
+                    separatorBuilder: (_, _) => const Divider(height: 1),
+                    itemBuilder: (_, index) {
+                      final b = myBusinesses[index];
+                      final revenue = monthlyRevenueByBranch[b.id] ?? 0.0;
+                      final isSelected = business?.id == b.id;
+
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 4,
+                        ),
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          if (!isSelected && onSwitchBusiness != null) {
+                            onSwitchBusiness!(b.id);
+                          }
+                        },
+                        leading: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.primary.withValues(alpha: 0.1)
+                                : Colors.grey.shade100,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isSelected
+                                ? Icons.storefront_rounded
+                                : Icons.store_outlined,
+                            color: isSelected
+                                ? AppColors.primary
+                                : Colors.grey.shade600,
+                            size: 22,
+                          ),
+                        ),
+                        title: Text(
+                          b.nombre,
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: AppColors.onSurface,
+                          ),
+                        ),
+                        subtitle: Text(
+                          b.businessCode.isNotEmpty
+                              ? 'Código: ${b.businessCode}'
+                              : 'RUC: ${b.ruc}',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                        ),
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '\$${revenue.toStringAsFixed(2)}',
+                              style: GoogleFonts.outfit(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green.shade700,
+                              ),
+                            ),
+                            if (isSelected)
+                              Text(
+                                'Seleccionado',
+                                style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
     );
   }
 

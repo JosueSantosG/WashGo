@@ -7,8 +7,8 @@ class FindUserByPhoneVariablesBuilder {
   FindUserByPhoneVariablesBuilder(this._dataConnect, {required  this.phone,});
   Deserializer<FindUserByPhoneData> dataDeserializer = (dynamic json)  => FindUserByPhoneData.fromJson(jsonDecode(json));
   Serializer<FindUserByPhoneVariables> varsSerializer = (FindUserByPhoneVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<FindUserByPhoneData, FindUserByPhoneVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<FindUserByPhoneData, FindUserByPhoneVariables>> execute() {
+    return ref().execute();
   }
 
   QueryRef<FindUserByPhoneData, FindUserByPhoneVariables> ref() {

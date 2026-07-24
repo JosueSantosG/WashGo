@@ -17,8 +17,8 @@ class GetPendingPaymentProofsVariablesBuilder {
   GetPendingPaymentProofsVariablesBuilder(this._dataConnect, );
   Deserializer<GetPendingPaymentProofsData> dataDeserializer = (dynamic json)  => GetPendingPaymentProofsData.fromJson(jsonDecode(json));
   Serializer<GetPendingPaymentProofsVariables> varsSerializer = (GetPendingPaymentProofsVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetPendingPaymentProofsData, GetPendingPaymentProofsVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetPendingPaymentProofsData, GetPendingPaymentProofsVariables>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetPendingPaymentProofsData, GetPendingPaymentProofsVariables> ref() {

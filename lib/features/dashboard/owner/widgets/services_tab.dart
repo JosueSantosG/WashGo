@@ -133,87 +133,158 @@ class ServicesTab extends StatelessWidget {
                             : Colors.grey.shade200,
                       ),
                     ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(16),
-                      leading: CircleAvatar(
-                        backgroundColor: isServiceActive
-                            ? Colors.blue.shade50
-                            : Colors.grey.shade100,
-                        child: Icon(
-                          serviceIcon,
-                          color: isServiceActive
-                              ? AppColors.primary
-                              : Colors.grey.shade400,
-                        ),
-                      ),
-                      title: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              service.nombre,
-                              style: GoogleFonts.inter(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: isServiceActive
-                                    ? AppColors.onSurface
-                                    : Colors.grey.shade500,
-                                decoration: isServiceActive
-                                    ? null
-                                    : TextDecoration.lineThrough,
-                              ),
-                            ),
-                          ),
-                          if (!isServiceActive) ...[
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade200,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                'Inactivo',
-                                style: GoogleFonts.inter(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                          ],
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isServiceActive
-                                  ? Colors.blue.shade50
-                                  : Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              tipoText,
-                              style: GoogleFonts.inter(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: isServiceActive
-                                    ? AppColors.primary
-                                    : Colors.grey.shade500,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      subtitle: Column(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: isServiceActive
+                                    ? Colors.blue.shade50
+                                    : Colors.grey.shade100,
+                                child: Icon(
+                                  serviceIcon,
+                                  color: isServiceActive
+                                      ? AppColors.primary
+                                      : Colors.grey.shade400,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      service.nombre,
+                                      style: GoogleFonts.inter(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: isServiceActive
+                                            ? AppColors.onSurface
+                                            : Colors.grey.shade500,
+                                        decoration: isServiceActive
+                                            ? null
+                                            : TextDecoration.lineThrough,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Wrap(
+                                      spacing: 6,
+                                      runSpacing: 4,
+                                      children: [
+                                        if (!isServiceActive)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.shade200,
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              'Inactivo',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.grey.shade600,
+                                              ),
+                                            ),
+                                          ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: isServiceActive
+                                                ? Colors.blue.shade50
+                                                : Colors.grey.shade100,
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            tipoText,
+                                            style: GoogleFonts.inter(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: isServiceActive
+                                                  ? AppColors.primary
+                                                  : Colors.grey.shade500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Switch(
+                                    value: isServiceActive,
+                                    activeThumbColor: AppColors.primary,
+                                    onChanged: service.precioPendiente
+                                        ? null
+                                        : (value) {
+                                            onToggleActive(service.id, value, service.nombre);
+                                          },
+                                  ),
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.edit_outlined,
+                                      color: service.precioPendiente ? Colors.grey : Colors.blue,
+                                    ),
+                                    onPressed: service.precioPendiente
+                                        ? null
+                                        : () => onEditService(service),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.delete_outline_rounded,
+                                      color: Colors.red,
+                                    ),
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: const Text('Eliminar Servicio'),
+                                          content: Text(
+                                            '¿Estás seguro de que deseas eliminar "${service.nombre}"?',
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context),
+                                              child: const Text('Cancelar'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.pop(context);
+                                                onDeleteService(
+                                                  service.id,
+                                                  service.nombre,
+                                                );
+                                              },
+                                              child: const Text(
+                                                'Eliminar',
+                                                style: TextStyle(color: Colors.red),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                           if (service.descripcion != null &&
                               service.descripcion!.isNotEmpty) ...[
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 8),
                             Text(
                               service.descripcion!,
                               style: GoogleFonts.inter(
@@ -246,7 +317,7 @@ class ServicesTab extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
                           Wrap(
                             spacing: 8,
                             runSpacing: 4,
@@ -258,7 +329,7 @@ class ServicesTab extends StatelessWidget {
                             ],
                           ),
                           if (service.precioPendiente) ...[
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.all(12),
@@ -313,65 +384,6 @@ class ServicesTab extends StatelessWidget {
                               ),
                             ),
                           ],
-                        ],
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Switch(
-                            value: isServiceActive,
-                            activeThumbColor: AppColors.primary,
-                            onChanged: service.precioPendiente
-                                ? null
-                                : (value) {
-                                    onToggleActive(service.id, value, service.nombre);
-                                  },
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              Icons.edit_outlined,
-                              color: service.precioPendiente ? Colors.grey : Colors.blue,
-                            ),
-                            onPressed: service.precioPendiente
-                                ? null
-                                : () => onEditService(service),
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.delete_outline_rounded,
-                              color: Colors.red,
-                            ),
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('Eliminar Servicio'),
-                                  content: Text(
-                                    '¿Estás seguro de que deseas eliminar "${service.nombre}"?',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text('Cancelar'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                        onDeleteService(
-                                          service.id,
-                                          service.nombre,
-                                        );
-                                      },
-                                      child: const Text(
-                                        'Eliminar',
-                                        style: TextStyle(color: Colors.red),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
                         ],
                       ),
                     ),

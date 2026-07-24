@@ -50,6 +50,7 @@ class EmployeeBranchStatus {
   final String? description;
   final bool isDisabledByOwner;
   final bool estadoDisponibilidad;
+  final bool isPending;
 
   const EmployeeBranchStatus({
     required this.recordId,
@@ -59,5 +60,6 @@ class EmployeeBranchStatus {
     this.description,
     required this.isDisabledByOwner,
     required this.estadoDisponibilidad,
+    this.isPending = false,
   });
 }

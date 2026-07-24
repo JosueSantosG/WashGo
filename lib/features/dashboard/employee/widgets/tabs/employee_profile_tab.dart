@@ -25,6 +25,11 @@ class EmployeeProfileTab extends StatefulWidget {
   final Future<void> Function(String businessId)? onDeactivateShift;
   final Future<void> Function() onRefreshDashboard;
   final void Function(String name, String phone) onProfileUpdated;
+  final int activeOrdersCount;
+  final VoidCallback? onGoToTareasTab;
+
+  final String? currentBusinessId;
+  final Future<void> Function(String businessId)? onSwitchBranch;
 
   const EmployeeProfileTab({
     super.key,
@@ -42,6 +47,10 @@ class EmployeeProfileTab extends StatefulWidget {
     this.onDeactivateShift,
     required this.onRefreshDashboard,
     required this.onProfileUpdated,
+    this.activeOrdersCount = 0,
+    this.onGoToTareasTab,
+    this.currentBusinessId,
+    this.onSwitchBranch,
   });
 
   @override
@@ -94,7 +103,10 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                              width: 2,
+                            ),
                           ),
                         ),
                         validator: (value) {
@@ -116,7 +128,10 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                              width: 2,
+                            ),
                           ),
                         ),
                         validator: (value) {
@@ -171,7 +186,9 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Perfil actualizado correctamente.'),
+                                    content: Text(
+                                      'Perfil actualizado correctamente.',
+                                    ),
                                     backgroundColor: Colors.green,
                                   ),
                                 );
@@ -197,7 +214,10 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
                   ),
                   child: isSaving
                       ? const SizedBox(
@@ -250,7 +270,9 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
+            border: Border.all(
+              color: AppColors.outlineVariant.withValues(alpha: 0.3),
+            ),
           ),
           child: Column(
             children: [
@@ -261,7 +283,11 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                     color: AppColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.person_outline_rounded, color: AppColors.primary, size: 20),
+                  child: const Icon(
+                    Icons.person_outline_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
                 ),
                 title: Text(
                   'Nombre Completo',
@@ -288,7 +314,11 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                     color: AppColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.email_outlined, color: AppColors.primary, size: 20),
+                  child: const Icon(
+                    Icons.email_outlined,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
                 ),
                 title: Text(
                   'Correo Electrónico',
@@ -315,7 +345,11 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                     color: AppColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.phone_outlined, color: AppColors.primary, size: 20),
+                  child: const Icon(
+                    Icons.phone_outlined,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
                 ),
                 title: Text(
                   'Teléfono',
@@ -326,13 +360,16 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                   ),
                 ),
                 subtitle: Text(
-                  (widget.employeePhone != null && widget.employeePhone!.isNotEmpty)
+                  (widget.employeePhone != null &&
+                          widget.employeePhone!.isNotEmpty)
                       ? widget.employeePhone!
                       : 'No especificado',
                   style: GoogleFonts.outfit(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
-                    color: (widget.employeePhone != null && widget.employeePhone!.isNotEmpty)
+                    color:
+                        (widget.employeePhone != null &&
+                            widget.employeePhone!.isNotEmpty)
                         ? AppColors.onSurface
                         : AppColors.error,
                   ),
@@ -362,12 +399,17 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
+            border: Border.all(
+              color: AppColors.outlineVariant.withValues(alpha: 0.3),
+            ),
           ),
           child: Column(
             children: [
               ListTile(
-                leading: const Icon(Icons.description_outlined, color: AppColors.primary),
+                leading: const Icon(
+                  Icons.description_outlined,
+                  color: AppColors.primary,
+                ),
                 title: Text(
                   'Términos y Condiciones',
                   style: GoogleFonts.outfit(
@@ -380,7 +422,10 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const Icon(Icons.privacy_tip_outlined, color: AppColors.primary),
+                leading: const Icon(
+                  Icons.privacy_tip_outlined,
+                  color: AppColors.primary,
+                ),
                 title: Text(
                   'Política de Privacidad y GDPR',
                   style: GoogleFonts.outfit(
@@ -393,7 +438,10 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const Icon(Icons.delete_forever_outlined, color: AppColors.error),
+                leading: const Icon(
+                  Icons.delete_forever_outlined,
+                  color: AppColors.error,
+                ),
                 title: Text(
                   'Eliminar Cuenta',
                   style: GoogleFonts.outfit(
@@ -402,7 +450,10 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                     color: AppColors.error,
                   ),
                 ),
-                trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.error),
+                trailing: const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.error,
+                ),
                 onTap: () => _showDeleteAccountDialog(context),
               ),
             ],
@@ -534,7 +585,7 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
   void _showDeleteAccountDialog(BuildContext context) {
     bool isConfirmed = false;
     bool isDeleting = false;
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -547,7 +598,11 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
               ),
               title: Row(
                 children: [
-                  const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 28),
+                  const Icon(
+                    Icons.warning_amber_rounded,
+                    color: AppColors.error,
+                    size: 28,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -649,8 +704,11 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                             });
                             if (context.mounted) {
                               String errorMsg = 'Error al eliminar cuenta: $e';
-                              if (e.toString().contains('requires-recent-login')) {
-                                errorMsg = 'Por motivos de seguridad, debes haber iniciado sesión recientemente para eliminar tu cuenta. Cierra sesión y vuelve a ingresar para intentarlo.';
+                              if (e.toString().contains(
+                                'requires-recent-login',
+                              )) {
+                                errorMsg =
+                                    'Por motivos de seguridad, debes haber iniciado sesión recientemente para eliminar tu cuenta. Cierra sesión y vuelve a ingresar para intentarlo.';
                               }
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -665,11 +723,16 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.error,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: AppColors.error.withValues(alpha: 0.3),
+                    disabledBackgroundColor: AppColors.error.withValues(
+                      alpha: 0.3,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                   ),
                   child: isDeleting
                       ? const SizedBox(
@@ -695,7 +758,6 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
     );
   }
 
-
   Widget _buildAccountSettingsCard() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -713,13 +775,18 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
+            border: Border.all(
+              color: AppColors.outlineVariant.withValues(alpha: 0.3),
+            ),
           ),
           child: Column(
             children: [
               if (widget.userRoles.contains(UserRole.CLIENTE)) ...[
                 ListTile(
-                  leading: const Icon(Icons.directions_car_filled_rounded, color: AppColors.primary),
+                  leading: const Icon(
+                    Icons.directions_car_filled_rounded,
+                    color: AppColors.primary,
+                  ),
                   title: const Text('Cambiar a modo Cliente'),
                   subtitle: const Text('Ir al panel de reservas de cliente'),
                   trailing: const Icon(Icons.chevron_right_rounded),
@@ -731,10 +798,19 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                 const Divider(height: 1),
               ],
               ListTile(
-                leading: const Icon(Icons.logout_rounded, color: AppColors.error),
-                title: const Text('Cerrar Sesión', style: TextStyle(color: AppColors.error)),
+                leading: const Icon(
+                  Icons.logout_rounded,
+                  color: AppColors.error,
+                ),
+                title: const Text(
+                  'Cerrar Sesión',
+                  style: TextStyle(color: AppColors.error),
+                ),
                 subtitle: const Text('Salir de la cuenta actual'),
-                trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.error),
+                trailing: const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.error,
+                ),
                 onTap: () async {
                   final router = GoRouter.of(context);
                   await FirebaseAuth.instance.signOut();
@@ -749,9 +825,73 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
     );
   }
 
+  void _showActiveServicesWarning() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.block_rounded, color: Colors.amber, size: 28),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Servicios en Curso',
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: AppColors.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Actualmente tienes servicios o reservas en curso en tu sucursal actual. Debes completarlos antes de ponerte en receso, cambiar de turno, vincular un nuevo local o cambiar de sucursal.',
+            style: GoogleFonts.inter(fontSize: 14, height: 1.5),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Entendido',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
+  void _handleActivateShift(String businessId) {
+    if (widget.activeOrdersCount > 0) {
+      _showActiveServicesWarning();
+      return;
+    }
+    widget.onActivateShift(businessId);
+  }
+
+  void _handleDeactivateShift(String businessId) {
+    if (widget.activeOrdersCount > 0) {
+      _showActiveServicesWarning();
+      return;
+    }
+    widget.onDeactivateShift?.call(businessId);
+  }
 
   void _showJoinNewBranchModal(BuildContext context) {
+    if (widget.activeOrdersCount > 0) {
+      _showActiveServicesWarning();
+      return;
+    }
+
     final codeController = TextEditingController();
     bool isSearching = false;
     bool isSubmitting = false;
@@ -780,7 +920,11 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.storefront_rounded, color: AppColors.primary, size: 28),
+                      const Icon(
+                        Icons.storefront_rounded,
+                        color: AppColors.primary,
+                        size: 28,
+                      ),
                       const SizedBox(width: 10),
                       Text(
                         'Vincular Nueva Sucursal',
@@ -834,19 +978,22 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                                     businessFound = null;
                                   });
                                   try {
-                                    final business = await widget.authRepository.getBusinessByCode(code);
+                                    final business = await widget.authRepository
+                                        .getBusinessByCode(code);
                                     setSheetState(() {
                                       isSearching = false;
                                       if (business != null) {
                                         businessFound = business;
                                       } else {
-                                        errorMessage = 'No se encontró lavandería con ese código.';
+                                        errorMessage =
+                                            'No se encontró lavandería con ese código.';
                                       }
                                     });
                                   } catch (e) {
                                     setSheetState(() {
                                       isSearching = false;
-                                      errorMessage = 'Error al buscar el código.';
+                                      errorMessage =
+                                          'Error al buscar el código.';
                                     });
                                   }
                                 },
@@ -861,9 +1008,15 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
                                 )
-                              : const Text('Buscar', style: TextStyle(color: Colors.white)),
+                              : const Text(
+                                  'Buscar',
+                                  style: TextStyle(color: Colors.white),
+                                ),
                         ),
                       ),
                     ],
@@ -875,11 +1028,17 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.2),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.check_circle_rounded, color: Colors.green, size: 32),
+                          const Icon(
+                            Icons.check_circle_rounded,
+                            color: Colors.green,
+                            size: 32,
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -919,7 +1078,8 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                                   isSubmitting = true;
                                 });
                                 try {
-                                  await widget.authRepository.requestEmployeeAccess(businessFound!.id);
+                                  await widget.authRepository
+                                      .requestEmployeeAccess(businessFound!.id);
                                   if (ctx.mounted) {
                                     Navigator.pop(ctx);
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -936,18 +1096,31 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                                 } catch (e) {
                                   setSheetState(() {
                                     isSubmitting = false;
-                                    errorMessage = 'Error al enviar solicitud: $e';
+                                    errorMessage =
+                                        'Error al enviar solicitud: $e';
                                   });
                                 }
                               },
-                        icon: const Icon(Icons.send_rounded, color: Colors.white),
+                        icon: const Icon(
+                          Icons.send_rounded,
+                          color: Colors.white,
+                        ),
                         label: isSubmitting
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
                               )
-                            : const Text('Enviar Solicitud al Dueño', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            : const Text(
+                                'Enviar Solicitud al Dueño',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -968,15 +1141,27 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
   }
 
   Widget _buildBranchesCard() {
+    final activeBranchList = widget.employeeBranches
+        .where((b) => b.businessId == widget.currentBusinessId)
+        .toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Disponibilidad por Sucursal',
+          'Mis Sucursales',
           style: GoogleFonts.outfit(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: AppColors.onBackground,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Selecciona o activa la sucursal donde vas a atender tu turno:',
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            color: AppColors.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 12),
@@ -984,11 +1169,34 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
+            border: Border.all(
+              color: AppColors.outlineVariant.withValues(alpha: 0.3),
+            ),
           ),
           child: Column(
             children: [
-              ...widget.employeeBranches.map((branch) {
+              if (activeBranchList.isEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.info_outline_rounded, color: AppColors.primary),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'No tienes ninguna sucursal seleccionada en este momento.',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+              ] else
+                ...activeBranchList.map((branch) {
                 final isAvailable = branch.estadoDisponibilidad;
                 final isDisabled = branch.isDisabledByOwner;
 
@@ -996,7 +1204,11 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                 Color statusColor;
                 IconData statusIcon;
 
-                if (isDisabled) {
+                if (branch.isPending) {
+                  statusSubtitle = 'Pendiente de aprobación';
+                  statusColor = Colors.orange;
+                  statusIcon = Icons.hourglass_empty_rounded;
+                } else if (isDisabled) {
                   statusSubtitle = 'Deshabilitado por el dueño';
                   statusColor = Colors.red;
                   statusIcon = Icons.block_rounded;
@@ -1005,7 +1217,8 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                   statusColor = Colors.green;
                   statusIcon = Icons.check_circle_rounded;
                 } else {
-                  statusSubtitle = 'En Receso / Inactivo';
+                  statusSubtitle =
+                      'En Receso / Inactivo (Toca para cambiar aquí)';
                   statusColor = Colors.orange;
                   statusIcon = Icons.pause_circle_outline_rounded;
                 }
@@ -1013,17 +1226,22 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                 return Column(
                   children: [
                     ListTile(
+                      onTap: branch.isPending || isDisabled
+                          ? null
+                          : () {
+                              if (!isAvailable) {
+                                _handleActivateShift(branch.businessId);
+                              } else {
+                                widget.onGoToTareasTab?.call();
+                              }
+                            },
                       leading: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: statusColor.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
-                          statusIcon,
-                          color: statusColor,
-                          size: 20,
-                        ),
+                        child: Icon(statusIcon, color: statusColor, size: 20),
                       ),
                       title: Text(
                         branch.businessName,
@@ -1036,13 +1254,14 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Código: ${branch.businessCode}',
-                            style: GoogleFonts.outfit(
-                              fontSize: 12,
-                              color: AppColors.onSurfaceVariant,
+                          if (branch.businessCode.isNotEmpty)
+                            Text(
+                              'Código: ${branch.businessCode}',
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                color: AppColors.onSurfaceVariant,
+                              ),
                             ),
-                          ),
                           Text(
                             statusSubtitle,
                             style: GoogleFonts.outfit(
@@ -1053,19 +1272,38 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                           ),
                         ],
                       ),
-                      trailing: isDisabled
-                          ? const Icon(Icons.lock_rounded, color: Colors.red)
-                          : Switch.adaptive(
-                              value: isAvailable,
-                              activeColor: Colors.green,
-                              onChanged: (val) {
-                                if (val) {
-                                  widget.onActivateShift(branch.businessId);
-                                } else {
-                                  widget.onDeactivateShift?.call(branch.businessId);
-                                }
-                              },
-                            ),
+                      trailing: branch.isPending
+                          ? Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                'Pendiente',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange.shade800,
+                                ),
+                              ),
+                            )
+                          : isDisabled
+                              ? const Icon(Icons.lock_rounded, color: Colors.red)
+                              : Switch.adaptive(
+                                  value: isAvailable,
+                                  activeColor: Colors.green,
+                                  onChanged: (val) {
+                                    if (val) {
+                                      _handleActivateShift(branch.businessId);
+                                    } else {
+                                      _handleDeactivateShift(branch.businessId);
+                                    }
+                                  },
+                                ),
                     ),
                     const Divider(height: 1, indent: 56),
                   ],
@@ -1079,13 +1317,13 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                    Icons.add_business_rounded,
+                    Icons.swap_horiz_rounded,
                     color: AppColors.primary,
                     size: 20,
                   ),
                 ),
                 title: Text(
-                  'Unirme a otra sucursal',
+                  'Cambiar de sucursal',
                   style: GoogleFonts.outfit(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
@@ -1093,20 +1331,283 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                   ),
                 ),
                 subtitle: Text(
-                  'Ingresar código de lavandería para vincularte',
+                  'Selecciona el local desde el que deseas trabajar',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: AppColors.onSurfaceVariant,
                   ),
                 ),
-                trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.primary),
-                onTap: () => _showJoinNewBranchModal(context),
+                trailing: const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.primary,
+                ),
+                onTap: () => _showSwitchBranchModal(context),
               ),
             ],
           ),
         ),
         const SizedBox(height: 24),
       ],
+    );
+  }
+
+  void _showSwitchBranchModal(BuildContext context) {
+    final branches = widget.employeeBranches;
+    final currentId = widget.currentBusinessId;
+    final switchBranchCallback = widget.onSwitchBranch;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.swap_horiz_rounded,
+                    color: AppColors.primary,
+                    size: 28,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Cambiar de Sucursal',
+                    style: GoogleFonts.outfit(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Selecciona el local para cambiarte a ese local y ver su dashboard. Cada local tiene datos independientes.',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppColors.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (branches.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.info_outline_rounded, color: AppColors.primary),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'No tienes sucursales vinculadas en este momento.',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(ctx).size.height * 0.4,
+                  ),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: branches.length,
+                    itemBuilder: (_, index) {
+                      final branch = branches[index];
+                      final isCurrentActive =
+                          branch.businessId == currentId;
+                      return Column(
+                        children: [
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            onTap: isCurrentActive
+                                ? () {
+                                    Navigator.pop(ctx);
+                                    ScaffoldMessenger.of(ctx).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Ya te encuentras seleccionado en esta sucursal.',
+                                        ),
+                                        duration: Duration(seconds: 2),
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  }
+                                : () {
+                                    Navigator.pop(ctx);
+                                    if (widget.activeOrdersCount > 0) {
+                                      _showActiveServicesWarning();
+                                    } else {
+                                      switchBranchCallback?.call(branch.businessId);
+                                    }
+                                  },
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: isCurrentActive
+                                    ? AppColors.primary.withValues(alpha: 0.1)
+                                    : Colors.grey.shade100,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                isCurrentActive
+                                    ? Icons.storefront_rounded
+                                    : Icons.store_outlined,
+                                color: isCurrentActive
+                                    ? AppColors.primary
+                                    : Colors.grey.shade600,
+                                size: 20,
+                              ),
+                            ),
+                            title: Text(
+                              branch.businessName,
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: AppColors.onSurface,
+                              ),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (branch.businessCode.isNotEmpty)
+                                  Text(
+                                    'Código: ${branch.businessCode}',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 12,
+                                      color: AppColors.onSurfaceVariant,
+                                    ),
+                                  ),
+                                if (branch.isPending) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Pendiente de aprobación',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.orange.shade800,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            trailing: isCurrentActive
+                                ? Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          AppColors.primary.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.check_circle_rounded,
+                                          color: AppColors.primary,
+                                          size: 16,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Actual',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : branch.isPending
+                                    ? Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.orange.withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Text(
+                                          'Pendiente',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.orange.shade800,
+                                          ),
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.chevron_right_rounded,
+                                        color: AppColors.primary,
+                                      ),
+                          ),
+                          const Divider(height: 1),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              const SizedBox(height: 16),
+              const Divider(height: 1),
+              const SizedBox(height: 8),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.add_business_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                ),
+                title: Text(
+                  'Vincular otra sucursal',
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: AppColors.primary,
+                  ),
+                ),
+                subtitle: Text(
+                  'Ingresa un código de negocio para enviarle solicitud',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
+                trailing: const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.primary,
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showJoinNewBranchModal(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -1128,7 +1629,8 @@ class _EmployeeProfileTabState extends State<EmployeeProfileTab> {
                   radius: 50,
                   backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                   child: Text(
-                    (widget.employeeName != null && widget.employeeName!.isNotEmpty)
+                    (widget.employeeName != null &&
+                            widget.employeeName!.isNotEmpty)
                         ? widget.employeeName!.substring(0, 1).toUpperCase()
                         : 'E',
                     style: GoogleFonts.outfit(

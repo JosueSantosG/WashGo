@@ -18,6 +18,7 @@ abstract class InvoiceRepository {
     String? searchQuery,
   });
   Future<List<InvoiceModel>> getEmployeeInvoices({
+    required String businessId,
     int? limit,
     int? offset,
     DateTime? startDate,
@@ -114,6 +115,7 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
 
   @override
   Future<List<InvoiceModel>> getEmployeeInvoices({
+    required String businessId,
     int? limit,
     int? offset,
     DateTime? startDate,
@@ -122,7 +124,7 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
     InvoiceStatus? status,
     String? searchQuery,
   }) async {
-    var builder = _connector.getEmployeeInvoices();
+    var builder = _connector.getEmployeeInvoices(businessId: businessId);
     if (limit != null) builder = builder.limit(limit);
     if (offset != null) builder = builder.offset(offset);
     if (startDate != null) {

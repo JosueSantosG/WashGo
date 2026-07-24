@@ -272,6 +272,45 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
     return _allBusinesses;
   }
 
+  bool _laundryHasPendingChanges(SuperAdminGetBusinessesBusinesses laundry) {
+    return laundry.services_on_business.any((s) => s.precioPendiente == true);
+  }
+
+  List<_OwnerGroupData> get _approvedOwnerGroups {
+    final approvedList = _allBusinesses
+        .where((b) => _getBusinessStatus(b) == BusinessStatus.APPROVED)
+        .toList();
+
+    final Map<String, List<SuperAdminGetBusinessesBusinesses>> map = {};
+    for (final laundry in approvedList) {
+      final ownerId = laundry.owner.id;
+      if (!map.containsKey(ownerId)) {
+        map[ownerId] = [];
+      }
+      map[ownerId]!.add(laundry);
+    }
+
+    final groups = <_OwnerGroupData>[];
+    map.forEach((ownerId, laundries) {
+      final ownerName = laundries.first.owner.nombreCompleto;
+      final hasPending = laundries.any(_laundryHasPendingChanges);
+      groups.add(_OwnerGroupData(
+        ownerId: ownerId,
+        ownerName: ownerName,
+        businesses: laundries,
+        hasPendingChanges: hasPending,
+      ));
+    });
+
+    groups.sort((a, b) {
+      if (a.hasPendingChanges && !b.hasPendingChanges) return -1;
+      if (!a.hasPendingChanges && b.hasPendingChanges) return 1;
+      return a.ownerName.compareTo(b.ownerName);
+    });
+
+    return groups;
+  }
+
   @override
   Widget build(BuildContext context) {
     // Stats counters
@@ -438,6 +477,16 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
                               ? SliverToBoxAdapter(child: _buildErrorWidget())
                               : _filteredBusinesses.isEmpty
                               ? SliverToBoxAdapter(child: _buildEmptyWidget())
+                              : _activeFilter == 'APPROVED'
+                              ? SliverList(
+                                  delegate: SliverChildBuilderDelegate((
+                                    context,
+                                    index,
+                                  ) {
+                                    final group = _approvedOwnerGroups[index];
+                                    return _buildOwnerGroupCard(group);
+                                  }, childCount: _approvedOwnerGroups.length),
+                                )
                               : SliverList(
                                   delegate: SliverChildBuilderDelegate((
                                     context,
@@ -623,6 +672,108 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
             color: isActive ? AppColors.primary : AppColors.outline,
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOwnerGroupCard(_OwnerGroupData group) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: group.hasPendingChanges
+              ? Colors.amber.shade400
+              : AppColors.outlineVariant,
+          width: group.hasPendingChanges ? 1.5 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          key: ValueKey<String>('owner_group_${group.ownerId}'),
+          initiallyExpanded: group.hasPendingChanges,
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: group.hasPendingChanges
+                  ? Colors.amber.shade50
+                  : AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.person_rounded,
+              color: group.hasPendingChanges
+                  ? Colors.amber.shade800
+                  : AppColors.primary,
+              size: 22,
+            ),
+          ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  group.ownerName,
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: AppColors.onSurface,
+                  ),
+                ),
+              ),
+              if (group.hasPendingChanges)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  margin: const EdgeInsets.only(left: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.amber.shade400),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        size: 14,
+                        color: Colors.amber.shade900,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Cambios pendientes',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.amber.shade900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          subtitle: Text(
+            '${group.businesses.length} ${group.businesses.length == 1 ? 'local' : 'locales'}',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: AppColors.outline,
+            ),
+          ),
+          children: group.businesses.map((laundry) {
+            return Padding(
+              padding: const EdgeInsets.only(left: 12, right: 12, bottom: 8),
+              child: _buildLaundryCard(laundry),
+            );
+          }).toList(),
         ),
       ),
     );
@@ -2357,4 +2508,18 @@ class _SuperAdminDashboardPageState extends State<SuperAdminDashboardPage> {
       ),
     );
   }
+}
+
+class _OwnerGroupData {
+  final String ownerId;
+  final String ownerName;
+  final List<SuperAdminGetBusinessesBusinesses> businesses;
+  final bool hasPendingChanges;
+
+  _OwnerGroupData({
+    required this.ownerId,
+    required this.ownerName,
+    required this.businesses,
+    required this.hasPendingChanges,
+  });
 }

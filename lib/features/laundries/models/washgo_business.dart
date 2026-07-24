@@ -8,6 +8,7 @@ class WashGoBusiness {
   final double? latitud;
   final double? longitud;
   final String? status;
+  final bool wasApprovedBySuperAdmin;
   final double saldoPrepagoInicial;
   final double saldoPrepagoConsumido;
 
@@ -21,6 +22,7 @@ class WashGoBusiness {
     this.latitud,
     this.longitud,
     this.status,
+    this.wasApprovedBySuperAdmin = false,
     this.saldoPrepagoInicial = 0.0,
     this.saldoPrepagoConsumido = 0.0,
   });

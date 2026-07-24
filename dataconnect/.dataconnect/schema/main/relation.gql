@@ -460,6 +460,15 @@ extend type Business {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "Business.telefono", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `Business` table where the `wasApprovedBySuperAdmin` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  wasApprovedBySuperAdmin_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Business.wasApprovedBySuperAdmin", purpose: QUERY_COUNT)
+  """
   ✨ Sum the `latitud` field in the `Business` table.
   """
   latitud_sum(

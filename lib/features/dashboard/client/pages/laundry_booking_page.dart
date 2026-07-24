@@ -19,6 +19,7 @@ import 'package:washgo/features/laundries/services/availability_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:washgo/core/session/booking_intent_manager.dart';
 import 'package:washgo/config/routes/app_routes.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 
 
@@ -108,6 +109,19 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
           _waitTime = '5 min';
         });
       }
+    }
+  }
+
+  Future<void> _openGoogleMapsRoute(double lat, double lng) async {
+    final uri = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving',
+    );
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      debugPrint('Error launching navigation URL: $e');
     }
   }
 
@@ -399,24 +413,37 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
                                 _buildDetailBadge(
                                   icon: Icons.star_rounded,
                                   color: Colors.amber,
-                                  title: 'CALIFICACIÓN',
+                                  title: 'RATING',
                                   value: widget.laundry.rating == 0.0
                                       ? 'Nuevo'
                                       : '${widget.laundry.rating.toStringAsFixed(1)} (${widget.laundry.reviewsCount})',
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 8),
                                 _buildDetailBadge(
                                   icon: Icons.access_time_filled_rounded,
                                   color: AppColors.primary,
-                                  title: 'ESPERA ESTIMADA',
+                                  title: 'ESPERA',
                                   value: _waitTime ?? 'Cargando...',
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 8),
                                 _buildDetailBadge(
                                   icon: Icons.directions_car_filled_rounded,
                                   color: AppColors.info,
                                   title: 'DISTANCIA',
                                   value: widget.laundry.distance,
+                                ),
+                                const SizedBox(width: 8),
+                                _buildDetailBadge(
+                                  icon: Icons.directions_rounded,
+                                  color: AppColors.primary,
+                                  title: 'RUTA',
+                                  value: 'Ir →',
+                                  onTap: () {
+                                    _openGoogleMapsRoute(
+                                      widget.laundry.location.latitude,
+                                      widget.laundry.location.longitude,
+                                    );
+                                  },
                                 ),
                               ],
                             ),
@@ -1933,36 +1960,54 @@ class _LaundryBookingPageState extends State<LaundryBookingPage> {
     required Color color,
     required String title,
     required String value,
+    VoidCallback? onTap,
   }) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        decoration: BoxDecoration(
-          color: AppColors.background,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(height: 6),
-            Text(
-              title,
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w500,
-              ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+            decoration: BoxDecoration(
+              color: onTap != null ? AppColors.primaryLight : AppColors.background,
+              borderRadius: BorderRadius.circular(12),
+              border: onTap != null
+                  ? Border.all(color: AppColors.primary.withValues(alpha: 0.3))
+                  : null,
             ),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: color, size: 20),
+                const SizedBox(height: 6),
+                Text(
+                  title,
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    color: onTap != null ? AppColors.primary : AppColors.textSecondary,
+                    fontWeight: onTap != null ? FontWeight.bold : FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: onTap != null ? AppColors.primary : AppColors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

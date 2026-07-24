@@ -31,6 +31,7 @@ query GetCurrentUser @auth(level: USER) {
       latitud
       longitud
       status
+      wasApprovedBySuperAdmin
       saldoPrepagoInicial
       saldoPrepagoConsumido
     }
@@ -206,7 +207,7 @@ query GetActiveEmployees($businessId: UUID!) @auth(level: USER) {
       id
     }
   }
-  businessEmployees(where: {businessId: {eq: $businessId}, status: {eq: ACTIVE}}) @check(expr: "'SUPER_ADMIN' in response.user.roles || (response.business != null && response.business.owner != null && response.business.owner.id == auth.uid) || this.exists(e, e.employeeId == auth.uid)", message: "No tienes permiso para ver los empleados de este negocio") {
+  businessEmployees(where: {businessId: {eq: $businessId}, status: {eq: ACTIVE}}) @check(expr: "'SUPER_ADMIN' in response.user.roles || (response.business != null && response.business.owner != null && response.business.owner.id == auth.uid) || this.exists(e, e.employee.id == auth.uid)", message: "No tienes permiso para ver los empleados de este negocio") {
     id
     employee {
       id
@@ -226,13 +227,20 @@ query GetActiveEmployees($businessId: UUID!) @auth(level: USER) {
 }
 
 query GetEmployeeBranches @auth(level: USER) {
-  businessEmployees(where: { employeeId: { eq_expr: "auth.uid" }, status: { eq: ACTIVE } }) {
+  businessEmployees(
+    where: {
+      employeeId: { eq_expr: "auth.uid" }
+      status: { eq: ACTIVE }
+      business: { status: { eq: APPROVED } }
+    }
+  ) {
     id
     business {
       id
       nombre
       businessCode
       descripcion
+      status
     }
     status
     isDisabledByOwner
@@ -367,7 +375,7 @@ query GetBusinessHours($businessId: UUID!) @auth(level: USER, insecureReason: "O
 
 query SuperAdminGetBusinesses @auth(level: USER) {
   user(key: { id_expr: "auth.uid" }) @redact @check(
-    expr: "auth.token.email == 'root@washgo.com' || (this != null && 'SUPER_ADMIN' in this.roles)",
+    expr: "auth.token.email == 'root@washgo.com' || auth.token.email == 'root1@washgo.com' || (this != null && 'SUPER_ADMIN' in this.roles)",
     message: "Only super admins can access this list"
   ) {
     roles
@@ -378,6 +386,7 @@ query SuperAdminGetBusinesses @auth(level: USER) {
     ruc
     businessCode
     status
+    wasApprovedBySuperAdmin
     descripcion
     telefono
     latitud
@@ -416,6 +425,7 @@ query GetMyBusinesses @auth(level: USER) {
     ruc
     businessCode
     status
+    wasApprovedBySuperAdmin
     descripcion
     telefono
     saldoPrepagoInicial
@@ -586,6 +596,7 @@ query GetClientInvoices(
 }
 
 query GetEmployeeInvoices(
+  $businessId: UUID!
   $limit: Int
   $offset: Int
   $startDate: Timestamp
@@ -598,6 +609,7 @@ query GetEmployeeInvoices(
     where: {
       _and: [
         { order: { employeeId: { eq_expr: "auth.uid" } } }
+        { order: { businessId: { eq: $businessId } } }
         { fechaEmision: { ge: $startDate, le: $endDate } }
         { paymentMethod: { eq: $paymentMethod } }
         { invoiceStatus: { eq: $status } }
@@ -1096,7 +1108,22 @@ query GetBusinessReviews($businessId: UUID!) @auth(level: USER, insecureReason: 
   }
 }
 
-query GetOrderReview($orderId: UUID!) @auth(level: USER, insecureReason: "Obtener reseña por id de orden") {
+query GetOrderReview($orderId: UUID!) @auth(level: USER) {
+  order(key: { id: $orderId }) @redact {
+    clientId
+    employeeId
+    business {
+      owner {
+        id
+      }
+    }
+  }
+  user(key: { id_expr: "auth.uid" }) @redact @check(
+    expr: "'SUPER_ADMIN' in this.roles || (response.order != null && (response.order.clientId == auth.uid || response.order.employeeId == auth.uid || (response.order.business != null && response.order.business.owner != null && response.order.business.owner.id == auth.uid)))",
+    message: "No tienes permiso para ver la reseña de esta orden"
+  ) {
+    roles
+  }
   reviews(where: { orderId: { eq: $orderId } }) {
     id
     calificacion
@@ -1207,7 +1234,7 @@ query GetPaymentProof($orderId: UUID!) @auth(level: NO_ACCESS) {
   }
 }
 
-# Get pending transfer orders for a business (for owner review)
+# Get pending transfer orders for a business (for super admin review only)
 query GetPendingTransferOrders($businessId: UUID!) @auth(level: USER) {
   business(key: { id: $businessId }) @redact {
     owner {
@@ -1380,7 +1407,7 @@ query GetOrderLogs($orderId: UUID!) @auth(level: USER) {
 # Queries for SuperAdmin Accounting Dashboard (filtered by month)
 query SuperAdminGetCompletedOrders($startOfMonth: Timestamp!, $endOfMonth: Timestamp!) @auth(level: USER) {
   user(key: { id_expr: "auth.uid" }) @redact @check(
-    expr: "auth.token.email == 'root@washgo.com' || 'SUPER_ADMIN' in this.roles",
+    expr: "auth.token.email == 'root@washgo.com' || auth.token.email == 'root1@washgo.com' || 'SUPER_ADMIN' in this.roles",
     message: "No tienes permiso para ver la contabilidad"
   ) {
     roles
@@ -1399,7 +1426,7 @@ query SuperAdminGetCompletedOrders($startOfMonth: Timestamp!, $endOfMonth: Times
 
 query SuperAdminGetCancelledPaidOrders($startOfMonth: Timestamp!, $endOfMonth: Timestamp!) @auth(level: USER) {
   user(key: { id_expr: "auth.uid" }) @redact @check(
-    expr: "auth.token.email == 'root@washgo.com' || 'SUPER_ADMIN' in this.roles",
+    expr: "auth.token.email == 'root@washgo.com' || auth.token.email == 'root1@washgo.com' || 'SUPER_ADMIN' in this.roles",
     message: "No tienes permiso para ver la contabilidad"
   ) {
     roles
@@ -1426,7 +1453,7 @@ query SuperAdminGetCancelledPaidOrders($startOfMonth: Timestamp!, $endOfMonth: T
 
 query SuperAdminGetCancelledOrdersSummary($startOfMonth: Timestamp!, $endOfMonth: Timestamp!) @auth(level: USER) {
   user(key: { id_expr: "auth.uid" }) @redact @check(
-    expr: "auth.token.email == 'root@washgo.com' || 'SUPER_ADMIN' in this.roles",
+    expr: "auth.token.email == 'root@washgo.com' || auth.token.email == 'root1@washgo.com' || 'SUPER_ADMIN' in this.roles",
     message: "No tienes permiso para ver la contabilidad"
   ) {
     roles
@@ -1459,6 +1486,20 @@ query GetPendingElectronicOrders @auth(level: NO_ACCESS) {
     paymentMethod
     serviceName
     businessId
+    createdAt
+  }
+}
+
+query GetMyEmployeeRequests @auth(level: USER) {
+  employeeRequests(where: { userId: { eq_expr: "auth.uid" } }) {
+    id
+    business {
+      id
+      nombre
+      businessCode
+      descripcion
+    }
+    status
     createdAt
   }
 }

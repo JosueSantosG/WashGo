@@ -88,6 +88,7 @@ type Business @table {
   latitud: Float
   longitud: Float
   status: BusinessStatus!
+  wasApprovedBySuperAdmin: Boolean! @default(value: false)
   saldoPrepagoInicial: Float! @default(value: 0.0)
   saldoPrepagoConsumido: Float! @default(value: 0.0)
 }

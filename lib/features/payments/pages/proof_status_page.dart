@@ -462,13 +462,7 @@ class _ProofStatusPageState extends State<ProofStatusPage> {
         width: double.infinity,
         height: 52,
         child: OutlinedButton.icon(
-          onPressed: () {
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-            } else {
-              context.go('/reservas');
-            }
-          },
+          onPressed: () => context.go('/reservas'),
           icon: const Icon(Icons.list_alt_rounded, size: 20),
           label: Text(
             'Ir a mis reservas',
@@ -512,13 +506,7 @@ class _ProofStatusPageState extends State<ProofStatusPage> {
         ),
         const SizedBox(height: 12),
         TextButton(
-          onPressed: () {
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-            } else {
-              context.go('/reservas');
-            }
-          },
+          onPressed: () => context.go('/reservas'),
           child: Text(
             'Ir a mis reservas',
             style: GoogleFonts.inter(

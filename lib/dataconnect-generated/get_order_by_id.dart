@@ -7,8 +7,8 @@ class GetOrderByIdVariablesBuilder {
   GetOrderByIdVariablesBuilder(this._dataConnect, {required  this.id,});
   Deserializer<GetOrderByIdData> dataDeserializer = (dynamic json)  => GetOrderByIdData.fromJson(jsonDecode(json));
   Serializer<GetOrderByIdVariables> varsSerializer = (GetOrderByIdVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetOrderByIdData, GetOrderByIdVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetOrderByIdData, GetOrderByIdVariables>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetOrderByIdData, GetOrderByIdVariables> ref() {

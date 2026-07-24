@@ -6,8 +6,8 @@ class SuperAdminGetBusinessesVariablesBuilder {
   SuperAdminGetBusinessesVariablesBuilder(this._dataConnect, );
   Deserializer<SuperAdminGetBusinessesData> dataDeserializer = (dynamic json)  => SuperAdminGetBusinessesData.fromJson(jsonDecode(json));
   
-  Future<QueryResult<SuperAdminGetBusinessesData, void>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<SuperAdminGetBusinessesData, void>> execute() {
+    return ref().execute();
   }
 
   QueryRef<SuperAdminGetBusinessesData, void> ref() {
@@ -23,6 +23,7 @@ class SuperAdminGetBusinessesBusinesses {
   final String ruc;
   final String businessCode;
   final EnumValue<BusinessStatus> status;
+  final bool wasApprovedBySuperAdmin;
   final String? descripcion;
   final String? telefono;
   final double? latitud;
@@ -38,6 +39,7 @@ class SuperAdminGetBusinessesBusinesses {
   ruc = nativeFromJson<String>(json['ruc']),
   businessCode = nativeFromJson<String>(json['businessCode']),
   status = businessStatusDeserializer(json['status']),
+  wasApprovedBySuperAdmin = nativeFromJson<bool>(json['wasApprovedBySuperAdmin']),
   descripcion = json['descripcion'] == null ? null : nativeFromJson<String>(json['descripcion']),
   telefono = json['telefono'] == null ? null : nativeFromJson<String>(json['telefono']),
   latitud = json['latitud'] == null ? null : nativeFromJson<double>(json['latitud']),
@@ -63,6 +65,7 @@ class SuperAdminGetBusinessesBusinesses {
     ruc == otherTyped.ruc && 
     businessCode == otherTyped.businessCode && 
     status == otherTyped.status && 
+    wasApprovedBySuperAdmin == otherTyped.wasApprovedBySuperAdmin && 
     descripcion == otherTyped.descripcion && 
     telefono == otherTyped.telefono && 
     latitud == otherTyped.latitud && 
@@ -74,7 +77,7 @@ class SuperAdminGetBusinessesBusinesses {
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, nombre.hashCode, ruc.hashCode, businessCode.hashCode, status.hashCode, descripcion.hashCode, telefono.hashCode, latitud.hashCode, longitud.hashCode, saldoPrepagoInicial.hashCode, saldoPrepagoConsumido.hashCode, owner.hashCode, services_on_business.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, nombre.hashCode, ruc.hashCode, businessCode.hashCode, status.hashCode, wasApprovedBySuperAdmin.hashCode, descripcion.hashCode, telefono.hashCode, latitud.hashCode, longitud.hashCode, saldoPrepagoInicial.hashCode, saldoPrepagoConsumido.hashCode, owner.hashCode, services_on_business.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -86,6 +89,7 @@ class SuperAdminGetBusinessesBusinesses {
     json['status'] = 
     businessStatusSerializer(status)
     ;
+    json['wasApprovedBySuperAdmin'] = nativeToJson<bool>(wasApprovedBySuperAdmin);
     if (descripcion != null) {
       json['descripcion'] = nativeToJson<String?>(descripcion);
     }
@@ -111,6 +115,7 @@ class SuperAdminGetBusinessesBusinesses {
     required this.ruc,
     required this.businessCode,
     required this.status,
+    required this.wasApprovedBySuperAdmin,
     this.descripcion,
     this.telefono,
     this.latitud,

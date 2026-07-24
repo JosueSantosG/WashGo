@@ -299,6 +299,14 @@ input Business_Data {
   """
   telefono_expr: String_Expr @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `Business`.`wasApprovedBySuperAdmin` of type `Boolean!`
+  """
+  wasApprovedBySuperAdmin: Boolean
+  """
+  ✨ `_expr` server value variant of `wasApprovedBySuperAdmin` (✨ Generated from Field `Business`.`wasApprovedBySuperAdmin` of type `Boolean!`)
+  """
+  wasApprovedBySuperAdmin_expr: Boolean_Expr @fdc_forbiddenInVariables
+  """
   ✨ Generated from Field `Business`.`businessEmployees_on_business` of type `[BusinessEmployee!]!`
   """
   businessEmployees_on_business: [BusinessEmployee_Data!]
@@ -407,6 +415,10 @@ input Business_Filter {
   ✨ Generated from Field `Business`.`telefono` of type `String`
   """
   telefono: String_Filter
+  """
+  ✨ Generated from Field `Business`.`wasApprovedBySuperAdmin` of type `Boolean!`
+  """
+  wasApprovedBySuperAdmin: Boolean_Filter
   """
   ✨ Generated from Field `Business`.`businessEmployees_on_business` of type `[BusinessEmployee!]!`
   """
@@ -537,6 +549,10 @@ input Business_Having {
   ✨ Generated from Field `Business`.`telefono_count` of type `Int!`
   """
   telefono_count: Int_Filter
+  """
+  ✨ Generated from Field `Business`.`wasApprovedBySuperAdmin_count` of type `Int!`
+  """
+  wasApprovedBySuperAdmin_count: Int_Filter
   """
   ✨ Generated from Field `Business`.`latitud_sum` of type `Float`
   """
@@ -685,6 +701,10 @@ input Business_Order {
   """
   telefono: OrderDirection
   """
+  ✨ Generated from Field `Business`.`wasApprovedBySuperAdmin` of type `Boolean!`
+  """
+  wasApprovedBySuperAdmin: OrderDirection
+  """
   ✨ Generated from Field `Business`.`_count` of type `Int!`
   """
   _count: OrderDirection
@@ -736,6 +756,10 @@ input Business_Order {
   ✨ Generated from Field `Business`.`telefono_count` of type `Int!`
   """
   telefono_count: OrderDirection
+  """
+  ✨ Generated from Field `Business`.`wasApprovedBySuperAdmin_count` of type `Int!`
+  """
+  wasApprovedBySuperAdmin_count: OrderDirection
   """
   ✨ Generated from Field `Business`.`latitud_sum` of type `Float`
   """

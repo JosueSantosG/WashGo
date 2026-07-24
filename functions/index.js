@@ -102,6 +102,41 @@ const authenticate = async (req, res, next) => {
   }
 };
 
+const checkIsSuperAdmin = async (req) => {
+  if (req.user?.token?.roles?.includes("SUPER_ADMIN")) return true;
+  const email = req.user?.email;
+  if (email === "root@washgo.com" || email === "root1@washgo.com") return true;
+
+  if (!req.user?.uid) return false;
+
+  try {
+    const { getDataConnect } = require("firebase-admin/data-connect");
+    const dc = getDataConnect({ serviceId: "washgo", location: "us-central1" });
+    const res = await dc.executeGraphql(
+      `
+      query GetUserRoles($uid: String!) {
+        user(key: { id: $uid }) {
+          roles
+        }
+      }
+    `,
+      { variables: { uid: req.user.uid } }
+    );
+    const roles = res.data?.user?.roles || [];
+    if (roles.includes("SUPER_ADMIN")) {
+      try {
+        await admin.auth().setCustomUserClaims(req.user.uid, { roles: ["SUPER_ADMIN"] });
+      } catch (e) {
+        // ignore claim set error
+      }
+      return true;
+    }
+  } catch (err) {
+    console.error("Error checking superadmin status:", err.message);
+  }
+  return false;
+};
+
 // 1. Create PayPal Order
 app.post("/paypal/create-order", authenticate, async (req, res) => {
   const { orderId } = req.body;
@@ -1612,7 +1647,7 @@ app.post("/payments/review-proof", authenticate, async (req, res) => {
     }
 
     // Verify caller is SUPER_ADMIN
-    const isSuperAdmin = req.user.token?.roles?.includes("SUPER_ADMIN");
+    const isSuperAdmin = await checkIsSuperAdmin(req);
     if (!isSuperAdmin) {
       return res.status(403).json({ error: "Forbidden: Only a super admin can review payment proofs" });
     }

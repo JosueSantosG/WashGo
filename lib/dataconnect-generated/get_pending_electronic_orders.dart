@@ -6,8 +6,8 @@ class GetPendingElectronicOrdersVariablesBuilder {
   GetPendingElectronicOrdersVariablesBuilder(this._dataConnect, );
   Deserializer<GetPendingElectronicOrdersData> dataDeserializer = (dynamic json)  => GetPendingElectronicOrdersData.fromJson(jsonDecode(json));
   
-  Future<QueryResult<GetPendingElectronicOrdersData, void>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetPendingElectronicOrdersData, void>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetPendingElectronicOrdersData, void> ref() {

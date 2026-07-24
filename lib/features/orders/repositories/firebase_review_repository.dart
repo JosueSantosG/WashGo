@@ -1,4 +1,3 @@
-// ignore_for_file: avoid_print
 import 'package:firebase_data_connect/firebase_data_connect.dart';
 import 'package:washgo/dataconnect-generated/example.dart';
 import 'package:washgo/features/orders/models/washgo_review.dart';

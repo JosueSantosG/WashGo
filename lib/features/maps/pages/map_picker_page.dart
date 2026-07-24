@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
+import 'package:latlong2/latlong.dart' as latlong;
 import 'package:go_router/go_router.dart';
 import 'package:washgo/config/theme/app_colors.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:washgo/features/dashboard/client/home_page.dart';
 
 class MapPickerPage extends StatefulWidget {
-  final LatLng? initialLocation;
+  final latlong.LatLng? initialLocation;
 
   const MapPickerPage({super.key, this.initialLocation});
 
@@ -16,33 +16,28 @@ class MapPickerPage extends StatefulWidget {
 }
 
 class _MapPickerPageState extends State<MapPickerPage> {
-  late LatLng _currentPosition;
-  final MapController _mapController = MapController();
-  bool _isMapReady = false;
+  late latlong.LatLng _currentPosition;
+  gmaps.GoogleMapController? _mapController;
 
   @override
   void initState() {
     super.initState();
     // Use widget's initial location, cached user location, or default fallback to Guayaquil center
-    _currentPosition = widget.initialLocation ?? HomePage.cachedUserLocation ?? const LatLng(-2.1961601, -79.8862076);
+    _currentPosition = widget.initialLocation ?? HomePage.cachedUserLocation ?? const latlong.LatLng(-2.1961601, -79.8862076);
     _getUserLocation();
   }
 
-  void _moveToPosition(LatLng position) {
+  void _moveToPosition(latlong.LatLng position) {
     if (!mounted) return;
     setState(() {
       _currentPosition = position;
     });
-    if (_isMapReady) {
-      try {
-        _mapController.move(position, 15.0);
-      } catch (e) {
-        debugPrint('Error moving map: $e');
-      }
-    } else {
-      // Retry in 100ms if the map controller isn't ready
-      Future.delayed(const Duration(milliseconds: 100), () => _moveToPosition(position));
-    }
+    _mapController?.animateCamera(
+      gmaps.CameraUpdate.newLatLngZoom(
+        gmaps.LatLng(position.latitude, position.longitude),
+        15.0,
+      ),
+    );
   }
 
   Future<void> _getUserLocation() async {
@@ -60,7 +55,7 @@ class _MapPickerPageState extends State<MapPickerPage> {
       try {
         final lastKnown = await Geolocator.getLastKnownPosition();
         if (lastKnown != null) {
-          _moveToPosition(LatLng(lastKnown.latitude, lastKnown.longitude));
+          _moveToPosition(latlong.LatLng(lastKnown.latitude, lastKnown.longitude));
         }
       } catch (_) {}
 
@@ -68,7 +63,7 @@ class _MapPickerPageState extends State<MapPickerPage> {
       final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
-      _moveToPosition(LatLng(position.latitude, position.longitude));
+      _moveToPosition(latlong.LatLng(position.latitude, position.longitude));
     } catch (e) {
       debugPrint('Error getting location for picker: $e');
     }
@@ -85,34 +80,28 @@ class _MapPickerPageState extends State<MapPickerPage> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: FlutterMap(
-              mapController: _mapController,
-              options: MapOptions(
-                initialCenter: _currentPosition,
-                initialZoom: 15.0,
-                onMapReady: () {
-                  setState(() {
-                    _isMapReady = true;
-                  });
-                },
-                onPositionChanged: (camera, hasGesture) {
-                  setState(() {
-                    _currentPosition = camera.center;
-                  });
-                },
+            child: gmaps.GoogleMap(
+              initialCameraPosition: gmaps.CameraPosition(
+                target: gmaps.LatLng(_currentPosition.latitude, _currentPosition.longitude),
+                zoom: 15.0,
               ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.example.washgo',
-                ),
-              ],
+              onMapCreated: (controller) {
+                _mapController = controller;
+              },
+              onCameraMove: (position) {
+                setState(() {
+                  _currentPosition = latlong.LatLng(position.target.latitude, position.target.longitude);
+                });
+              },
+              myLocationEnabled: true,
+              myLocationButtonEnabled: false,
+              zoomControlsEnabled: false,
             ),
           ),
           // Center pin indicator
           const Center(
             child: Padding(
-              padding: EdgeInsets.only(bottom: 35.0), // Adjust to point exactly to the center
+              padding: EdgeInsets.only(bottom: 35.0),
               child: Icon(
                 Icons.location_on,
                 size: 50.0,

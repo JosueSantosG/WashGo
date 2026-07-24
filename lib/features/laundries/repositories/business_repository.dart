@@ -107,6 +107,7 @@ abstract class BusinessRepository {
   Future<List<PrepaidHistoryEntryModel>> getPrepaidHistory(String businessId);
 
   Future<List<EmployeeBranchStatus>> getEmployeeBranches();
+  Future<List<EmployeeBranchStatus>> getEmployeePendingBranches();
   Future<void> activateEmployeeShift(String businessId);
   Future<void> deactivateEmployeeShift(String businessId);
   Future<void> toggleEmployeeDisabledByOwner({

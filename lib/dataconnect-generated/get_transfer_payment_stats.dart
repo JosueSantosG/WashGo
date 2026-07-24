@@ -7,8 +7,8 @@ class GetTransferPaymentStatsVariablesBuilder {
   GetTransferPaymentStatsVariablesBuilder(this._dataConnect, {required  this.businessId,});
   Deserializer<GetTransferPaymentStatsData> dataDeserializer = (dynamic json)  => GetTransferPaymentStatsData.fromJson(jsonDecode(json));
   Serializer<GetTransferPaymentStatsVariables> varsSerializer = (GetTransferPaymentStatsVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetTransferPaymentStatsData, GetTransferPaymentStatsVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetTransferPaymentStatsData, GetTransferPaymentStatsVariables>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetTransferPaymentStatsData, GetTransferPaymentStatsVariables> ref() {

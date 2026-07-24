@@ -6,8 +6,8 @@ class GetEmployeeBranchesVariablesBuilder {
   GetEmployeeBranchesVariablesBuilder(this._dataConnect, );
   Deserializer<GetEmployeeBranchesData> dataDeserializer = (dynamic json)  => GetEmployeeBranchesData.fromJson(jsonDecode(json));
   
-  Future<QueryResult<GetEmployeeBranchesData, void>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetEmployeeBranchesData, void>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetEmployeeBranchesData, void> ref() {
@@ -78,12 +78,14 @@ class GetEmployeeBranchesBusinessEmployeesBusiness {
   final String nombre;
   final String businessCode;
   final String? descripcion;
+  final EnumValue<BusinessStatus> status;
   GetEmployeeBranchesBusinessEmployeesBusiness.fromJson(dynamic json):
   
   id = nativeFromJson<String>(json['id']),
   nombre = nativeFromJson<String>(json['nombre']),
   businessCode = nativeFromJson<String>(json['businessCode']),
-  descripcion = json['descripcion'] == null ? null : nativeFromJson<String>(json['descripcion']);
+  descripcion = json['descripcion'] == null ? null : nativeFromJson<String>(json['descripcion']),
+  status = businessStatusDeserializer(json['status']);
   @override
   bool operator ==(Object other) {
     if(identical(this, other)) {
@@ -97,11 +99,12 @@ class GetEmployeeBranchesBusinessEmployeesBusiness {
     return id == otherTyped.id && 
     nombre == otherTyped.nombre && 
     businessCode == otherTyped.businessCode && 
-    descripcion == otherTyped.descripcion;
+    descripcion == otherTyped.descripcion && 
+    status == otherTyped.status;
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, nombre.hashCode, businessCode.hashCode, descripcion.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, nombre.hashCode, businessCode.hashCode, descripcion.hashCode, status.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -112,6 +115,9 @@ class GetEmployeeBranchesBusinessEmployeesBusiness {
     if (descripcion != null) {
       json['descripcion'] = nativeToJson<String?>(descripcion);
     }
+    json['status'] = 
+    businessStatusSerializer(status)
+    ;
     return json;
   }
 
@@ -120,6 +126,7 @@ class GetEmployeeBranchesBusinessEmployeesBusiness {
     required this.nombre,
     required this.businessCode,
     this.descripcion,
+    required this.status,
   });
 }
 

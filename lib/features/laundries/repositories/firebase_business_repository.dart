@@ -41,6 +41,7 @@ class FirebaseBusinessRepository implements BusinessRepository {
       latitud: _safeDoubleNullable(business.latitud),
       longitud: _safeDoubleNullable(business.longitud),
       status: business.status.stringValue,
+      wasApprovedBySuperAdmin: business.wasApprovedBySuperAdmin,
       saldoPrepagoInicial: _safeDouble(business.saldoPrepagoInicial),
       saldoPrepagoConsumido: _safeDouble(business.saldoPrepagoConsumido),
     );
@@ -283,7 +284,7 @@ class FirebaseBusinessRepository implements BusinessRepository {
   }) async {
     final response = await _connector
         .getEmployeeAvailability(businessId: businessId, employeeId: employeeId)
-        .execute(fetchPolicy: QueryFetchPolicy.serverOnly);
+        .ref().execute(fetchPolicy: QueryFetchPolicy.serverOnly);
     final list = response.data.businessEmployees;
     if (list.isEmpty) return null;
     final record = list.first;
@@ -350,6 +351,7 @@ class FirebaseBusinessRepository implements BusinessRepository {
         latitud: _safeDoubleNullable(b.latitud),
         longitud: _safeDoubleNullable(b.longitud),
         status: b.status.stringValue,
+        wasApprovedBySuperAdmin: b.wasApprovedBySuperAdmin,
         saldoPrepagoInicial: _safeDouble(b.saldoPrepagoInicial),
         saldoPrepagoConsumido: _safeDouble(b.saldoPrepagoConsumido),
       );
@@ -407,7 +409,7 @@ class FirebaseBusinessRepository implements BusinessRepository {
 
   @override
   Future<List<EmployeeBranchStatus>> getEmployeeBranches() async {
-    final response = await _connector.getEmployeeBranches().execute(fetchPolicy: QueryFetchPolicy.serverOnly);
+    final response = await _connector.getEmployeeBranches().ref().execute(fetchPolicy: QueryFetchPolicy.serverOnly);
     return response.data.businessEmployees.map((be) {
       return EmployeeBranchStatus(
         recordId: be.id,
@@ -417,6 +419,24 @@ class FirebaseBusinessRepository implements BusinessRepository {
         description: be.business.descripcion,
         isDisabledByOwner: be.isDisabledByOwner,
         estadoDisponibilidad: be.estadoDisponibilidad,
+        isPending: false,
+      );
+    }).toList();
+  }
+
+  @override
+  Future<List<EmployeeBranchStatus>> getEmployeePendingBranches() async {
+    final response = await _connector.getMyEmployeeRequests().ref().execute(fetchPolicy: QueryFetchPolicy.serverOnly);
+    return response.data.employeeRequests.map((req) {
+      return EmployeeBranchStatus(
+        recordId: req.id,
+        businessId: req.business.id,
+        businessName: req.business.nombre,
+        businessCode: req.business.businessCode,
+        description: req.business.descripcion,
+        isDisabledByOwner: false,
+        estadoDisponibilidad: false,
+        isPending: true,
       );
     }).toList();
   }

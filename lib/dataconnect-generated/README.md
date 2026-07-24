@@ -1113,8 +1113,10 @@ ref.subscribe(...);
 ### GetEmployeeInvoices
 #### Required Arguments
 ```dart
-// No required arguments
-ExampleConnector.instance.getEmployeeInvoices().execute();
+String businessId = ...;
+ExampleConnector.instance.getEmployeeInvoices(
+  businessId: businessId,
+).execute();
 ```
 
 #### Optional Arguments
@@ -1123,8 +1125,7 @@ The builder pattern allows Data Connect to distinguish between fields that haven
 ```dart
 class GetEmployeeInvoicesVariablesBuilder {
   ...
- 
-  GetEmployeeInvoicesVariablesBuilder limit(int? t) {
+   GetEmployeeInvoicesVariablesBuilder limit(int? t) {
    _limit.value = t;
    return this;
   }
@@ -1155,7 +1156,9 @@ class GetEmployeeInvoicesVariablesBuilder {
 
   ...
 }
-ExampleConnector.instance.getEmployeeInvoices()
+ExampleConnector.instance.getEmployeeInvoices(
+  businessId: businessId,
+)
 .limit(limit)
 .offset(offset)
 .startDate(startDate)
@@ -1182,7 +1185,9 @@ class QueryResult<Data, Variables> extends OperationResult<Data, Variables> {
   QueryResult(super.dataConnect, super.data, super.ref);
 }
 
-final result = await ExampleConnector.instance.getEmployeeInvoices();
+final result = await ExampleConnector.instance.getEmployeeInvoices(
+  businessId: businessId,
+);
 GetEmployeeInvoicesData data = result.data;
 final ref = result.ref;
 ```
@@ -1191,7 +1196,11 @@ final ref = result.ref;
 Each builder returns an `execute` function, which is a helper function that creates a `Ref` object, and executes the underlying operation.
 An example of how to use the `Ref` object is shown below:
 ```dart
-final ref = ExampleConnector.instance.getEmployeeInvoices().ref();
+String businessId = ...;
+
+final ref = ExampleConnector.instance.getEmployeeInvoices(
+  businessId: businessId,
+).ref();
 ref.execute();
 
 ref.subscribe(...);
@@ -2838,6 +2847,47 @@ Each builder returns an `execute` function, which is a helper function that crea
 An example of how to use the `Ref` object is shown below:
 ```dart
 final ref = ExampleConnector.instance.getPendingElectronicOrders().ref();
+ref.execute();
+
+ref.subscribe(...);
+```
+
+
+### GetMyEmployeeRequests
+#### Required Arguments
+```dart
+// No required arguments
+ExampleConnector.instance.getMyEmployeeRequests().execute();
+```
+
+
+
+#### Return Type
+`execute()` returns a `QueryResult<GetMyEmployeeRequestsData, void>`
+```dart
+/// Result of an Operation Request (query/mutation).
+class OperationResult<Data, Variables> {
+  OperationResult(this.dataConnect, this.data, this.ref);
+  Data data;
+  OperationRef<Data, Variables> ref;
+  FirebaseDataConnect dataConnect;
+}
+
+/// Result of a query request. Created to hold extra variables in the future.
+class QueryResult<Data, Variables> extends OperationResult<Data, Variables> {
+  QueryResult(super.dataConnect, super.data, super.ref);
+}
+
+final result = await ExampleConnector.instance.getMyEmployeeRequests();
+GetMyEmployeeRequestsData data = result.data;
+final ref = result.ref;
+```
+
+#### Getting the Ref
+Each builder returns an `execute` function, which is a helper function that creates a `Ref` object, and executes the underlying operation.
+An example of how to use the `Ref` object is shown below:
+```dart
+final ref = ExampleConnector.instance.getMyEmployeeRequests().ref();
 ref.execute();
 
 ref.subscribe(...);

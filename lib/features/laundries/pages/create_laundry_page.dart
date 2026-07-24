@@ -1041,8 +1041,8 @@ class _CreateLaundryPageState extends State<CreateLaundryPage> {
       // Set active role and redirect or pop
       SessionManager.activeRole = UserRole.ADMINISTRADOR;
       if (mounted) {
-        if (Navigator.of(context).canPop()) {
-          Navigator.of(context).pop(true);
+        if (context.canPop()) {
+          context.pop(true);
         } else {
           context.go(AppRoutes.ownerDashboard);
         }

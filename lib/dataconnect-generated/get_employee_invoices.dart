@@ -1,6 +1,7 @@
 part of 'example.dart';
 
 class GetEmployeeInvoicesVariablesBuilder {
+  String businessId;
   Optional<int> _limit = Optional.optional(nativeFromJson, nativeToJson);
   Optional<int> _offset = Optional.optional(nativeFromJson, nativeToJson);
   Optional<Timestamp> _startDate = Optional.optional((json) => json['startDate'] = Timestamp.fromJson(json['startDate']), defaultSerializer);
@@ -9,8 +10,7 @@ class GetEmployeeInvoicesVariablesBuilder {
   Optional<InvoiceStatus> _status = Optional.optional((data) => InvoiceStatus.values.byName(data), enumSerializer);
   Optional<String> _searchQuery = Optional.optional(nativeFromJson, nativeToJson);
 
-  final FirebaseDataConnect _dataConnect;
-  GetEmployeeInvoicesVariablesBuilder limit(int? t) {
+  final FirebaseDataConnect _dataConnect;  GetEmployeeInvoicesVariablesBuilder limit(int? t) {
    _limit.value = t;
    return this;
   }
@@ -39,15 +39,15 @@ class GetEmployeeInvoicesVariablesBuilder {
    return this;
   }
 
-  GetEmployeeInvoicesVariablesBuilder(this._dataConnect, );
+  GetEmployeeInvoicesVariablesBuilder(this._dataConnect, {required  this.businessId,});
   Deserializer<GetEmployeeInvoicesData> dataDeserializer = (dynamic json)  => GetEmployeeInvoicesData.fromJson(jsonDecode(json));
   Serializer<GetEmployeeInvoicesVariables> varsSerializer = (GetEmployeeInvoicesVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetEmployeeInvoicesData, GetEmployeeInvoicesVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetEmployeeInvoicesData, GetEmployeeInvoicesVariables>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetEmployeeInvoicesData, GetEmployeeInvoicesVariables> ref() {
-    GetEmployeeInvoicesVariables vars= GetEmployeeInvoicesVariables(limit: _limit,offset: _offset,startDate: _startDate,endDate: _endDate,paymentMethod: _paymentMethod,status: _status,searchQuery: _searchQuery,);
+    GetEmployeeInvoicesVariables vars= GetEmployeeInvoicesVariables(businessId: businessId,limit: _limit,offset: _offset,startDate: _startDate,endDate: _endDate,paymentMethod: _paymentMethod,status: _status,searchQuery: _searchQuery,);
     return _dataConnect.query("GetEmployeeInvoices", dataDeserializer, varsSerializer, vars);
   }
 }
@@ -405,6 +405,7 @@ class GetEmployeeInvoicesData {
 
 @immutable
 class GetEmployeeInvoicesVariables {
+  final String businessId;
   late final Optional<int>limit;
   late final Optional<int>offset;
   late final Optional<Timestamp>startDate;
@@ -413,7 +414,10 @@ class GetEmployeeInvoicesVariables {
   late final Optional<InvoiceStatus>status;
   late final Optional<String>searchQuery;
   @Deprecated('fromJson is deprecated for Variable classes as they are no longer required for deserialization.')
-  GetEmployeeInvoicesVariables.fromJson(Map<String, dynamic> json) {
+  GetEmployeeInvoicesVariables.fromJson(Map<String, dynamic> json):
+  
+  businessId = nativeFromJson<String>(json['businessId']) {
+  
   
   
     limit = Optional.optional(nativeFromJson, nativeToJson);
@@ -454,7 +458,8 @@ class GetEmployeeInvoicesVariables {
     }
 
     final GetEmployeeInvoicesVariables otherTyped = other as GetEmployeeInvoicesVariables;
-    return limit == otherTyped.limit && 
+    return businessId == otherTyped.businessId && 
+    limit == otherTyped.limit && 
     offset == otherTyped.offset && 
     startDate == otherTyped.startDate && 
     endDate == otherTyped.endDate && 
@@ -464,11 +469,12 @@ class GetEmployeeInvoicesVariables {
     
   }
   @override
-  int get hashCode => Object.hashAll([limit.hashCode, offset.hashCode, startDate.hashCode, endDate.hashCode, paymentMethod.hashCode, status.hashCode, searchQuery.hashCode]);
+  int get hashCode => Object.hashAll([businessId.hashCode, limit.hashCode, offset.hashCode, startDate.hashCode, endDate.hashCode, paymentMethod.hashCode, status.hashCode, searchQuery.hashCode]);
   
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = {};
+    json['businessId'] = nativeToJson<String>(businessId);
     if(limit.state == OptionalState.set) {
       json['limit'] = limit.toJson();
     }
@@ -494,6 +500,7 @@ class GetEmployeeInvoicesVariables {
   }
 
   GetEmployeeInvoicesVariables({
+    required this.businessId,
     required this.limit,
     required this.offset,
     required this.startDate,

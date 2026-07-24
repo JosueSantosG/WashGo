@@ -78,6 +78,12 @@ class _SplashPageState extends State<SplashPage>
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    precacheImage(const AssetImage('assets/images/logo.png'), context);
+  }
+
   void _replayAnimation() {
     _controller.reset();
     _controller.forward();
@@ -199,6 +205,8 @@ class _SplashPageState extends State<SplashPage>
                     width: 140,
                     height: 140,
                     fit: BoxFit.contain,
+                    gaplessPlayback: true,
+                    filterQuality: FilterQuality.high,
                   ),
                   const SizedBox(height: 24),
                   // WashGo Title

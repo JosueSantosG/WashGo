@@ -96,6 +96,8 @@ class FakeBusinessRepository implements BusinessRepository {
   @override
   Future<List<EmployeeBranchStatus>> getEmployeeBranches() async => [];
   @override
+  Future<List<EmployeeBranchStatus>> getEmployeePendingBranches() async => [];
+  @override
   Future<void> activateEmployeeShift(String businessId) async {}
   @override
   Future<void> deactivateEmployeeShift(String businessId) async {}

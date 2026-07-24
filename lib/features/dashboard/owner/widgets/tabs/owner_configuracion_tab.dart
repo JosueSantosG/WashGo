@@ -40,9 +40,11 @@ class OwnerConfiguracionTab extends StatefulWidget {
   final String? businessId;
   final BusinessRepository businessRepository;
   final String? businessStatus;
+  final bool wasApprovedBySuperAdmin;
   final VoidCallback onBusinessStatusChanged;
   final ValueNotifier<List<WashGoService>> servicesNotifier;
-  final void Function(String id, bool active, String nombre) onToggleServiceActive;
+  final void Function(String id, bool active, String nombre)
+  onToggleServiceActive;
   final void Function(WashGoService service) onEditService;
   final void Function(String id, String nombre) onDeleteService;
   final VoidCallback onAddService;
@@ -74,6 +76,7 @@ class OwnerConfiguracionTab extends StatefulWidget {
     required this.businessId,
     required this.businessRepository,
     required this.businessStatus,
+    this.wasApprovedBySuperAdmin = false,
     required this.onBusinessStatusChanged,
     required this.servicesNotifier,
     required this.onToggleServiceActive,
@@ -102,20 +105,14 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
         border: Border.all(color: Colors.grey.shade100),
       ),
       child: ListTile(
-        leading: const Icon(
-          Icons.store_rounded,
-          color: AppColors.primary,
-        ),
+        leading: const Icon(Icons.store_rounded, color: AppColors.primary),
         title: Text(
           'Editar información de tu local',
           style: GoogleFonts.inter(fontWeight: FontWeight.w600),
         ),
         subtitle: Text(
           'Nombre, teléfono, dirección, horario y ubicación.',
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            color: Colors.grey.shade500,
-          ),
+          style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade500),
         ),
         trailing: const Icon(Icons.chevron_right_rounded),
         onTap: () => _showEditLocalDialog(context),
@@ -145,7 +142,11 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
                       padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
                       child: Row(
                         children: [
-                          const Icon(Icons.store_rounded, color: AppColors.primary, size: 28),
+                          const Icon(
+                            Icons.store_rounded,
+                            color: AppColors.primary,
+                            size: 28,
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
@@ -158,7 +159,9 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
                             ),
                           ),
                           IconButton(
-                            onPressed: widget.isSaving ? null : () => Navigator.pop(context),
+                            onPressed: widget.isSaving
+                                ? null
+                                : () => Navigator.pop(context),
                             icon: const Icon(Icons.close_rounded),
                           ),
                         ],
@@ -217,7 +220,8 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
           keyboardType: TextInputType.phone,
           decoration: const InputDecoration(
             labelText: 'Teléfono del Local',
-            helperText: 'Tus clientes te contactarán a este número para más información (mín. 7 dígitos).',
+            helperText:
+                'Tus clientes te contactarán a este número para más información (mín. 7 dígitos).',
             helperMaxLines: 2,
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.phone, color: AppColors.primary),
@@ -573,7 +577,8 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: const InputDecoration(
             labelText: 'Capacidad Simultánea (Reservas)',
-            helperText: 'Número máximo de citas o clientes que puedes atender al mismo tiempo (mín. 1).',
+            helperText:
+                'Número máximo de citas o clientes que puedes atender al mismo tiempo (mín. 1).',
             helperMaxLines: 2,
             border: OutlineInputBorder(),
             prefixIcon: Icon(
@@ -589,7 +594,8 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: const InputDecoration(
             labelText: 'Tiempo de Anticipación (Minutos)',
-            helperText: 'Tiempo mínimo requerido antes de la cita para poder reservar (mín. 0).',
+            helperText:
+                'Tiempo mínimo requerido antes de la cita para poder reservar (mín. 0).',
             helperMaxLines: 2,
             border: OutlineInputBorder(),
             prefixIcon: Icon(
@@ -651,7 +657,9 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
         context: context,
         builder: (context) {
           return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: Row(
               children: [
                 const Icon(Icons.block_rounded, color: Colors.amber, size: 28),
@@ -677,7 +685,10 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
                 onPressed: () => Navigator.pop(context),
                 child: Text(
                   'Entendido',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.primary),
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
             ],
@@ -691,10 +702,16 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Row(
             children: [
-              const Icon(Icons.power_settings_new_rounded, color: Colors.orange, size: 28),
+              const Icon(
+                Icons.power_settings_new_rounded,
+                color: Colors.orange,
+                size: 28,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -717,7 +734,10 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
               onPressed: () => Navigator.pop(context),
               child: Text(
                 'Cancelar',
-                style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.onSurfaceVariant),
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.onSurfaceVariant,
+                ),
               ),
             ),
             ElevatedButton(
@@ -765,10 +785,16 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Row(
             children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.green, size: 28),
+              const Icon(
+                Icons.check_circle_rounded,
+                color: Colors.green,
+                size: 28,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -791,7 +817,10 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
               onPressed: () => Navigator.pop(context),
               child: Text(
                 'Cancelar',
-                style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.onSurfaceVariant),
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.onSurfaceVariant,
+                ),
               ),
             ),
             ElevatedButton(
@@ -840,7 +869,9 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
         context: context,
         builder: (context) {
           return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: Row(
               children: [
                 const Icon(Icons.block_rounded, color: Colors.amber, size: 28),
@@ -866,8 +897,68 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
                 onPressed: () => Navigator.pop(context),
                 child: Text(
                   'Entendido',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.primary),
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
                 ),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
+    if (widget.businessStatus == 'APPROVED') {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Row(
+              children: [
+                const Icon(Icons.block_rounded, color: Colors.orange, size: 28),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Desactiva tu local primero',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: AppColors.onSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              'Para poder eliminar tu cuenta, primero debes desactivar o suspender tu local para garantizar que no permanezca activo en el mapa para los clientes.',
+              style: GoogleFonts.inter(fontSize: 14, height: 1.5),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Cancelar',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showDeactivateLocalDialog(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Desactivar Local Ahora'),
               ),
             ],
           );
@@ -891,7 +982,11 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
               ),
               title: Row(
                 children: [
-                  const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 28),
+                  const Icon(
+                    Icons.warning_amber_rounded,
+                    color: AppColors.error,
+                    size: 28,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -912,7 +1007,7 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
                   children: [
                     Text(
                       'Esta acción es permanente y eliminará tu información de usuario (nombre, correo y teléfono) de forma irreversible, cerrando tu sesión.\n\n'
-                      'Nota: Si deseas que tu local deje de aparecer en el mapa antes de borrar tu cuenta, por favor presiona la opción "Desactivar Local" primero.',
+                      'Nota: Tu local se encuentra actualmente desactivado. Al confirmar, tu cuenta se eliminará definitivamente.',
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         color: AppColors.onSurface,
@@ -990,7 +1085,9 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
                             });
                             if (context.mounted) {
                               String errorMsg = 'Error al eliminar cuenta: $e';
-                              if (e.toString().contains('requires-recent-login')) {
+                              if (e.toString().contains(
+                                'requires-recent-login',
+                              )) {
                                 errorMsg =
                                     'Por motivos de seguridad, debes haber iniciado sesión recientemente para eliminar tu cuenta. Cierra sesión y vuelve a ingresar para intentarlo.';
                               }
@@ -1007,11 +1104,16 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.error,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: AppColors.error.withValues(alpha: 0.3),
+                    disabledBackgroundColor: AppColors.error.withValues(
+                      alpha: 0.3,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                   ),
                   child: isDeleting
                       ? const SizedBox(
@@ -1024,9 +1126,7 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
                         )
                       : Text(
                           'Eliminar',
-                          style: GoogleFonts.inter(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                         ),
                 ),
               ],
@@ -1062,10 +1162,7 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
         ),
         subtitle: Text(
           'Precios, duración y catálogo de lavado o planchado.',
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            color: Colors.grey.shade500,
-          ),
+          style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade500),
         ),
         trailing: const Icon(Icons.chevron_right_rounded),
         onTap: () => _showServicesDialog(context),
@@ -1092,7 +1189,11 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
                   padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
                   child: Row(
                     children: [
-                      const Icon(Icons.local_laundry_service_rounded, color: AppColors.primary, size: 28),
+                      const Icon(
+                        Icons.local_laundry_service_rounded,
+                        color: AppColors.primary,
+                        size: 28,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -1192,48 +1293,120 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
                   onTap: widget.showProfileSheet,
                 ),
                 Divider(height: 1, color: Colors.grey.shade100),
-                ListTile(
-                  leading: Icon(
-                    widget.businessStatus == 'APPROVED'
-                        ? Icons.power_settings_new_rounded
-                        : Icons.check_circle_rounded,
-                    color: widget.businessStatus == 'APPROVED' ? Colors.orange : Colors.green,
-                  ),
-                  title: Text(
-                    widget.businessStatus == 'APPROVED'
-                        ? 'Desactivar Local / Suspender Servicio'
-                        : 'Activar Local / Reabrir Servicio',
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.w600,
+                if (!widget.wasApprovedBySuperAdmin)
+                  ListTile(
+                    leading: const Icon(
+                      Icons.hourglass_top_rounded,
+                      color: Colors.amber,
+                    ),
+                    title: Text(
+                      'Pendiente de Aprobación por WashGo',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.amber.shade900,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'Tu local está en revisión. WashGo debe aprobar tu solicitud antes de que puedas activarlo.',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    trailing: const Icon(
+                      Icons.info_outline_rounded,
+                      color: Colors.amber,
+                    ),
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          title: Row(
+                            children: [
+                              const Icon(
+                                Icons.hourglass_top_rounded,
+                                color: Colors.amber,
+                                size: 28,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Aprobación Pendiente',
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          content: Text(
+                            'Tu local fue enviado a revisión por WashGo. Una vez que WashGo lo apruebe, podrás activarlo y gestionar la atención a tus clientes.',
+                            style: GoogleFonts.inter(fontSize: 14, height: 1.5),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Entendido'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  )
+                else
+                  ListTile(
+                    leading: Icon(
+                      widget.businessStatus == 'APPROVED'
+                          ? Icons.power_settings_new_rounded
+                          : Icons.check_circle_rounded,
                       color: widget.businessStatus == 'APPROVED'
-                          ? Colors.orange.shade800
-                          : Colors.green.shade800,
+                          ? Colors.orange
+                          : Colors.green,
                     ),
-                  ),
-                  subtitle: Text(
-                    widget.businessStatus == 'APPROVED'
-                        ? 'Ocultar temporalmente tu local en el mapa para clientes.'
-                        : 'Hacer visible tu local en el mapa y reabrir el servicio.',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: Colors.grey.shade500,
+                    title: Text(
+                      widget.businessStatus == 'APPROVED'
+                          ? 'Desactivar Local / Suspender Servicio'
+                          : 'Activar Local / Reabrir Servicio',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        color: widget.businessStatus == 'APPROVED'
+                            ? Colors.orange.shade800
+                            : Colors.green.shade800,
+                      ),
                     ),
+                    subtitle: Text(
+                      widget.businessStatus == 'APPROVED'
+                          ? 'Ocultar temporalmente tu local en el mapa para clientes.'
+                          : 'Hacer visible tu local en el mapa y reabrir el servicio.',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                    trailing: Icon(
+                      Icons.chevron_right_rounded,
+                      color: widget.businessStatus == 'APPROVED'
+                          ? Colors.orange
+                          : Colors.green,
+                    ),
+                    onTap: () {
+                      if (widget.businessStatus == 'APPROVED') {
+                        _showDeactivateLocalDialog(context);
+                      } else {
+                        _showActivateLocalDialog(context);
+                      }
+                    },
                   ),
-                  trailing: Icon(
-                    Icons.chevron_right_rounded,
-                    color: widget.businessStatus == 'APPROVED' ? Colors.orange : Colors.green,
-                  ),
-                  onTap: () {
-                    if (widget.businessStatus == 'APPROVED') {
-                      _showDeactivateLocalDialog(context);
-                    } else {
-                      _showActivateLocalDialog(context);
-                    }
-                  },
-                ),
                 Divider(height: 1, color: Colors.grey.shade100),
                 ListTile(
-                  leading: const Icon(Icons.delete_forever_outlined, color: AppColors.error),
+                  leading: const Icon(
+                    Icons.delete_forever_outlined,
+                    color: AppColors.error,
+                  ),
                   title: Text(
                     'Eliminar Cuenta',
                     style: GoogleFonts.inter(
@@ -1248,7 +1421,10 @@ class _OwnerConfiguracionTabState extends State<OwnerConfiguracionTab> {
                       color: Colors.grey.shade500,
                     ),
                   ),
-                  trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.error),
+                  trailing: const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.error,
+                  ),
                   onTap: () => _showDeleteAccountDialog(context),
                 ),
                 Divider(height: 1, color: Colors.grey.shade100),

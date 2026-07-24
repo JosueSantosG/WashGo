@@ -54,6 +54,7 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
   String? _businessName;
   List<UserRole> _userRoles = [];
   EmployeeStatus? _employeeStatus;
+  bool _isBusinessUnavailable = false;
 
   List<WashGoOrder> _pendingQueue = [];
   List<WashGoOrder> _myActiveOrders = [];
@@ -64,6 +65,7 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
   int _currentNavIndex = 0;
   StreamSubscription<List<WashGoOrder>>? _ordersSubscription;
   Timer? _approvalPollingTimer;
+  final Set<String> _completingOrderIds = {};
 
 
   final TextEditingController _searchController = TextEditingController();
@@ -394,7 +396,7 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
     bool refresh = false,
     String? searchQuery,
   }) async {
-    if (_employeeId == null) return;
+    if (_employeeId == null || _businessId == null) return;
 
     if (searchQuery != null) {
       _invoicesSearchQuery = searchQuery;
@@ -427,6 +429,7 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
           ? _invoicesSearchQuery.trim()
           : null;
       final invoices = await _invoiceRepository.getEmployeeInvoices(
+        businessId: _businessId!,
         limit: _invoicesPageSize,
         offset: _invoicesOffset,
         searchQuery: query,
@@ -920,6 +923,39 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
         throw Exception('No se pudo encontrar la información del usuario.');
       }
 
+      final currentBusinessId = user.currentBusinessId;
+      final currentBusinessName = user.currentBusinessName;
+
+      // 1. Fetch active and pending branches for the employee
+      List<EmployeeBranchStatus> branches = [];
+      try {
+        final activeBranches = await _businessRepository.getEmployeeBranches();
+        final pendingBranches = await _businessRepository.getEmployeePendingBranches();
+        branches = [...activeBranches, ...pendingBranches];
+      } catch (e) {
+        debugPrint('Error fetching branches in _initializeDashboard: $e');
+      }
+
+      // 2. Determine active business status dynamically
+      EmployeeStatus determinedStatus = user.employeeStatus;
+      bool unavailable = false;
+
+      if (currentBusinessId == null) {
+        determinedStatus = EmployeeStatus.UNASSIGNED;
+      } else {
+        final isActiveInCurrent = branches.any((b) => b.businessId == currentBusinessId && !b.isPending);
+        final isPendingInCurrent = branches.any((b) => b.businessId == currentBusinessId && b.isPending);
+
+        if (isActiveInCurrent) {
+          determinedStatus = EmployeeStatus.ACTIVE;
+        } else if (isPendingInCurrent) {
+          determinedStatus = EmployeeStatus.PENDING;
+        } else {
+          determinedStatus = EmployeeStatus.UNASSIGNED;
+          unavailable = true;
+        }
+      }
+
       if (mounted) {
         setState(() {
           _employeeId = user.uid;
@@ -927,12 +963,11 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
           _employeePhone = user.telefono;
           _employeeEmail = user.email;
           _userRoles = user.roles;
-          _employeeStatus = user.employeeStatus;
+          _employeeStatus = determinedStatus;
+          _isBusinessUnavailable = unavailable;
+          _employeeBranches = branches;
         });
       }
-
-      final currentBusinessId = user.currentBusinessId;
-      final currentBusinessName = user.currentBusinessName;
       if (currentBusinessId == null) {
         if (_employeeStatus == EmployeeStatus.PENDING) {
           _businessId = null;
@@ -967,6 +1002,7 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
 
       if (_employeeStatus == EmployeeStatus.PENDING) {
         _startApprovalPolling();
+        await _fetchAvailability();
         if (mounted) {
           setState(() {
             _pendingQueue = [];
@@ -1028,7 +1064,7 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
 
               if ((isEnCola || isTransferenciaConComprobante) && orderEmployeeId == null) {
                 pending.add(order);
-              } else if (orderEmployeeId == _employeeId) {
+              } else if (orderEmployeeId == _employeeId && !_completingOrderIds.contains(order.id)) {
                 myActive.add(order);
               }
             }
@@ -1113,7 +1149,7 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
 
         if ((isEnCola || isTransferenciaConComprobante) && orderEmployeeId == null) {
           pending.add(order);
-        } else if (orderEmployeeId == _employeeId) {
+        } else if (orderEmployeeId == _employeeId && !_completingOrderIds.contains(order.id)) {
           myActive.add(order);
         }
       }
@@ -1141,39 +1177,62 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
   }
 
   Future<void> _fetchAvailability() async {
-    if (_businessId == null ||
-        _employeeId == null ||
-        _employeeStatus == EmployeeStatus.PENDING)
-      return;
+    if (_employeeId == null) return;
     setState(() {
       _isLoadingAvailability = true;
     });
     try {
-      final availability = await _businessRepository.getEmployeeAvailability(
-        businessId: _businessId!,
-        employeeId: _employeeId!,
-      );
-      final branches = await _businessRepository.getEmployeeBranches();
-
-      setState(() {
+      if (_businessId != null && _employeeStatus != EmployeeStatus.PENDING) {
+        final availability = await _businessRepository.getEmployeeAvailability(
+          businessId: _businessId!,
+          employeeId: _employeeId!,
+        );
         if (availability != null) {
           _isAvailable = availability.estadoDisponibilidad;
           _businessEmployeeRecordId = availability.id;
         }
-        _employeeBranches = branches;
-        if (branches.isNotEmpty) {
-          final branch = branches.firstWhere(
-            (b) => b.businessId == _businessId,
-            orElse: () => branches.first,
-          );
-          _isDisabledByOwner = branch.isDisabledByOwner;
-          _isAvailable = branch.estadoDisponibilidad;
-        } else {
-          // Para usuarios empleados preexistentes sin registros en la tabla pivote
-          _isDisabledByOwner = false;
-          _isAvailable = true;
-        }
-      });
+      }
+
+      List<EmployeeBranchStatus> branches = [];
+      try {
+        final activeBranches = await _businessRepository.getEmployeeBranches();
+        final pendingBranches = await _businessRepository.getEmployeePendingBranches();
+        branches = [...activeBranches, ...pendingBranches];
+      } catch (e) {
+        debugPrint('Error fetching branches in _fetchAvailability: $e');
+      }
+
+      if (_businessId != null && !branches.any((b) => b.businessId == _businessId)) {
+        branches.add(
+          EmployeeBranchStatus(
+            recordId: _businessEmployeeRecordId ?? '',
+            businessId: _businessId!,
+            businessName: _businessName ?? 'Lavandería',
+            businessCode: '',
+            description: _employeeStatus == EmployeeStatus.PENDING ? 'Pendiente de aprobación' : '',
+            isDisabledByOwner: false,
+            estadoDisponibilidad: _isAvailable,
+            isPending: _employeeStatus == EmployeeStatus.PENDING,
+          ),
+        );
+      }
+
+      if (mounted) {
+        setState(() {
+          _employeeBranches = branches;
+          if (branches.isNotEmpty && _businessId != null) {
+            final branch = branches.firstWhere(
+              (b) => b.businessId == _businessId,
+              orElse: () => branches.first,
+            );
+            _isDisabledByOwner = branch.isDisabledByOwner;
+            _isAvailable = branch.estadoDisponibilidad;
+          } else {
+            _isDisabledByOwner = false;
+            _isAvailable = true;
+          }
+        });
+      }
     } catch (e) {
       debugPrint('Error fetching employee availability/branches: $e');
     } finally {
@@ -1313,18 +1372,7 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
       return;
     }
 
-    if (!_isAvailable) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'No puedes aceptar pedidos mientras estés en descanso / almuerzo. Cambia tu estado a Disponible primero.',
-          ),
-          backgroundColor: AppColors.warning,
-          duration: Duration(seconds: 3),
-        ),
-      );
-      return;
-    }
+
 
     // Mostrar loader dialog
     showDialog(
@@ -1514,56 +1562,62 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
     );
 
     if (confirmed == true && mounted) {
-      // Show loader dialog
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const PopScope(
-          canPop: false,
-          child: Center(
-            child: Material(
-              color: Colors.transparent,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(color: AppColors.primary),
-                  SizedBox(height: 16),
-                  Text(
-                    'Generando factura digital...',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+      final orderId = order.id;
+      final displayId = orderId.length > 8 ? orderId.substring(0, 8) : orderId;
+
+      // 1. Optimistic Update: Add to completing set and remove from active list immediately
+      setState(() {
+        _completingOrderIds.add(orderId);
+        _myActiveOrders.removeWhere((o) => o.id == orderId);
+      });
+
+      // 2. Show non-blocking SnackBar with progress spinner
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Completando pedido #$displayId y generando factura en segundo plano...',
+                ),
+              ),
+            ],
           ),
+          duration: const Duration(seconds: 4),
+          behavior: SnackBarBehavior.floating,
         ),
       );
 
-      try {
-        final employeeName = _employeeName ?? 'Empleado';
-        final employeeId = _employeeId ?? '';
-        final businessId = _businessId ?? order.businessId;
+      final employeeNotes = notesController.text;
+      final employeeName = _employeeName ?? 'Empleado';
+      final employeeId = _employeeId ?? '';
+      final businessId = _businessId ?? order.businessId;
 
-        // Fetch client email if phone is available
-        String? clientEmail;
-        if (order.client.telefono != null &&
-            order.client.telefono!.isNotEmpty) {
-          try {
-            final clientInfo = await _orderRepository.findUserByPhone(
-              order.client.telefono!,
-            );
-            clientEmail = clientInfo?.email;
-          } catch (_) {}
-        }
+      // 3. Run billing logic in the background
+      final String phoneToSearch = order.client.telefono ?? '';
+      Future<String?> fetchEmailFuture;
+      if (phoneToSearch.isNotEmpty) {
+        fetchEmailFuture = _orderRepository.findUserByPhone(phoneToSearch)
+            .then((clientInfo) => clientInfo?.email)
+            .catchError((_) => null);
+      } else {
+        fetchEmailFuture = Future.value(null);
+      }
 
-        // Call the repo method that generates the invoice, uploads it, updates DB, and updates order status.
-        await _invoiceRepository.completeOrderWithInvoice(
-          orderId: order.id,
+      fetchEmailFuture.then((clientEmail) {
+        return _invoiceRepository.completeOrderWithInvoice(
+          orderId: orderId,
           originalObservations: order.observations ?? '',
-          employeeNotes: notesController.text,
+          employeeNotes: employeeNotes,
           price: order.price,
           serviceName: order.serviceName ?? 'Servicio de Lavado',
           paymentMethod: order.paymentMethod.name,
@@ -1574,34 +1628,41 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
           clientEmail: clientEmail,
           clientPhone: order.client.telefono,
         );
-
-        if (!mounted) return;
-        Navigator.pop(context); // Close loader
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              '¡Pedido completado y factura digital generada con éxito!',
+      }).then((_) {
+        if (mounted) {
+          setState(() {
+            _completingOrderIds.remove(orderId);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '¡Pedido #$displayId completado y factura digital generada con éxito!',
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
             ),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        _fetchOrders();
-        _loadNextHistoryPage(refresh: true);
-        _loadEmployeeInvoices(refresh: true);
-      } catch (e) {
-        if (!mounted) return;
-        Navigator.pop(context); // Close loader
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Error al finalizar el pedido y generar la factura: $e',
+          );
+          _fetchOrders();
+          _loadNextHistoryPage(refresh: true);
+          _loadEmployeeInvoices(refresh: true);
+        }
+      }).catchError((e) {
+        if (mounted) {
+          setState(() {
+            _completingOrderIds.remove(orderId);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Error al finalizar el pedido #$displayId: $e',
+              ),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
             ),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+          );
+          _fetchOrders(); // Restore order if it failed
+        }
+      });
     }
   }
 
@@ -1949,6 +2010,15 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
         content = const SizedBox.shrink();
     }
 
+    if (_isBusinessUnavailable) {
+      return Column(
+        children: [
+          _buildUnavailableWarningBanner(),
+          Expanded(child: content),
+        ],
+      );
+    }
+
     if (_employeeStatus == EmployeeStatus.PENDING) {
       return Column(
         children: [
@@ -2037,7 +2107,76 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
     );
   }
 
+  Widget _buildUnavailableWarningBanner() {
+    final localName = (_businessName != null && _businessName!.isNotEmpty)
+        ? _businessName!
+        : 'esta lavandería';
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.red.shade300, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.red.shade200.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.red.shade100,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.storefront_outlined,
+              color: Colors.red.shade800,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Local No Disponible: $localName',
+                  style: GoogleFonts.outfit(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red.shade900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Este local ha sido desactivado o fue eliminado por el dueño. Puedes cambiar a otra sucursal o vincularte a un nuevo local.',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: Colors.red.shade900.withValues(alpha: 0.8),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPendingWarningBanner() {
+    final localName = (_businessName != null && _businessName!.isNotEmpty)
+        ? _businessName!
+        : 'el nuevo local';
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -2064,7 +2203,7 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
               shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.warning_amber_rounded,
+              Icons.hourglass_top_rounded,
               color: Colors.amber.shade800,
               size: 24,
             ),
@@ -2076,7 +2215,7 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Cuenta Pendiente de Aprobación',
+                  'Solicitud Pendiente: $localName',
                   style: GoogleFonts.outfit(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -2085,7 +2224,7 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Debe esperar que el dueño le acepte para empezar a recibir las reservas.',
+                  'Tu solicitud para unirte a "$localName" fue enviada. Debes esperar a que el dueño te apruebe para recibir y tomar reservas en esta sucursal.',
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     color: Colors.amber.shade900.withValues(alpha: 0.8),
@@ -2101,7 +2240,75 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
   }
 
   Widget _buildTareasSection() {
+    if (_isBusinessUnavailable) {
+      final localName = (_businessName != null && _businessName!.isNotEmpty)
+          ? _businessName!
+          : 'esta lavandería';
+      return Center(
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.store_outlined,
+                    size: 64,
+                    color: Colors.red.shade700,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Este local ya no está disponible',
+                  style: GoogleFonts.outfit(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.onBackground,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'El local "$localName" ha sido desactivado o fue eliminado por el dueño. Puedes cambiarte a otra sucursal o vincularte a un nuevo local.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: AppColors.onSurfaceVariant,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () => setState(() => _currentNavIndex = 2),
+                  icon: const Icon(Icons.person_outline_rounded),
+                  label: const Text('Ir a mi Perfil para cambiar sucursal'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     if (_employeeStatus == EmployeeStatus.PENDING) {
+      final localName = (_businessName != null && _businessName!.isNotEmpty)
+          ? _businessName!
+          : 'la lavandería';
       return Center(
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -2111,22 +2318,23 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  Icons.assignment_late_rounded,
+                  Icons.hourglass_empty_rounded,
                   size: 80,
-                  color: AppColors.outline.withValues(alpha: 0.5),
+                  color: Colors.amber.shade400,
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Sin Tareas Disponibles',
+                  'Esperando Aprobación de $localName',
                   style: GoogleFonts.outfit(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: AppColors.onBackground,
                   ),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Una vez que el dueño te acepte en la lavandería, podrás visualizar y tomar los pedidos en cola aquí.',
+                  'Tu solicitud para trabajar en "$localName" se encuentra en revisión.\nUna vez que el dueño acepte tu solicitud, podrás tomar y atender los pedidos de este local.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: 14,
@@ -2255,6 +2463,56 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
     );
   }
 
+  Future<void> _switchBranch(String businessId) async {
+    if (_businessId == businessId) return;
+
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
+
+    try {
+      await _businessRepository.switchCurrentBusiness(businessId);
+      _ordersSubscription?.cancel();
+      _ordersSubscription = null;
+      _pendingQueue = [];
+      _myActiveOrders = [];
+      _myHistoryOrders = [];
+      _employeeInvoices = [];
+      _historyOffset = 0;
+      _invoicesOffset = 0;
+      _hasMoreHistory = true;
+      _hasMoreInvoices = true;
+
+      await _initializeDashboard(silent: false);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Se cambió a la sucursal "${_businessName ?? 'seleccionada'}".'),
+            backgroundColor: AppColors.primary,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error al cambiar de sucursal: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al cambiar de sucursal: $e'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   Widget _buildProfileTab() {
     return EmployeeProfileTab(
       employeeStatus: _employeeStatus,
@@ -2266,6 +2524,16 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
       userRoles: _userRoles,
       authRepository: _authRepository,
       employeeBranches: _employeeBranches,
+      currentBusinessId: _businessId,
+      onSwitchBranch: _switchBranch,
+      activeOrdersCount: _myActiveOrders.length,
+      onGoToTareasTab: () {
+        if (mounted) {
+          setState(() {
+            _currentNavIndex = 0;
+          });
+        }
+      },
       onToggleAvailability: _toggleAvailability,
       onActivateShift: (businessId) async {
         try {
@@ -2278,7 +2546,12 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
                 behavior: SnackBarBehavior.floating,
               ),
             );
-            _initializeDashboard(silent: true);
+            await _initializeDashboard(silent: false);
+            if (mounted) {
+              setState(() {
+                _currentNavIndex = 0;
+              });
+            }
           }
         } catch (e) {
           if (mounted) {
@@ -2747,6 +3020,31 @@ class _EmployeeDashboardPageState extends State<EmployeeDashboardPage>
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                ] else if (!_isAvailable) ...[
+                  ElevatedButton.icon(
+                    onPressed: () => _acceptOrder(order),
+                    icon: Icon(
+                      Icons.pause_circle_filled_rounded,
+                      color: Colors.amber.shade800,
+                    ),
+                    label: Text(
+                      'En receso — No disponible',
+                      style: GoogleFonts.inter(
+                        color: Colors.amber.shade900,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.amber.shade50,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: BorderSide(color: Colors.amber.shade300),
+                      ),
                     ),
                   ),
                 ] else ...[

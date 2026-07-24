@@ -13,8 +13,8 @@ class GetClientHistoryOrdersPagedVariablesBuilder {
   GetClientHistoryOrdersPagedVariablesBuilder(this._dataConnect, {required  this.limit,required  this.offset,});
   Deserializer<GetClientHistoryOrdersPagedData> dataDeserializer = (dynamic json)  => GetClientHistoryOrdersPagedData.fromJson(jsonDecode(json));
   Serializer<GetClientHistoryOrdersPagedVariables> varsSerializer = (GetClientHistoryOrdersPagedVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetClientHistoryOrdersPagedData, GetClientHistoryOrdersPagedVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetClientHistoryOrdersPagedData, GetClientHistoryOrdersPagedVariables>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetClientHistoryOrdersPagedData, GetClientHistoryOrdersPagedVariables> ref() {

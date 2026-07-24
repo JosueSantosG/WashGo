@@ -6,8 +6,8 @@ class GetCurrentUserVariablesBuilder {
   GetCurrentUserVariablesBuilder(this._dataConnect, );
   Deserializer<GetCurrentUserData> dataDeserializer = (dynamic json)  => GetCurrentUserData.fromJson(jsonDecode(json));
   
-  Future<QueryResult<GetCurrentUserData, void>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetCurrentUserData, void>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetCurrentUserData, void> ref() {
@@ -111,6 +111,7 @@ class GetCurrentUserUserCurrentBusiness {
   final double? latitud;
   final double? longitud;
   final EnumValue<BusinessStatus> status;
+  final bool wasApprovedBySuperAdmin;
   final double saldoPrepagoInicial;
   final double saldoPrepagoConsumido;
   GetCurrentUserUserCurrentBusiness.fromJson(dynamic json):
@@ -124,6 +125,7 @@ class GetCurrentUserUserCurrentBusiness {
   latitud = json['latitud'] == null ? null : nativeFromJson<double>(json['latitud']),
   longitud = json['longitud'] == null ? null : nativeFromJson<double>(json['longitud']),
   status = businessStatusDeserializer(json['status']),
+  wasApprovedBySuperAdmin = nativeFromJson<bool>(json['wasApprovedBySuperAdmin']),
   saldoPrepagoInicial = nativeFromJson<double>(json['saldoPrepagoInicial']),
   saldoPrepagoConsumido = nativeFromJson<double>(json['saldoPrepagoConsumido']);
   @override
@@ -145,12 +147,13 @@ class GetCurrentUserUserCurrentBusiness {
     latitud == otherTyped.latitud && 
     longitud == otherTyped.longitud && 
     status == otherTyped.status && 
+    wasApprovedBySuperAdmin == otherTyped.wasApprovedBySuperAdmin && 
     saldoPrepagoInicial == otherTyped.saldoPrepagoInicial && 
     saldoPrepagoConsumido == otherTyped.saldoPrepagoConsumido;
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, nombre.hashCode, ruc.hashCode, businessCode.hashCode, descripcion.hashCode, telefono.hashCode, latitud.hashCode, longitud.hashCode, status.hashCode, saldoPrepagoInicial.hashCode, saldoPrepagoConsumido.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, nombre.hashCode, ruc.hashCode, businessCode.hashCode, descripcion.hashCode, telefono.hashCode, latitud.hashCode, longitud.hashCode, status.hashCode, wasApprovedBySuperAdmin.hashCode, saldoPrepagoInicial.hashCode, saldoPrepagoConsumido.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -174,6 +177,7 @@ class GetCurrentUserUserCurrentBusiness {
     json['status'] = 
     businessStatusSerializer(status)
     ;
+    json['wasApprovedBySuperAdmin'] = nativeToJson<bool>(wasApprovedBySuperAdmin);
     json['saldoPrepagoInicial'] = nativeToJson<double>(saldoPrepagoInicial);
     json['saldoPrepagoConsumido'] = nativeToJson<double>(saldoPrepagoConsumido);
     return json;
@@ -189,6 +193,7 @@ class GetCurrentUserUserCurrentBusiness {
     this.latitud,
     this.longitud,
     required this.status,
+    required this.wasApprovedBySuperAdmin,
     required this.saldoPrepagoInicial,
     required this.saldoPrepagoConsumido,
   });

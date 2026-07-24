@@ -17,10 +17,10 @@ import 'package:washgo/features/dashboard/client/widgets/payment_selection_page.
 import 'package:washgo/features/dashboard/client/models/laundry_item.dart';
 import 'package:washgo/core/session/booking_intent_manager.dart';
 import 'package:washgo/features/orders/repositories/firebase_order_repository.dart';
-import 'package:washgo/dataconnect-generated/example.dart' hide PaymentProofStatus;
+import 'package:washgo/dataconnect-generated/example.dart'
+    hide PaymentProofStatus;
 import 'package:latlong2/latlong.dart';
 import 'package:washgo/features/dashboard/client/pages/client_order_history_page.dart';
-
 
 class BookingsTab extends StatefulWidget {
   final List<ClientOrder> orders;
@@ -32,7 +32,8 @@ class BookingsTab extends StatefulWidget {
   final VoidCallback onExplorePressed;
   final Function(BuildContext, ClientOrder) onCancelOrder;
   final Function(BuildContext, ClientOrder) onRescheduleOrder;
-  final Future<QueuePosition> Function(String businessId, String orderId)? getQueuePosition;
+  final Future<QueuePosition> Function(String businessId, String orderId)?
+  getQueuePosition;
 
   const BookingsTab({
     super.key,
@@ -81,9 +82,14 @@ class _BookingsTabState extends State<BookingsTab> {
     }
   }
 
-  void _showPaymentSelectionForExistingOrder(BuildContext context, ClientOrder order) {
+  void _showPaymentSelectionForExistingOrder(
+    BuildContext context,
+    ClientOrder order,
+  ) {
     final parsed = ParsedObservations.parse(order.observations);
-    final serviceType = order.type == 'DELIVERY' ? OrderType.DELIVERY : OrderType.LOCAL;
+    final serviceType = order.type == 'DELIVERY'
+        ? OrderType.DELIVERY
+        : OrderType.LOCAL;
 
     Navigator.push(
       context,
@@ -109,75 +115,82 @@ class _BookingsTabState extends State<BookingsTab> {
           serviceType: serviceType,
           selectedCategory: parsed.vehicleDetails,
           scheduleNow: parsed.scheduleType == 'Ahora mismo',
-          scheduledDateTime: _parseOrderDateTime(parsed.dateTime) ?? DateTime.now(),
+          scheduledDateTime:
+              _parseOrderDateTime(parsed.dateTime) ?? DateTime.now(),
           serviceDuration: 30,
-          onPaymentCompleted: (paymentMethod, {transactionId, phoneNumber}) async {
-            final status = (paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA ||
-                    paymentMethod == PaymentMethod.PAYPHONE ||
-                    paymentMethod == PaymentMethod.PAYPAL)
-                ? OrderStatus.PENDIENTE_PAGO
-                : OrderStatus.EN_COLA;
+          onPaymentCompleted:
+              (paymentMethod, {transactionId, phoneNumber}) async {
+                final status =
+                    (paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA ||
+                        paymentMethod == PaymentMethod.PAYPHONE ||
+                        paymentMethod == PaymentMethod.PAYPAL)
+                    ? OrderStatus.PENDIENTE_PAGO
+                    : OrderStatus.EN_COLA;
 
-            final repository = FirebaseOrderRepository();
-            await repository.updateOrderPaymentMethodAndStatus(
-              orderId: order.id,
-              paymentMethod: paymentMethod,
-              status: status,
-            );
-
-            if (paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA) {
-              BookingIntentManager.instance.savePendingPaymentIntent(
-                PendingPaymentIntent(
+                final repository = FirebaseOrderRepository();
+                await repository.updateOrderPaymentMethodAndStatus(
                   orderId: order.id,
-                  paymentMethod: 'TRANSFERENCIA_BANCARIA',
-                  amount: order.price,
-                  serviceName: order.serviceName ?? 'Servicio',
-                  businessName: order.businessName,
-                  businessId: order.businessId,
-                  createdAt: DateTime.now(),
-                ),
-              );
-            }
-
-            if (paymentMethod == PaymentMethod.PAYPHONE) {
-              return order.id;
-            }
-
-            if (!routeContext.mounted) return order.id;
-
-            Navigator.pop(routeContext);
-
-            if (paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA) {
-              if (context.mounted) {
-                context.pushNamed(
-                  AppRoutes.bankTransferInstructions,
-                  extra: {
-                    'orderId': order.id,
-                    'amount': order.price.toDouble(),
-                    'serviceName': order.serviceName ?? 'Servicio',
-                    'businessName': order.businessName,
-                    'businessId': order.businessId,
-                  },
+                  paymentMethod: paymentMethod,
+                  status: status,
                 );
-              }
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('¡Pago completado exitosamente!'),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-              widget.onRefresh();
-            }
 
-            return order.id;
-          },
+                if (paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA) {
+                  BookingIntentManager.instance.savePendingPaymentIntent(
+                    PendingPaymentIntent(
+                      orderId: order.id,
+                      paymentMethod: 'TRANSFERENCIA_BANCARIA',
+                      amount: order.price,
+                      serviceName: order.serviceName ?? 'Servicio',
+                      businessName: order.businessName,
+                      businessId: order.businessId,
+                      createdAt: DateTime.now(),
+                    ),
+                  );
+                }
+
+                if (paymentMethod == PaymentMethod.PAYPHONE) {
+                  return order.id;
+                }
+
+                if (!routeContext.mounted) return order.id;
+
+                Navigator.pop(routeContext);
+
+                if (paymentMethod == PaymentMethod.TRANSFERENCIA_BANCARIA) {
+                  if (context.mounted) {
+                    context.pushNamed(
+                      AppRoutes.bankTransferInstructions,
+                      extra: {
+                        'orderId': order.id,
+                        'amount': order.price.toDouble(),
+                        'serviceName': order.serviceName ?? 'Servicio',
+                        'businessName': order.businessName,
+                        'businessId': order.businessId,
+                      },
+                    );
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('¡Pago completado exitosamente!'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                  widget.onRefresh();
+                }
+
+                return order.id;
+              },
         ),
       ),
     );
   }
 
-  void _showInvoiceOptions(BuildContext context, String orderId, String pdfUrl) {
+  void _showInvoiceOptions(
+    BuildContext context,
+    String orderId,
+    String pdfUrl,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -215,7 +228,10 @@ class _BookingsTabState extends State<BookingsTab> {
                     color: AppColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.picture_as_pdf_rounded, color: AppColors.primary),
+                  child: const Icon(
+                    Icons.picture_as_pdf_rounded,
+                    color: AppColors.primary,
+                  ),
                 ),
                 title: Text(
                   'Ver y Descargar Factura',
@@ -223,11 +239,15 @@ class _BookingsTabState extends State<BookingsTab> {
                 ),
                 subtitle: Text(
                   'Abrir en el lector de PDF y guardar offline',
-                  style: GoogleFonts.inter(fontSize: 12, color: AppColors.outline),
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: AppColors.outline,
+                  ),
                 ),
                 onTap: () async {
                   Navigator.pop(context);
-                  final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+                  final idToken = await FirebaseAuth.instance.currentUser
+                      ?.getIdToken();
                   final baseUrl = InvoiceCacheManager.getFunctionsBaseUrl();
                   await InvoiceCacheManager.printOrViewInvoice(
                     orderId,
@@ -245,7 +265,10 @@ class _BookingsTabState extends State<BookingsTab> {
                     color: Colors.green.shade50,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.share_rounded, color: Colors.green.shade700),
+                  child: Icon(
+                    Icons.share_rounded,
+                    color: Colors.green.shade700,
+                  ),
                 ),
                 title: Text(
                   'Compartir Factura',
@@ -253,11 +276,15 @@ class _BookingsTabState extends State<BookingsTab> {
                 ),
                 subtitle: Text(
                   'Enviar PDF por WhatsApp, correo, etc.',
-                  style: GoogleFonts.inter(fontSize: 12, color: AppColors.outline),
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: AppColors.outline,
+                  ),
                 ),
                 onTap: () async {
                   Navigator.pop(context);
-                  final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+                  final idToken = await FirebaseAuth.instance.currentUser
+                      ?.getIdToken();
                   final baseUrl = InvoiceCacheManager.getFunctionsBaseUrl();
                   await InvoiceCacheManager.shareInvoice(
                     orderId,
@@ -350,7 +377,10 @@ class _BookingsTabState extends State<BookingsTab> {
       return _buildGuestPlaceholder(context);
     }
     final activeOrders = widget.orders
-        .where((order) => order.status != 'COMPLETADO' && order.status != 'CANCELADO')
+        .where(
+          (order) =>
+              order.status != 'COMPLETADO' && order.status != 'CANCELADO',
+        )
         .toList();
     final pendingReviewOrders = widget.orders
         .where((order) => order.status == 'COMPLETADO' && !order.hasReview)
@@ -392,7 +422,8 @@ class _BookingsTabState extends State<BookingsTab> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const ClientOrderHistoryPage(),
+                                builder: (context) =>
+                                    const ClientOrderHistoryPage(),
                               ),
                             );
                           },
@@ -400,10 +431,15 @@ class _BookingsTabState extends State<BookingsTab> {
                           label: const Text('Historial'),
                           style: TextButton.styleFrom(
                             foregroundColor: AppColors.primary,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
-                              side: BorderSide(color: AppColors.primary.withValues(alpha: 0.2)),
+                              side: BorderSide(
+                                color: AppColors.primary.withValues(alpha: 0.2),
+                              ),
                             ),
                           ),
                         ),
@@ -424,7 +460,9 @@ class _BookingsTabState extends State<BookingsTab> {
 
             if (pendingReviewOrders.isNotEmpty)
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 24).copyWith(bottom: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                ).copyWith(bottom: 24),
                 sliver: SliverToBoxAdapter(
                   child: _buildPendingReviewsCard(context, pendingReviewOrders),
                 ),
@@ -596,10 +634,7 @@ class _BookingsTabState extends State<BookingsTab> {
     );
   }
 
-  Widget _buildActiveOrderCard(
-    BuildContext context,
-    ClientOrder order,
-  ) {
+  Widget _buildActiveOrderCard(BuildContext context, ClientOrder order) {
     final statusStr = order.status;
     final step = _getStepFromStatus(statusStr);
     final displayId = order.id.length > 8
@@ -757,7 +792,10 @@ class _BookingsTabState extends State<BookingsTab> {
                         SizedBox(width: 10),
                         Text(
                           'Verificando estado del pago...',
-                          style: TextStyle(fontSize: 13, color: AppColors.onSurfaceVariant),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
@@ -779,7 +817,8 @@ class _BookingsTabState extends State<BookingsTab> {
                             extra: {
                               'orderId': order.id,
                               'amount': order.price.toDouble(),
-                              'serviceName': order.serviceName ?? "Lavado Completo",
+                              'serviceName':
+                                  order.serviceName ?? "Lavado Completo",
                               'businessName': order.businessName,
                               'businessId': order.businessId,
                             },
@@ -791,7 +830,8 @@ class _BookingsTabState extends State<BookingsTab> {
                                 'orderId': order.id,
                                 'proofStatus': 'PENDIENTE',
                                 'amount': order.price.toDouble(),
-                                'serviceName': order.serviceName ?? "Lavado Completo",
+                                'serviceName':
+                                    order.serviceName ?? "Lavado Completo",
                                 'businessName': order.businessName,
                               },
                             );
@@ -812,15 +852,22 @@ class _BookingsTabState extends State<BookingsTab> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.cloud_upload_outlined, color: Colors.blue.shade700, size: 20),
+                              Icon(
+                                Icons.cloud_upload_outlined,
+                                color: Colors.blue.shade700,
+                                size: 20,
+                              ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Pendiente de comprobante — Sube tu comprobante de pago para que el dueño lo revise.',
-                                      style: TextStyle(fontSize: 13, color: Colors.blue.shade900),
+                                      'Pendiente de comprobante — Sube tu comprobante de pago para que WashGo lo revise.',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.blue.shade900,
+                                      ),
                                     ),
                                     if (order.createdAt != null) ...[
                                       const SizedBox(height: 4),
@@ -840,7 +887,11 @@ class _BookingsTabState extends State<BookingsTab> {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Icon(Icons.chevron_right_rounded, color: Colors.blue.shade700, size: 20),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                color: Colors.blue.shade700,
+                                size: 20,
+                              ),
                             ],
                           ),
                         ),
@@ -857,7 +908,8 @@ class _BookingsTabState extends State<BookingsTab> {
                   case PaymentProofStatus.PENDING:
                     icon = Icons.access_time_rounded;
                     color = Colors.amber;
-                    message = 'Comprobante recibido. El dueño lo está revisando...';
+                    message =
+                        'Comprobante recibido. WashGo lo está revisando...';
                   case PaymentProofStatus.APPROVED:
                     icon = Icons.check_circle_rounded;
                     color = Colors.green;
@@ -872,7 +924,8 @@ class _BookingsTabState extends State<BookingsTab> {
 
                 // If proof is rejected, clicking it should allow re-uploading a new proof.
                 // If it is pending or approved, they click to view the status details.
-                final bool isRejected = proof.status == PaymentProofStatus.REJECTED;
+                final bool isRejected =
+                    proof.status == PaymentProofStatus.REJECTED;
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
@@ -887,7 +940,8 @@ class _BookingsTabState extends State<BookingsTab> {
                             extra: {
                               'orderId': order.id,
                               'amount': order.price.toDouble(),
-                              'serviceName': order.serviceName ?? "Lavado Completo",
+                              'serviceName':
+                                  order.serviceName ?? "Lavado Completo",
                               'businessName': order.businessName,
                               'businessId': order.businessId,
                             },
@@ -899,7 +953,8 @@ class _BookingsTabState extends State<BookingsTab> {
                                 'orderId': order.id,
                                 'proofStatus': 'PENDIENTE',
                                 'amount': order.price.toDouble(),
-                                'serviceName': order.serviceName ?? "Lavado Completo",
+                                'serviceName':
+                                    order.serviceName ?? "Lavado Completo",
                                 'businessName': order.businessName,
                               },
                             );
@@ -911,7 +966,8 @@ class _BookingsTabState extends State<BookingsTab> {
                               'orderId': order.id,
                               'proofStatus': proof.status.name,
                               'amount': order.price.toDouble(),
-                              'serviceName': order.serviceName ?? "Lavado Completo",
+                              'serviceName':
+                                  order.serviceName ?? "Lavado Completo",
                               'businessName': order.businessName,
                             },
                           );
@@ -924,7 +980,9 @@ class _BookingsTabState extends State<BookingsTab> {
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          border: Border.all(color: color.withValues(alpha: 0.2)),
+                          border: Border.all(
+                            color: color.withValues(alpha: 0.2),
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -934,11 +992,19 @@ class _BookingsTabState extends State<BookingsTab> {
                             Expanded(
                               child: Text(
                                 message,
-                                style: TextStyle(fontSize: 13, color: color.shade900, fontWeight: FontWeight.w500),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: color.shade900,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Icon(Icons.chevron_right_rounded, color: color.shade700, size: 20),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              color: color.shade700,
+                              size: 20,
+                            ),
                           ],
                         ),
                       ),
@@ -951,7 +1017,8 @@ class _BookingsTabState extends State<BookingsTab> {
 
           // Advertencia de expiración de pago para PayPhone/PayPal
           if (statusStr == 'PENDIENTE_PAGO' &&
-              (order.paymentMethod == 'PAYPHONE' || order.paymentMethod == 'PAYPAL') &&
+              (order.paymentMethod == 'PAYPHONE' ||
+                  order.paymentMethod == 'PAYPAL') &&
               order.createdAt != null) ...[
             Container(
               margin: const EdgeInsets.only(bottom: 12),
@@ -963,7 +1030,11 @@ class _BookingsTabState extends State<BookingsTab> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 20),
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: AppColors.error,
+                    size: 20,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -1119,7 +1190,10 @@ class _BookingsTabState extends State<BookingsTab> {
                             ],
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.primary,
                               borderRadius: BorderRadius.circular(20),
@@ -1190,14 +1264,17 @@ class _BookingsTabState extends State<BookingsTab> {
           // Stepper status
           _buildStatusStepper(step: step, statusStr: statusStr, order: order),
 
-          if (order.businessPhone != null && order.businessPhone!.isNotEmpty) ...[
+          if (order.businessPhone != null &&
+              order.businessPhone!.isNotEmpty) ...[
             const Divider(height: 32),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.12)),
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                ),
               ),
               child: Row(
                 children: [
@@ -1207,7 +1284,10 @@ class _BookingsTabState extends State<BookingsTab> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.store_rounded, color: AppColors.primary),
+                    child: const Icon(
+                      Icons.store_rounded,
+                      color: AppColors.primary,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -1246,13 +1326,21 @@ class _BookingsTabState extends State<BookingsTab> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        onPressed: () => widget.onMakePhoneCall(order.businessPhone!),
-                        icon: const Icon(Icons.phone_rounded, color: AppColors.primary),
+                        onPressed: () =>
+                            widget.onMakePhoneCall(order.businessPhone!),
+                        icon: const Icon(
+                          Icons.phone_rounded,
+                          color: AppColors.primary,
+                        ),
                         tooltip: 'Llamar al local',
                       ),
                       IconButton(
-                        onPressed: () => widget.onOpenWhatsApp(order.businessPhone!),
-                        icon: const Icon(Icons.message_rounded, color: AppColors.primary),
+                        onPressed: () =>
+                            widget.onOpenWhatsApp(order.businessPhone!),
+                        icon: const Icon(
+                          Icons.message_rounded,
+                          color: AppColors.primary,
+                        ),
                         tooltip: 'WhatsApp al local',
                       ),
                     ],
@@ -1275,12 +1363,16 @@ class _BookingsTabState extends State<BookingsTab> {
               child: Row(
                 children: [
                   CircleAvatar(
-                    backgroundImage: order.employee!.fotoPerfil != null &&
+                    backgroundImage:
+                        order.employee!.fotoPerfil != null &&
                             order.employee!.fotoPerfil!.isNotEmpty
-                        ? CachedNetworkImageProvider(order.employee!.fotoPerfil!)
+                        ? CachedNetworkImageProvider(
+                            order.employee!.fotoPerfil!,
+                          )
                         : null,
                     backgroundColor: Colors.green.shade200,
-                    child: order.employee!.fotoPerfil == null ||
+                    child:
+                        order.employee!.fotoPerfil == null ||
                             order.employee!.fotoPerfil!.isEmpty
                         ? const Icon(Icons.person, color: Colors.green)
                         : null,
@@ -1360,11 +1452,16 @@ class _BookingsTabState extends State<BookingsTab> {
             const Divider(height: 32),
             Row(
               children: [
-                if (statusStr == 'PENDIENTE_PAGO' || statusStr == 'EN_COLA') ...[
+                if (statusStr == 'PENDIENTE_PAGO' ||
+                    statusStr == 'EN_COLA') ...[
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () => widget.onCancelOrder(context, order),
-                      icon: const Icon(Icons.cancel_outlined, color: AppColors.error, size: 18),
+                      icon: const Icon(
+                        Icons.cancel_outlined,
+                        color: AppColors.error,
+                        size: 18,
+                      ),
                       label: const Text('Cancelar Reserva'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.error,
@@ -1384,7 +1481,11 @@ class _BookingsTabState extends State<BookingsTab> {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () => widget.onRescheduleOrder(context, order),
-                    icon: const Icon(Icons.edit_calendar_rounded, color: Colors.white, size: 18),
+                    icon: const Icon(
+                      Icons.edit_calendar_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                     label: const Text('Postergar Cita'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange.shade700,
@@ -1403,13 +1504,19 @@ class _BookingsTabState extends State<BookingsTab> {
 
           // Botón Pagar ahora para PayPhone y PayPal
           if (statusStr == 'PENDIENTE_PAGO' &&
-              (order.paymentMethod == 'PAYPHONE' || order.paymentMethod == 'PAYPAL')) ...[
+              (order.paymentMethod == 'PAYPHONE' ||
+                  order.paymentMethod == 'PAYPAL')) ...[
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => _showPaymentSelectionForExistingOrder(context, order),
-                icon: const Icon(Icons.payment_rounded, color: Colors.white, size: 18),
+                onPressed: () =>
+                    _showPaymentSelectionForExistingOrder(context, order),
+                icon: const Icon(
+                  Icons.payment_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
                 label: const Text('Pagar ahora'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -1425,7 +1532,8 @@ class _BookingsTabState extends State<BookingsTab> {
           ],
 
           // Botón alternativo de pago en línea para transferencia bancaria (si no hay comprobante subido o fue rechazado)
-          if (statusStr == 'PENDIENTE_PAGO' && order.paymentMethod == 'TRANSFERENCIA_BANCARIA') ...[
+          if (statusStr == 'PENDIENTE_PAGO' &&
+              order.paymentMethod == 'TRANSFERENCIA_BANCARIA') ...[
             FutureBuilder<PaymentProofModel?>(
               future: _getProofFuture(order.id),
               builder: (context, snapshot) {
@@ -1433,18 +1541,29 @@ class _BookingsTabState extends State<BookingsTab> {
                   return const SizedBox.shrink();
                 }
                 final proof = snapshot.data;
-                if (proof == null || proof.status == PaymentProofStatus.REJECTED) {
+                if (proof == null ||
+                    proof.status == PaymentProofStatus.REJECTED) {
                   return Padding(
                     padding: const EdgeInsets.only(top: 12),
                     child: SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: () => _showPaymentSelectionForExistingOrder(context, order),
-                        icon: const Icon(Icons.payment_rounded, color: AppColors.primary, size: 18),
+                        onPressed: () => _showPaymentSelectionForExistingOrder(
+                          context,
+                          order,
+                        ),
+                        icon: const Icon(
+                          Icons.payment_rounded,
+                          color: AppColors.primary,
+                          size: 18,
+                        ),
                         label: const Text('Pagar con otros medios'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.primary,
-                          side: const BorderSide(color: AppColors.primary, width: 1.5),
+                          side: const BorderSide(
+                            color: AppColors.primary,
+                            width: 1.5,
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -1469,11 +1588,14 @@ class _BookingsTabState extends State<BookingsTab> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const SizedBox(
                     height: 48,
-                    child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    child: Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
                   );
                 }
                 final proof = snapshot.data;
-                if (proof == null || proof.status == PaymentProofStatus.REJECTED) {
+                if (proof == null ||
+                    proof.status == PaymentProofStatus.REJECTED) {
                   return SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -1507,8 +1629,16 @@ class _BookingsTabState extends State<BookingsTab> {
                           widget.onRefresh();
                         }
                       },
-                      icon: const Icon(Icons.cloud_upload_outlined, color: Colors.white, size: 18),
-                      label: Text(proof == null ? 'Subir Comprobante' : 'Subir nuevo comprobante'),
+                      icon: const Icon(
+                        Icons.cloud_upload_outlined,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      label: Text(
+                        proof == null
+                            ? 'Subir Comprobante'
+                            : 'Subir nuevo comprobante',
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
@@ -1542,11 +1672,18 @@ class _BookingsTabState extends State<BookingsTab> {
                           widget.onRefresh();
                         }
                       },
-                      icon: const Icon(Icons.visibility_outlined, color: AppColors.primary, size: 18),
+                      icon: const Icon(
+                        Icons.visibility_outlined,
+                        color: AppColors.primary,
+                        size: 18,
+                      ),
                       label: const Text('Ver Estado de Pago'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primary,
-                        side: const BorderSide(color: AppColors.primary, width: 1.5),
+                        side: const BorderSide(
+                          color: AppColors.primary,
+                          width: 1.5,
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -1559,7 +1696,6 @@ class _BookingsTabState extends State<BookingsTab> {
               },
             ),
           ],
-
         ],
       ),
     );
@@ -1688,7 +1824,10 @@ class _BookingsTabState extends State<BookingsTab> {
     );
   }
 
-  Widget _buildPendingReviewsCard(BuildContext context, List<ClientOrder> orders) {
+  Widget _buildPendingReviewsCard(
+    BuildContext context,
+    List<ClientOrder> orders,
+  ) {
     final order = orders.first;
     final otherCount = orders.length - 1;
 
@@ -1820,7 +1959,10 @@ class _BookingsTabState extends State<BookingsTab> {
                   foregroundColor: Colors.white,
                   elevation: 0,
                   minimumSize: const Size(0, 36),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -1839,7 +1981,6 @@ class _BookingsTabState extends State<BookingsTab> {
       ),
     );
   }
-
 
   Widget _buildGuestPlaceholder(BuildContext context) {
     return Center(
@@ -1969,11 +2110,13 @@ class _PaymentCountdownTextState extends State<PaymentCountdownText> {
 
     return Text(
       'Tiempo restante: $minutes ${minutes == 1 ? 'minuto' : 'minutos'}',
-      style: widget.style ?? GoogleFonts.inter(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        color: AppColors.error,
-      ),
+      style:
+          widget.style ??
+          GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppColors.error,
+          ),
     );
   }
 }

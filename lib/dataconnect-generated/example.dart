@@ -244,6 +244,8 @@ part 'super_admin_get_cancelled_orders_summary.dart';
 
 part 'get_pending_electronic_orders.dart';
 
+part 'get_my_employee_requests.dart';
+
 
 
   enum BusinessStatus {
@@ -1065,8 +1067,8 @@ class ExampleConnector {
   }
   
   
-  GetEmployeeInvoicesVariablesBuilder getEmployeeInvoices () {
-    return GetEmployeeInvoicesVariablesBuilder(dataConnect, );
+  GetEmployeeInvoicesVariablesBuilder getEmployeeInvoices ({required String businessId, }) {
+    return GetEmployeeInvoicesVariablesBuilder(dataConnect, businessId: businessId,);
   }
   
   
@@ -1229,6 +1231,11 @@ class ExampleConnector {
     return GetPendingElectronicOrdersVariablesBuilder(dataConnect, );
   }
   
+  
+  GetMyEmployeeRequestsVariablesBuilder getMyEmployeeRequests () {
+    return GetMyEmployeeRequestsVariablesBuilder(dataConnect, );
+  }
+  
 
   static ConnectorConfig connectorConfig = ConnectorConfig(
     'us-central1',
@@ -1238,18 +1245,9 @@ class ExampleConnector {
 
   ExampleConnector({required this.dataConnect});
   static ExampleConnector get instance {
-    
-    CacheSettings cacheSettings = CacheSettings(
-      maxAge: Duration(milliseconds:5000),
-      storage: CacheStorage.memory,
-    );
-    
     return ExampleConnector(
         dataConnect: FirebaseDataConnect.instanceFor(
             connectorConfig: connectorConfig,
-            
-            cacheSettings: cacheSettings,
-            
             sdkType: CallerSDKType.generated));
   }
 

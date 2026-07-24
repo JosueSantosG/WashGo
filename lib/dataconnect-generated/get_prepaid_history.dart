@@ -7,8 +7,8 @@ class GetPrepaidHistoryVariablesBuilder {
   GetPrepaidHistoryVariablesBuilder(this._dataConnect, {required  this.businessId,});
   Deserializer<GetPrepaidHistoryData> dataDeserializer = (dynamic json)  => GetPrepaidHistoryData.fromJson(jsonDecode(json));
   Serializer<GetPrepaidHistoryVariables> varsSerializer = (GetPrepaidHistoryVariables vars) => jsonEncode(vars.toJson());
-  Future<QueryResult<GetPrepaidHistoryData, GetPrepaidHistoryVariables>> execute({QueryFetchPolicy fetchPolicy = QueryFetchPolicy.preferCache}) {
-    return ref().execute(fetchPolicy: fetchPolicy);
+  Future<QueryResult<GetPrepaidHistoryData, GetPrepaidHistoryVariables>> execute() {
+    return ref().execute();
   }
 
   QueryRef<GetPrepaidHistoryData, GetPrepaidHistoryVariables> ref() {

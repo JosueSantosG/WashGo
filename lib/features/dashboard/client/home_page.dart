@@ -1,13 +1,16 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_map/flutter_map.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:latlong2/latlong.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:washgo/config/theme/app_colors.dart';
-import 'package:washgo/dataconnect-generated/example.dart' hide PaymentProofStatus;
+import 'package:washgo/dataconnect-generated/example.dart'
+    hide PaymentProofStatus;
 import 'package:go_router/go_router.dart';
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
+import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:washgo/features/dashboard/client/models/laundry_item.dart';
@@ -39,15 +42,18 @@ class HomePage extends StatefulWidget {
   // Global static cache to persist user location across page destructions (route switches)
   static LatLng? cachedUserLocation;
   static bool hasLockedInitialLocation = false;
+  static List<LaundryItem> cachedLaundries = [];
+  static Map<String, gmaps.BitmapDescriptor> cachedMarkerIcons = {};
+  static gmaps.BitmapDescriptor? cachedUserDotIcon;
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+  gmaps.GoogleMapController? _googleMapController;
   bool _isAnimatingToPage = false;
   int _selectedIndex = 0;
-  final MapController _mapController = MapController();
   PageController _pageController = PageController(viewportFraction: 0.85);
   AnimationController? _mapAnimationController;
 
@@ -61,11 +67,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final LaundryRepository _laundryRepository = FirebaseLaundryRepository();
   final OrderRepository _orderRepository = FirebaseOrderRepository();
 
-  List<LaundryItem> _allLaundries = [];
-  List<LaundryItem> _filteredLaundries = [];
+  List<LaundryItem> _allLaundries = List<LaundryItem>.from(HomePage.cachedLaundries);
+  List<LaundryItem> _filteredLaundries = List<LaundryItem>.from(HomePage.cachedLaundries);
   List<LaundryItem> _carouselLaundries = [];
   int? _activeCarouselIndex;
   String _selectedCategory = 'Todos';
+  final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   List<UserRole> _userRoles = [];
   WashGoUser? _washGoUser;
@@ -86,8 +93,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // Map category filters
   final List<String> _categories = [
     'Todos',
-    'Cerca 📍(<500mt)',
-    'Económico 💰(<10.00)',
+    'Cerca 📍',
+    'Económico 💰',
   ];
 
   void _subscribeToClientOrders() {
@@ -147,7 +154,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _cancelOrder(BuildContext context, ClientOrder order) async {
-    bool isPaid = order.paymentMethod != 'CASH' && order.status != 'PENDIENTE_PAGO';
+    bool isPaid =
+        order.paymentMethod != 'CASH' && order.status != 'PENDIENTE_PAGO';
 
     if (order.paymentMethod == 'TRANSFERENCIA_BANCARIA') {
       showDialog(
@@ -571,11 +579,170 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     } catch (_) {}
   }
 
+  final Map<String, gmaps.BitmapDescriptor> _customMarkerCache =
+      Map<String, gmaps.BitmapDescriptor>.from(HomePage.cachedMarkerIcons);
+  gmaps.BitmapDescriptor? _userLocationDotIcon = HomePage.cachedUserDotIcon;
+
+  Future<void> _initCustomMarkerIcons() async {
+    if (HomePage.cachedUserDotIcon != null && HomePage.cachedMarkerIcons.isNotEmpty) {
+      _userLocationDotIcon = HomePage.cachedUserDotIcon;
+      _customMarkerCache.addAll(HomePage.cachedMarkerIcons);
+      if (mounted) setState(() {});
+      return;
+    }
+
+    _userLocationDotIcon = await _createUserLocationDotBitmap();
+    HomePage.cachedUserDotIcon = _userLocationDotIcon;
+
+    final configs = [
+      {'isOpen': true, 'isEco': false, 'isSelected': false},
+      {'isOpen': true, 'isEco': true, 'isSelected': false},
+      {'isOpen': false, 'isEco': false, 'isSelected': false},
+      {'isOpen': false, 'isEco': true, 'isSelected': false},
+      {'isOpen': true, 'isEco': false, 'isSelected': true},
+      {'isOpen': true, 'isEco': true, 'isSelected': true},
+      {'isOpen': false, 'isEco': false, 'isSelected': true},
+      {'isOpen': false, 'isEco': true, 'isSelected': true},
+    ];
+
+    for (final cfg in configs) {
+      final isOpen = cfg['isOpen'] as bool;
+      final isEco = cfg['isEco'] as bool;
+      final isSelected = cfg['isSelected'] as bool;
+      final key = '${isOpen}_${isEco}_$isSelected';
+
+      final descriptor = await _createCustomMarkerBitmap(
+        isOpen: isOpen,
+        isEco: isEco,
+        isSelected: isSelected,
+      );
+      _customMarkerCache[key] = descriptor;
+    }
+    HomePage.cachedMarkerIcons = Map.from(_customMarkerCache);
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<gmaps.BitmapDescriptor> _createUserLocationDotBitmap() async {
+    const size = 32;
+    final pictureRecorder = ui.PictureRecorder();
+    final canvas = Canvas(pictureRecorder);
+    final double radius = size / 2.0;
+
+    // Translucent aura
+    final auraPaint = Paint()
+      ..color = const Color(0xFF007BFF).withValues(alpha: 0.20)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(radius, radius), radius - 1, auraPaint);
+
+    // White ring
+    final whiteRingPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(radius, radius), radius - 7, whiteRingPaint);
+
+    // Inner blue core
+    final corePaint = Paint()
+      ..color = const Color(0xFF007BFF)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(radius, radius), radius - 9, corePaint);
+
+    final img = await pictureRecorder.endRecording().toImage(size, size);
+    final data = await img.toByteData(format: ui.ImageByteFormat.png);
+    return gmaps.BitmapDescriptor.bytes(data!.buffer.asUint8List());
+  }
+
+  Future<gmaps.BitmapDescriptor> _createCustomMarkerBitmap({
+    required bool isOpen,
+    required bool isEco,
+    required bool isSelected,
+  }) async {
+    final size = isSelected ? 80 : 60;
+    final pictureRecorder = ui.PictureRecorder();
+    final canvas = Canvas(pictureRecorder);
+    final double radius = size / 2.0;
+
+    // Shadow
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.20)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+    canvas.drawCircle(Offset(radius, radius + 2), radius - 4, shadowPaint);
+
+    // Background circle
+    final bgPaint = Paint()
+      ..color = isSelected
+          ? (isOpen ? AppColors.primary : Colors.grey.shade800)
+          : (isOpen ? Colors.white : Colors.grey.shade200)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(radius, radius), radius - 6, bgPaint);
+
+    // Border
+    final borderPaint = Paint()
+      ..color = isSelected
+          ? Colors.white
+          : (isOpen
+                ? (isEco ? const Color(0xFF16A34A) : AppColors.primary)
+                : Colors.grey.shade400)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = isSelected ? 3.5 : 2.2;
+    canvas.drawCircle(Offset(radius, radius), radius - 6, borderPaint);
+
+    // Icon (Eco leaf or Car wash icon - perfectly proportioned at 48% of circle diameter)
+    final iconData = isEco ? Icons.eco_rounded : Icons.local_car_wash_rounded;
+    final double iconSize = size * 0.48;
+    final TextPainter textPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.text = TextSpan(
+      text: String.fromCharCode(iconData.codePoint),
+      style: TextStyle(
+        fontSize: iconSize,
+        fontFamily: iconData.fontFamily,
+        package: iconData.fontPackage,
+        color: isSelected
+            ? Colors.white
+            : (isOpen
+                  ? (isEco ? const Color(0xFF16A34A) : AppColors.primary)
+                  : Colors.grey.shade500),
+      ),
+    );
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset(
+        radius - (textPainter.width / 2.0),
+        radius - (textPainter.height / 2.0),
+      ),
+    );
+
+    final img = await pictureRecorder.endRecording().toImage(size, size);
+    final data = await img.toByteData(format: ui.ImageByteFormat.png);
+    return gmaps.BitmapDescriptor.bytes(data!.buffer.asUint8List());
+  }
+
+  gmaps.BitmapDescriptor _getMarkerIcon(LaundryItem item, bool isSelected) {
+    final key = '${item.isOpen}_${item.isEco}_$isSelected';
+    try {
+      if (_customMarkerCache.containsKey(key)) {
+        return _customMarkerCache[key]!;
+      }
+    } catch (_) {}
+    return gmaps.BitmapDescriptor.defaultMarkerWithHue(
+      isSelected
+          ? gmaps.BitmapDescriptor.hueRed
+          : (item.isOpen
+                ? gmaps.BitmapDescriptor.hueAzure
+                : gmaps.BitmapDescriptor.hueOrange),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialTab;
     _filteredLaundries = List.from(_allLaundries);
+    _initCustomMarkerIcons();
     _initLocationTracking();
     _fetchSavedBusinesses();
 
@@ -614,11 +781,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _searchController.dispose();
     _positionSubscription?.cancel();
     _ordersSubscription?.cancel();
     _authStateSubscription?.cancel();
     _mapAnimationController?.dispose();
-    _mapController.dispose();
+    _googleMapController?.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -661,7 +829,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           if (_isFirstLocationLock) {
             _isFirstLocationLock = false;
             HomePage.hasLockedInitialLocation = true;
-            _mapController.move(_userLocation, 15.0);
+            _animatedMapMove(_userLocation, 15.0);
           }
         }
       } catch (e) {
@@ -670,33 +838,36 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         );
       }
 
+      // Always fetch businesses immediately with available/cached location
+      if (mounted) {
+        _fetchSavedBusinesses();
+      }
+
       // Initial quick location lock
       try {
         final initialPosition = await Geolocator.getCurrentPosition(
           locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high,
+            accuracy: LocationAccuracy.low,
           ),
-        );
+        ).timeout(const Duration(seconds: 5));
+
         if (mounted) {
+          final newLoc = LatLng(
+            initialPosition.latitude,
+            initialPosition.longitude,
+          );
           setState(() {
-            _userLocation = LatLng(
-              initialPosition.latitude,
-              initialPosition.longitude,
-            );
+            _userLocation = newLoc;
             HomePage.cachedUserLocation = _userLocation;
           });
-          if (_isFirstLocationLock) {
-            _isFirstLocationLock = false;
-            HomePage.hasLockedInitialLocation = true;
-            _mapController.move(_userLocation, 15.0);
-          }
-          _fetchSavedBusinesses();
+          _animatedMapMove(_userLocation, 15.0);
+          _recalculateDistances();
         }
       } catch (e) {
-        debugPrint('getCurrentPosition failed or timed out: $e');
+        debugPrint('getCurrentPosition fallback or waiting stream: $e');
       }
 
-      // Continuous tracking subscription
+      // Continuous tracking subscription (triggers as soon as user grants Chrome permission)
       try {
         _positionSubscription =
             Geolocator.getPositionStream(
@@ -706,10 +877,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
             ).listen((Position position) {
               if (mounted) {
+                final freshLoc = LatLng(position.latitude, position.longitude);
+                final shouldMove = _isFirstLocationLock;
+                if (shouldMove) {
+                  _isFirstLocationLock = false;
+                  HomePage.hasLockedInitialLocation = true;
+                }
                 setState(() {
-                  _userLocation = LatLng(position.latitude, position.longitude);
+                  _userLocation = freshLoc;
                   HomePage.cachedUserLocation = _userLocation;
                 });
+                if (shouldMove) {
+                  _animatedMapMove(freshLoc, 15.0);
+                }
                 _recalculateDistances();
               }
             });
@@ -723,12 +903,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _fetchSavedBusinesses() async {
     try {
-      final dynamicList = await _laundryRepository.getLaundries(_userLocation);
-      setState(() {
-        _allLaundries = dynamicList;
-        _filterLaundries();
-      });
-      _checkPendingBookingIntent();
+      final List<LaundryItem> dynamicList =
+          await _laundryRepository.getLaundries(_userLocation);
+      HomePage.cachedLaundries = List<LaundryItem>.from(dynamicList);
+      if (mounted) {
+        setState(() {
+          _allLaundries = List<LaundryItem>.from(dynamicList);
+          _filterLaundries();
+        });
+        _checkPendingBookingIntent();
+      }
     } catch (e) {
       debugPrint('Error fetching businesses: $e');
     }
@@ -829,21 +1013,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _recalculateDistances() {
-    debugPrint(
-      'RecalculateDistances: _allLaundries runtimeType = ${_allLaundries.runtimeType}',
-    );
-    for (var i = 0; i < _allLaundries.length; i++) {
-      debugPrint(
-        'RecalculateDistances Element $i: Type = ${_allLaundries[i].runtimeType}, Value = ${_allLaundries[i]}',
-      );
-    }
     setState(() {
       _allLaundries = _allLaundries.map((laundry) {
+        final double locLat = (laundry.location as dynamic).latitude as double;
+        final double locLng = (laundry.location as dynamic).longitude as double;
         final distMeters = Geolocator.distanceBetween(
           _userLocation.latitude,
           _userLocation.longitude,
-          laundry.location.latitude,
-          laundry.location.longitude,
+          locLat,
+          locLng,
         );
         return LaundryItem(
           id: laundry.id,
@@ -854,12 +1032,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           distance: _formatDistance(distMeters),
           distanceInMeters: distMeters,
           price: laundry.price,
-          location: laundry.location,
+          location: LatLng(locLat, locLng),
           isEco: laundry.isEco,
           isOpen: laundry.isOpen,
           waitTime: laundry.waitTime,
           phone: laundry.phone,
-          businessHours: laundry.businessHours,
+          businessHours: List<Map<String, dynamic>>.from(laundry.businessHours),
         );
       }).toList();
       _filterLaundries();
@@ -941,7 +1119,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _filterLaundries({bool resetCarousel = false}) {
-    // Save the ID of the currently selected laundry, if any
+    // Save the ID of the currently selected laundry, if any (only if not resetting carousel selection)
     final String? selectedLaundryId =
         (!resetCarousel &&
             _activeCarouselIndex != null &&
@@ -950,21 +1128,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         : null;
 
     setState(() {
+      final query = _searchQuery.trim().toLowerCase();
       _filteredLaundries = _allLaundries.where((laundry) {
-        final matchesSearch =
-            laundry.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            laundry.type.toLowerCase().contains(_searchQuery.toLowerCase());
+        final matchesSearch = query.isEmpty ||
+            query.length < 3 ||
+            laundry.name.toLowerCase().contains(query) ||
+            laundry.type.toLowerCase().contains(query) ||
+            laundry.phone.toLowerCase().contains(query);
 
         bool matchesCategory = true;
         final selectedLower = _selectedCategory.toLowerCase();
 
         if (selectedLower.contains('cerc') || selectedLower.contains('near')) {
-          // Filter laundries that are within 500 meters using precalculated distance
-          matchesCategory = laundry.distanceInMeters <= 500;
+          // Filter laundries within 3000 meters or top closest
+          matchesCategory = laundry.distanceInMeters <= 3000;
         } else if (selectedLower.contains('econ') ||
             selectedLower.contains('cheap')) {
-          // Filter laundries with price less than 10 dollars
-          matchesCategory = laundry.price < 10.00;
+          // Filter laundries with price <= 15.00
+          matchesCategory = laundry.price <= 15.00;
         }
 
         final matchesEco = !_filterEcoOnly || laundry.isEco;
@@ -984,8 +1165,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _filteredLaundries.sort((a, b) => b.rating.compareTo(a.rating));
       }
 
-      // Restore active carousel if the selected item is still in the list
-      if (selectedLaundryId != null) {
+      // Keep current selection if valid; otherwise clear selection so no local is selected
+      if (_filteredLaundries.isNotEmpty && selectedLaundryId != null) {
         final centerItemIndex = _filteredLaundries.indexWhere(
           (laundry) => laundry.id == selectedLaundryId,
         );
@@ -1009,51 +1190,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _animatedMapMove(LatLng destLocation, double destZoom) {
-    _mapAnimationController?.stop();
-    _mapAnimationController?.dispose();
-
-    final camera = _mapController.camera;
-    final latTween = Tween<double>(
-      begin: camera.center.latitude,
-      end: destLocation.latitude,
+    _googleMapController?.animateCamera(
+      gmaps.CameraUpdate.newLatLngZoom(
+        gmaps.LatLng(destLocation.latitude, destLocation.longitude),
+        destZoom,
+      ),
     );
-    final lngTween = Tween<double>(
-      begin: camera.center.longitude,
-      end: destLocation.longitude,
-    );
-    final zoomTween = Tween<double>(begin: camera.zoom, end: destZoom);
-
-    final controller = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-    _mapAnimationController = controller;
-
-    final Animation<double> animation = CurvedAnimation(
-      parent: controller,
-      curve: Curves.fastOutSlowIn,
-    );
-
-    controller.addListener(() {
-      if (mounted) {
-        _mapController.move(
-          LatLng(latTween.evaluate(animation), lngTween.evaluate(animation)),
-          zoomTween.evaluate(animation),
-        );
-      }
-    });
-
-    animation.addStatusListener((status) {
-      if (status == AnimationStatus.completed ||
-          status == AnimationStatus.dismissed) {
-        controller.dispose();
-        if (_mapAnimationController == controller) {
-          _mapAnimationController = null;
-        }
-      }
-    });
-
-    controller.forward();
   }
 
   void _animateToLaundry(LaundryItem laundry) {
@@ -1256,6 +1398,66 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  Set<gmaps.Marker> _buildGoogleMarkers() {
+    final Set<gmaps.Marker> markers = {};
+
+    // User location blue dot marker
+    if (_userLocationDotIcon != null) {
+      markers.add(
+        gmaps.Marker(
+          markerId: const gmaps.MarkerId('user_location_dot'),
+          position: gmaps.LatLng(
+            _userLocation.latitude,
+            _userLocation.longitude,
+          ),
+          icon: _userLocationDotIcon!,
+          anchor: const Offset(0.5, 0.5),
+          zIndexInt: 999,
+        ),
+      );
+    }
+
+
+
+    for (final item in _filteredLaundries) {
+      final isSelected =
+          _activeCarouselIndex != null &&
+          _carouselLaundries.isNotEmpty &&
+          item.id == _carouselLaundries[_activeCarouselIndex!].id;
+
+      markers.add(
+        gmaps.Marker(
+          markerId: gmaps.MarkerId(item.id),
+          position: gmaps.LatLng(
+            item.location.latitude,
+            item.location.longitude,
+          ),
+          icon: _getMarkerIcon(item, isSelected),
+          onTap: () {
+            final wasNull = _activeCarouselIndex == null;
+            setState(() {
+              _updateCarouselFor(item);
+              if (wasNull) {
+                _pageController.dispose();
+                _pageController = PageController(
+                  viewportFraction: 0.85,
+                  initialPage: 0,
+                );
+              } else if (_pageController.hasClients) {
+                _isAnimatingToPage = true;
+                _pageController.jumpToPage(0);
+                _isAnimatingToPage = false;
+              }
+            });
+            _animateToLaundry(item);
+          },
+        ),
+      );
+    }
+
+    return markers;
+  }
+
   // ==========================================
   // 1. MAP SECTION (EXPLORAR)
   // ==========================================
@@ -1263,508 +1465,610 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return Stack(
       key: const ValueKey('map_section'),
       children: [
-        // Fullscreen OSM map
+        // Fullscreen Google Map
         Positioned.fill(
-          child: FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _userLocation,
-              initialZoom: 15.0,
-              onTap: (tapPosition, point) {
-                setState(() {
-                  _activeCarouselIndex = null;
-                  _showFilterPanel = false;
-                });
-              },
+          child: gmaps.GoogleMap(
+            initialCameraPosition: gmaps.CameraPosition(
+              target: gmaps.LatLng(
+                _userLocation.latitude,
+                _userLocation.longitude,
+              ),
+              zoom: 15.0,
             ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.washgo',
-              ),
-              MarkerLayer(
-                markers: [
-                  // Pulsing User Location Marker
-                  Marker(
-                    point: _userLocation,
-                    width: 50.0,
-                    height: 50.0,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.2),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        Container(
-                          width: 16,
-                          height: 16,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        Container(
-                          width: 12,
-                          height: 12,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Laundry locations
-                  ..._filteredLaundries.asMap().entries.map((entry) {
-                    final item = entry.value;
-                    final isSelected =
-                        _activeCarouselIndex != null &&
-                        _carouselLaundries.isNotEmpty &&
-                        item.id == _carouselLaundries[_activeCarouselIndex!].id;
-
-                    return Marker(
-                      point: item.location,
-                      width: isSelected ? 56.0 : 44.0,
-                      height: isSelected ? 56.0 : 44.0,
-                      child: GestureDetector(
-                        onTap: () {
-                          final wasNull = _activeCarouselIndex == null;
-                          setState(() {
-                            _updateCarouselFor(item);
-                            if (wasNull) {
-                              _pageController.dispose();
-                              _pageController = PageController(
-                                viewportFraction: 0.85,
-                                initialPage: 0,
-                              );
-                            } else if (_pageController.hasClients) {
-                              _isAnimatingToPage = true;
-                              _pageController.jumpToPage(0);
-                              _isAnimatingToPage = false;
-                            }
-                          });
-                          _animateToLaundry(item);
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? (item.isOpen
-                                      ? AppColors.primary
-                                      : Colors.grey.shade700)
-                                : Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: isSelected
-                                  ? Colors.white
-                                  : (item.isOpen
-                                        ? AppColors.primary
-                                        : Colors.grey.shade400),
-                              width: 2.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.15),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            item.isEco
-                                ? Icons.eco_rounded
-                                : Icons.local_car_wash_rounded,
-                            color: isSelected
-                                ? Colors.white
-                                : (!item.isOpen
-                                      ? Colors.grey.shade400
-                                      : (item.isEco
-                                            ? Colors.green.shade600
-                                            : AppColors.primary)),
-                            size: isSelected ? 28 : 22,
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ],
-              ),
-            ],
+            onMapCreated: (controller) {
+              _googleMapController = controller;
+              _animatedMapMove(_userLocation, 15.0);
+            },
+            onTap: (point) {
+              setState(() {
+                _activeCarouselIndex = null;
+                _showFilterPanel = false;
+              });
+            },
+            markers: _buildGoogleMarkers(),
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
+            zoomControlsEnabled: false,
           ),
         ),
-
-        // Invisible overlay to detect clicks outside the filter panel and close it
-        if (_showFilterPanel)
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _showFilterPanel = false;
-                });
-              },
-              child: Container(color: Colors.transparent),
-            ),
-          ),
 
         // Floating Search & Filter Bar at top
         Positioned(
           top: 0,
           left: 0,
           right: 0,
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.black.withValues(alpha: 0.4),
-                  Colors.transparent,
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+          child: PointerInterceptor(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.black.withValues(alpha: 0.4),
+                    Colors.transparent,
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
               ),
-            ),
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 16.0,
-              left: 16.0,
-              right: 16.0,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Search Input Field & Filter Toggle
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).padding.top + 16.0,
+                left: 16.0,
+                right: 16.0,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Full-Width Search Input Field
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
                         ),
-                        child: TextField(
-                          onChanged: (val) {
-                            _searchQuery = val;
-                            _filterLaundries(resetCarousel: true);
-                          },
-                          decoration: InputDecoration(
-                            hintText: 'Buscar lavanderías...',
-                            hintStyle: GoogleFonts.inter(
-                              color: AppColors.outline,
-                              fontSize: 15,
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.search_rounded,
-                              color: AppColors.primary,
-                            ),
-                            suffixIcon: Container(
-                              margin: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(
-                                  alpha: 0.08,
+                      ],
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (val) {
+                        setState(() {
+                          _searchQuery = val;
+                        });
+                        final trimmed = val.trim();
+                        if (trimmed.isEmpty) {
+                          setState(() {
+                            _activeCarouselIndex = null;
+                            _carouselLaundries = [];
+                          });
+                          _filterLaundries(resetCarousel: false);
+                        } else if (trimmed.length >= 3) {
+                          _filterLaundries(resetCarousel: true);
+                        }
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Buscar lavanderías...',
+                        hintStyle: GoogleFonts.inter(
+                          color: AppColors.outline,
+                          fontSize: 15,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search_rounded,
+                          color: AppColors.primary,
+                        ),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(
+                                  Icons.close_rounded,
+                                  color: AppColors.outline,
+                                  size: 20,
                                 ),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.mic_none_rounded,
-                                color: AppColors.primary,
-                                size: 20,
-                              ),
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 14,
-                            ),
-                          ),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() {
+                                    _searchQuery = '';
+                                    _activeCarouselIndex = null;
+                                    _carouselLaundries = [];
+                                  });
+                                  _filterLaundries(resetCarousel: true);
+                                },
+                              )
+                            : null,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 14,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _showFilterPanel = !_showFilterPanel;
-                        });
-                      },
-                      child: Container(
-                        height: 52,
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        decoration: BoxDecoration(
-                          color: _showFilterPanel
-                              ? AppColors.primary
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.filter_list_rounded,
-                              color: _showFilterPanel
-                                  ? Colors.white
-                                  : AppColors.primary,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Filtrar por...',
-                              style: GoogleFonts.inter(
-                                color: _showFilterPanel
-                                    ? Colors.white
-                                    : AppColors.primary,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
+                  ),
+                  // Search Results Dropdown List (displays up to 5 matching laundries when 3+ chars entered)
+                  if (_searchQuery.trim().length >= 3) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.48,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            blurRadius: 15,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: _filteredLaundries.isEmpty
+                            ? Padding(
+                                padding: const EdgeInsets.all(20.0),
+                                child: Center(
+                                  child: Text(
+                                    'No se encontraron lavanderías con "$_searchQuery"',
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.inter(
+                                      color: AppColors.onSurfaceVariant,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : ListView.separated(
+                                shrinkWrap: true,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                itemCount: _filteredLaundries.take(5).length,
+                                separatorBuilder: (_, __) => const Divider(
+                                  height: 1,
+                                  indent: 16,
+                                  endIndent: 16,
+                                  color: Colors.black12,
+                                ),
+                                itemBuilder: (context, index) {
+                                  final item =
+                                      _filteredLaundries.take(5).elementAt(index);
+                                  return _buildSearchResultTile(item);
+                                },
                               ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   ],
-                ),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  child: _showFilterPanel
-                      ? Container(
-                          width: double.infinity,
-                          margin: const EdgeInsets.only(top: 10, bottom: 4),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: AppColors.outlineVariant.withValues(
-                                alpha: 0.5,
-                              ),
-                              width: 1,
+                  const SizedBox(height: 10),
+                  // Horizontal category filter chips bar (Direct 1-tap filtering)
+                  SizedBox(
+                    height: 38,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _categories.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      itemBuilder: (context, idx) {
+                        final cat = _categories[idx];
+                        final isSelected = _selectedCategory == cat;
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedCategory = cat;
+                            });
+                            _filterLaundries(resetCarousel: true);
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
-                                blurRadius: 20,
-                                offset: const Offset(0, 8),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isSelected
+                                    ? Colors.transparent
+                                    : Colors.grey.shade300,
                               ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.tune_rounded,
-                                        color: AppColors.primary,
-                                        size: 18,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Filtros de búsqueda',
-                                        style: GoogleFonts.outfit(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15,
-                                          color: AppColors.onSurface,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  if (_selectedCategory != 'Todos')
-                                    GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          _selectedCategory = 'Todos';
-                                        });
-                                        _filterLaundries(resetCarousel: true);
-                                      },
-                                      child: Text(
-                                        'Limpiar todos',
-                                        style: GoogleFonts.inter(
-                                          color: AppColors.primary,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Categorías',
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.08),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                cat,
                                 style: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12,
-                                  color: AppColors.outline,
+                                  fontSize: 13,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : AppColors.onSurface,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.w500,
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: _categories.map((cat) {
-                                  final isSelected = _selectedCategory == cat;
-                                  return GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        _selectedCategory = cat;
-                                      });
-                                      _filterLaundries(resetCarousel: true);
-                                    },
-                                    child: AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 200,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 8,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? AppColors.primary
-                                            : Colors.grey.shade100,
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? Colors.transparent
-                                              : Colors.grey.shade300,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        cat,
-                                        style: GoogleFonts.inter(
-                                          fontSize: 12,
-                                          color: isSelected
-                                              ? Colors.white
-                                              : AppColors.onSurface,
-                                          fontWeight: isSelected
-                                              ? FontWeight.w600
-                                              : FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            ],
+                            ),
                           ),
-                        )
-                      : const SizedBox(width: double.infinity, height: 0),
-                ),
-              ],
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+
+
+
+
+        // Always-visible Locate Me Floating Action Button (Smooth Animated Position)
+        AnimatedPositioned(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          bottom: _activeCarouselIndex != null ? 205 : 90,
+          right: 16,
+          child: PointerInterceptor(
+            child: FloatingActionButton(
+              heroTag: 'locate_me_fab',
+              onPressed: () {
+                _animatedMapMove(_userLocation, 15.0);
+              },
+              backgroundColor: Colors.white,
+              foregroundColor: AppColors.primary,
+              elevation: 6,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.my_location_rounded, size: 24),
             ),
           ),
         ),
 
         // Floating Horizontal Laundry Slider at bottom (only visible when a marker is active)
-        _activeCarouselIndex != null
-            ? Positioned(
-                bottom: 16,
-                left: 0,
-                right: 0,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    // Locate Me Floating Action Button
-                    Padding(
-                      padding: const EdgeInsets.only(right: 16.0, bottom: 12.0),
-                      child: FloatingActionButton(
-                        onPressed: () {
-                          _animatedMapMove(_userLocation, 15.0);
-                        },
-                        backgroundColor: Colors.white,
-                        foregroundColor: AppColors.primary,
-                        elevation: 6,
-                        shape: const CircleBorder(),
-                        child: const Icon(Icons.my_location_rounded, size: 24),
+        if (_activeCarouselIndex != null)
+          Positioned(
+            bottom: 16,
+            left: 0,
+            right: 0,
+            child: SizedBox(
+              height: 180,
+              child: _carouselLaundries.isEmpty
+                  ? Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black12, blurRadius: 8),
+                          ],
+                        ),
+                        child: Text(
+                          'No se encontraron lavanderías',
+                          style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                        ),
                       ),
+                    )
+                  : PageView.builder(
+                      controller: _pageController,
+                      itemCount: _carouselLaundries.length,
+                      onPageChanged: (idx) {
+                        if (_isAnimatingToPage) return;
+                        setState(() {
+                          _activeCarouselIndex = idx;
+                        });
+                        _animateToLaundry(_carouselLaundries[idx]);
+                      },
+                      itemBuilder: (context, idx) {
+                        final item = _carouselLaundries[idx];
+                        return _buildLaundryCarouselCard(item);
+                      },
                     ),
+            ),
+          ),
+      ],
+    );
+  }
 
-                    // PageView Carousel
-                    SizedBox(
-                      height: 180,
-                      child: _carouselLaundries.isEmpty
-                          ? Center(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black12,
-                                      blurRadius: 8,
-                                    ),
-                                  ],
-                                ),
-                                child: Text(
-                                  'No se encontraron lavanderías',
-                                  style: GoogleFonts.inter(
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            )
-                          : PageView.builder(
-                              controller: _pageController,
-                              itemCount: _carouselLaundries.length,
-                              onPageChanged: (idx) {
-                                if (_isAnimatingToPage) return;
-                                setState(() {
-                                  _activeCarouselIndex = idx;
-                                });
-                                _animateToLaundry(_carouselLaundries[idx]);
-                              },
-                              itemBuilder: (context, idx) {
-                                final item = _carouselLaundries[idx];
-                                return _buildLaundryCarouselCard(item);
-                              },
-                            ),
-                    ),
-                  ],
-                ),
-              )
-            : Positioned(
-                bottom: 16,
-                right: 16,
-                child: FloatingActionButton(
-                  onPressed: () {
-                    _animatedMapMove(_userLocation, 15.0);
-                  },
-                  backgroundColor: Colors.white,
-                  foregroundColor: AppColors.primary,
-                  elevation: 6,
-                  shape: const CircleBorder(),
-                  child: const Icon(Icons.my_location_rounded, size: 24),
+  Widget _buildSearchResultTile(LaundryItem laundry) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LaundryBookingPage(
+              laundry: laundry,
+              allLaundries: _allLaundries,
+            ),
+          ),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          children: [
+            // Left icon avatar
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: laundry.isEco
+                    ? Colors.green.shade50
+                    : AppColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Icon(
+                  laundry.isEco
+                      ? Icons.eco_rounded
+                      : Icons.local_car_wash_rounded,
+                  color: laundry.isEco
+                      ? Colors.green.shade700
+                      : AppColors.primary,
+                  size: 22,
                 ),
               ),
-      ],
+            ),
+            const SizedBox(width: 12),
+
+            // Middle info column
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Title + Badges
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          laundry.name,
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: AppColors.onSurface,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      // Open / Closed Status Badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: laundry.isOpen
+                              ? Colors.green.shade50
+                              : Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          laundry.isOpen ? 'Abierto' : 'Cerrado',
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                            color: laundry.isOpen
+                                ? Colors.green.shade700
+                                : Colors.red.shade700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      // Rating badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF9E6),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.star_rounded,
+                              color: Colors.amber,
+                              size: 11,
+                            ),
+                            const SizedBox(width: 1),
+                            Text(
+                              laundry.rating == 0.0
+                                  ? 'Nuevo'
+                                  : laundry.rating.toStringAsFixed(1),
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                                color: const Color(0xFF8A6D00),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      // Distance badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          laundry.distance,
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                            color: Colors.green.shade700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+
+                  // Subtitle: Type & Prominent Price Badge
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          laundry.type,
+                          style: GoogleFonts.inter(
+                            color: AppColors.onSurfaceVariant,
+                            fontSize: 11,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: const Color(0xFFA7F3D0),
+                          ),
+                        ),
+                        child: RichText(
+                          text: TextSpan(
+                            text: 'Desde ',
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              color: const Color(0xFF047857),
+                              fontWeight: FontWeight.w500,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: '\$${laundry.price.toStringAsFixed(2)}',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF059669),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+
+            // Route icon button (Ir)
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppColors.primary,
+                  width: 1.5,
+                ),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    _openGoogleMapsRoute(
+                      laundry.location.latitude,
+                      laundry.location.longitude,
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: const Padding(
+                    padding: EdgeInsets.all(7.0),
+                    child: Icon(
+                      Icons.directions_rounded,
+                      color: AppColors.primary,
+                      size: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+
+            // Reservar button (matches Ir button container structure & height)
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(
+                      alpha: 0.25,
+                    ),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LaundryBookingPage(
+                          laundry: laundry,
+                          allLaundries: _allLaundries,
+                        ),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 7,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.calendar_month_rounded,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Reservar',
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1832,12 +2136,34 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Row: Rating & Wait Time & Distance & Badges
+                        // Row: Open/Closed Status & Rating & Distance & Badges
                         Wrap(
                           spacing: 6,
                           runSpacing: 4,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: laundry.isOpen
+                                    ? Colors.green.shade50
+                                    : Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                laundry.isOpen ? 'Abierto' : 'Cerrado',
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: laundry.isOpen
+                                      ? Colors.green.shade700
+                                      : Colors.red.shade700,
+                                ),
+                              ),
+                            ),
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
@@ -1929,29 +2255,41 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         // Bottom row: Price, Directions & Book button
                         Row(
                           children: [
-                            Expanded(
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFECFDF5),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: const Color(0xFFA7F3D0),
+                                ),
+                              ),
                               child: RichText(
                                 text: TextSpan(
                                   text: 'Desde ',
                                   style: GoogleFonts.inter(
                                     fontSize: 11,
-                                    color: AppColors.outline,
+                                    color: const Color(0xFF047857),
+                                    fontWeight: FontWeight.w500,
                                   ),
                                   children: [
                                     TextSpan(
                                       text:
                                           '\$${laundry.price.toStringAsFixed(2)}',
                                       style: GoogleFonts.inter(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.primary,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w800,
+                                        color: const Color(0xFF059669),
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 4),
+                            const Spacer(),
 
                             // Navigation Button to open Google Maps route
                             Container(

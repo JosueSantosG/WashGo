@@ -40,10 +40,12 @@ void main() async {
     debugPrint('Firebase App Check skipped in emulator mode.');
   }
 
-  debugPrint('--- APP CONFIGURATION INFO ---');
-  debugPrint('Active Environment current: ${Environment.current}');
-  debugPrint('DefaultFirebaseOptions Project ID: ${DefaultFirebaseOptions.currentPlatform.projectId}');
-  debugPrint('------------------------------');
+  if (kDebugMode) {
+    debugPrint('--- APP CONFIGURATION INFO ---');
+    debugPrint('Active Environment current: ${Environment.current}');
+    debugPrint('DefaultFirebaseOptions Project ID: ${DefaultFirebaseOptions.currentPlatform.projectId}');
+    debugPrint('------------------------------');
+  }
 
   // Configure Crashlytics
   if (!kIsWeb) {

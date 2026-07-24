@@ -4,7 +4,7 @@
 mutation UpsertUser($email: String!, $nombreCompleto: String!, $roles: [UserRole!]!, $employeeStatus: EmployeeStatus = UNASSIGNED, $telefono: String, $fotoPerfil: String) @auth(level: USER) @transaction {
   query @redact {
     user(key: { id_expr: "auth.uid" }) @check(
-      expr: "this == null || auth.token.email == 'root@washgo.com' || (!('SUPER_ADMIN' in vars.roles) || 'SUPER_ADMIN' in this.roles)",
+      expr: "this == null || auth.token.email == 'root@washgo.com' || auth.token.email == 'root1@washgo.com' || (!('SUPER_ADMIN' in vars.roles) || 'SUPER_ADMIN' in this.roles)",
       message: "No tienes permiso para asignarte roles administrativos"
     ) {
       roles
@@ -178,6 +178,10 @@ mutation UpdateBusiness(
 mutation OwnerUpdateBusinessStatus($id: UUID!, $status: BusinessStatus!) @auth(level: USER) {
   query @redact {
     business(key: { id: $id }) {
+      wasApprovedBySuperAdmin @check(
+        expr: "this == true",
+        message: "No puedes activar tu local hasta que el SuperAdmin apruebe tu registro por primera vez."
+      )
       owner {
         id @check(expr: "this == auth.uid", message: "No eres el dueño de este negocio")
       }
@@ -519,7 +523,8 @@ mutation SuperAdminUpdateBusinessStatus($id: UUID!, $status: BusinessStatus!) @a
     }
   }
   business_update(key: { id: $id }, data: {
-    status: $status
+    status: $status,
+    wasApprovedBySuperAdmin: true
   })
 }
 

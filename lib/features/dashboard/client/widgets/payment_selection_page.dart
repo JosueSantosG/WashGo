@@ -42,7 +42,7 @@ class PaymentSelectionPage extends StatefulWidget {
 }
 
 class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
-  PaymentMethod _selectedMethod = PaymentMethod.PAYPHONE;
+  PaymentMethod _selectedMethod = PaymentMethod.TRANSFERENCIA_BANCARIA;
   bool _preferPaypalCard = false;
   bool _isProcessing = false;
   bool _payphoneWaiting = false;
@@ -587,23 +587,7 @@ class _PaymentSelectionPageState extends State<PaymentSelectionPage> {
                     ),
                     const SizedBox(height: 12),
 
-                    // PayPhone Option Card
-                    _buildPaymentOptionCard(
-                      isSelected: _selectedMethod == PaymentMethod.PAYPHONE,
-                      title: 'PayPhone',
-                      subtitle: 'Pago con tarjeta de crédito/débito o saldo PayPhone',
-                      icon: Icons.phone_android_rounded,
-                      iconColor: const Color(0xFFFF6C00),
-                      bgColor: const Color(0xFFFF6C00).withValues(alpha: 0.08),
-                      isDisabled: false,
-                      onTap: () {
-                        setState(() {
-                          _selectedMethod = PaymentMethod.PAYPHONE;
-                          _preferPaypalCard = false;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
+
 
                     // Bank Transfer Option Card
                     _buildPaymentOptionCard(

@@ -71,6 +71,7 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
   double? _latitud;
   double? _longitud;
   List<WashGoBusiness> _myBusinesses = [];
+  Map<String, double> _monthlyRevenueByBranch = {};
   WashGoBusiness? _business;
   bool _hasNoBusiness = false;
 
@@ -324,6 +325,24 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
           debugPrint('Error fetching business invoices: $e');
           return <InvoiceModel>[];
         }),
+        Future.wait(myBusinesses.map((b) async {
+          try {
+            final invs = await _invoiceRepository.getBusinessInvoices(
+              b.id,
+              startDate: startOfMonth,
+            );
+            double total = 0.0;
+            for (final inv in invs) {
+              if (inv.invoiceStatus == InvoiceStatus.GENERATED) {
+                total += inv.total;
+              }
+            }
+            return MapEntry(b.id, total);
+          } catch (e) {
+            debugPrint('Error fetching monthly revenue for business ${b.id}: $e');
+            return MapEntry(b.id, 0.0);
+          }
+        })),
       ]);
 
       final requests = results[0] as List<EmployeeRequest>;
@@ -331,6 +350,8 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
       final services = results[2] as List<WashGoService>;
       final businessHours = results[3] as List<Map<String, dynamic>>;
       final invoices = results[4] as List<dynamic>;
+      final branchEntries = results[5] as List<MapEntry<String, double>>;
+      _monthlyRevenueByBranch = Map.fromEntries(branchEntries);
 
       if (businessHours.isNotEmpty) {
         try {
@@ -2389,10 +2410,8 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                     if (isFromProfile) {
                       Navigator.pop(context); // Close profile sheet
                     }
-                    final result = await context.push(AppRoutes.createLaundry);
-                    if (result == true) {
-                      _loadDashboardData();
-                    }
+                    await context.push(AppRoutes.createLaundry);
+                    await _loadDashboardData();
                   },
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
@@ -2564,10 +2583,8 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                 const SizedBox(height: 32),
                 ElevatedButton.icon(
                   onPressed: () async {
-                    final result = await context.push(AppRoutes.createLaundry, extra: true);
-                    if (result == true) {
-                      _loadDashboardData();
-                    }
+                    await context.push(AppRoutes.createLaundry, extra: true);
+                    await _loadDashboardData();
                   },
                   icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white),
                   label: const Text('Registrar Local'),
@@ -2709,6 +2726,46 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
     }
   }
 
+  Future<void> _switchActiveBusiness(String businessId) async {
+    if (_businessId == businessId) return;
+
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
+
+    try {
+      await _businessRepository.switchCurrentBusiness(businessId);
+      _ordersSubscription?.cancel();
+      _ordersSubscription = null;
+      await _loadDashboardData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Se cambió al local "${_businessName ?? ''}".'),
+            backgroundColor: AppColors.primary,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error switching business: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al cambiar de local: $e'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   // ================= TAB 0: INICIO =================
   Widget _buildInicioTab() {
     return FadeTransition(
@@ -2725,6 +2782,9 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
         electronicEarnings: _electronicEarnings,
         dashboardStats:
             _dashboardStats ?? OwnerDashboardStats.calculate(_allOrders),
+        myBusinesses: _myBusinesses,
+        monthlyRevenueByBranch: _monthlyRevenueByBranch,
+        onSwitchBusiness: _switchActiveBusiness,
       ),
     );
   }
@@ -2787,6 +2847,7 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
         businessId: _businessId,
         businessRepository: _businessRepository,
         businessStatus: _business?.status,
+        wasApprovedBySuperAdmin: _business?.wasApprovedBySuperAdmin ?? false,
         onBusinessStatusChanged: () {
           _loadDashboardData();
         },
@@ -3223,6 +3284,7 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
+                            actionsOverflowButtonSpacing: 8,
                             title: Row(
                               children: [
                                 Icon(
@@ -3230,15 +3292,25 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage>
                                   color: Colors.orange.shade700,
                                 ),
                                 const SizedBox(width: 8),
-                                const Text('¿Deseas suspender y solicitar?'),
+                                Expanded(
+                                  child: Text(
+                                    '¿Deseas suspender y solicitar?',
+                                    style: GoogleFonts.outfit(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
-                            content: const Text(
-                              '⚠️ El servicio será suspendido temporalmente\n\n'
-                              'Al cambiar el precio, este servicio dejará de aparecer para '
-                              'los clientes hasta que el administrador de WashGo apruebe '
-                              'el nuevo precio.\n\n'
-                              '¿Deseas continuar y enviar la solicitud de cambio?',
+                            content: const SingleChildScrollView(
+                              child: Text(
+                                '⚠️ El servicio será suspendido temporalmente\n\n'
+                                'Al cambiar el precio, este servicio dejará de aparecer para '
+                                'los clientes hasta que el administrador de WashGo apruebe '
+                                'el nuevo precio.\n\n'
+                                '¿Deseas continuar y enviar la solicitud de cambio?',
+                              ),
                             ),
                             actions: [
                               TextButton(
